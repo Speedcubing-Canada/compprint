@@ -111,7 +111,7 @@ export default function CompetitionPickerPage() {
             >
               <span className={s.compName}>{comp.name}</span>
               <span className={s.compMeta}>
-                {comp.city} · {formatCompetitionDate(comp.start_date)}
+                {comp.city} · {formatCompetitionDate(comp.start_date, comp.end_date)}
               </span>
             </button>
           ))}

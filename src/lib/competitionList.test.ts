@@ -41,6 +41,16 @@ describe('visibleCompetitions', () => {
 describe('formatCompetitionDate', () => {
   it('shows the WCA date, not the day before, west of GMT', () => {
     // Bare `new Date('2026-09-13')` is UTC midnight, which renders as the 12th here.
-    expect(formatCompetitionDate('2026-09-13')).toContain('13');
+    expect(formatCompetitionDate('2026-09-13', '2026-09-13')).toContain('13');
+  });
+
+  it('shows first-last for a multi-day competition', () => {
+    const s = formatCompetitionDate('2026-09-13', '2026-09-14');
+    expect(s).toContain('13');
+    expect(s).toContain('14');
+  });
+
+  it('shows a single date for a one-day competition', () => {
+    expect(formatCompetitionDate('2026-09-13', '2026-09-13')).not.toMatch(/[–-]/);
   });
 });

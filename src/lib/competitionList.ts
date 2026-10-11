@@ -21,8 +21,7 @@ export function visibleCompetitions(
 
 // `T00:00:00` forces local midnight. The bare string parses as UTC midnight and renders
 // the previous day west of GMT, same trap as above.
-export function formatCompetitionDate(dateStr: string): string {
-  return new Date(`${dateStr}T00:00:00`).toLocaleDateString(undefined, {
-    year: 'numeric', month: 'long', day: 'numeric',
-  });
+export function formatCompetitionDate(start: string, end: string): string {
+  return new Intl.DateTimeFormat(undefined, { year: 'numeric', month: 'long', day: 'numeric' })
+    .formatRange(new Date(`${start}T00:00:00`), new Date(`${end}T00:00:00`));
 }
