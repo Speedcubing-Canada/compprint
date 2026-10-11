@@ -937,7 +937,7 @@ export function parseWCIF(wcif: WCIF, settings: CompetitionSettings): ParsedWCIF
 
     for (const { gNum, stage, timeslot } of sortGroups(groups)) {
       const coverLabel = resolveGroupLabel(rid, gNum, stage, totalGroups);
-      const blankCount = field != null ? Math.ceil(field / stageCount) + 2 : 16;
+      const blankCount = field != null ? Math.ceil(field / stageCount) : 16;
 
       for (let i = 0; i < blankCount; i++) {
         const cardGroup = useStationNumbers
@@ -972,7 +972,7 @@ export function parseWCIF(wcif: WCIF, settings: CompetitionSettings): ParsedWCIF
 
     for (const { gNum, stage, timeslot } of sortGroups(groups)) {
       const groupLabel = resolveGroupLabel(rid, gNum, stage, totalGroups);
-      const blankCount = field != null ? Math.ceil(field / stageCount) + 2 : 16;
+      const blankCount = field != null ? Math.ceil(field / stageCount) : 16;
 
       for (let i = 0; i < blankCount; i++) {
         semisEntries.push({
@@ -1034,7 +1034,7 @@ export function parseWCIF(wcif: WCIF, settings: CompetitionSettings): ParsedWCIF
         });
       }
     } else {
-      const blankCount = field != null ? Math.ceil(field / stageCount) + 2 : 16;
+      const blankCount = field != null ? Math.ceil(field / stageCount) : 16;
 
       for (const { gNum, stage, timeslot } of sortGroups(groups)) {
         const groupLabel = resolveGroupLabel(rid, gNum, stage, totalGroups);

@@ -508,7 +508,7 @@ describe('simultaneous multi-stage finals', () => {
     expect(cards.length).toBe(32);
   });
 
-  it('with ranking advancement: blankCount = ceil(level / stageCount) + 2', () => {
+  it('with ranking advancement: blankCount = ceil(level / stageCount)', () => {
     const e = evt('333', [
       rSpec('a', { adv: { type: 'ranking', level: 8 } }),
       rSpec('a'),
@@ -522,9 +522,9 @@ describe('simultaneous multi-stage finals', () => {
       act('333', 2, [ch(111, '333', 2, 1, '2024-01-01T14:00:00Z')]),
     ]);
     const result = parseWCIF(mkWCIF([e], [rRouge, rBleu], [per(1, [{ aid: 100 }])]), cfg());
-    // stageCount = 2 → blankCount = ceil(8/2) + 2 = 6 per stage
+    // stageCount = 2 → blankCount = ceil(8/2) = 4 per stage
     const blanks = scs(result.finals).filter(s => s.eventId === '333');
-    expect(blanks.length).toBe(12); // 2 stages × 6
+    expect(blanks.length).toBe(8); // 2 stages × 4
   });
 });
 
@@ -696,10 +696,10 @@ describe('intermediate round modes (3-round event, round 2)', () => {
     expect(cvs(result.intermediate).length).toBe(2);
   });
 
-  it('blanks mode with ranking advancement: blankCount = ceil(level / numGroups) + 2', () => {
-    // level=8, 2 groups → ceil(8/2)+2 = 6 per group → 12 blanks
+  it('blanks mode with ranking advancement: blankCount = ceil(level / numGroups)', () => {
+    // level=8, 2 groups → ceil(8/2) = 4 per group → 8 blanks
     const result = mk3Round('blanks', { type: 'ranking', level: 8 });
-    expect(scs(result.intermediate).filter(s => s.eventId === '333').length).toBe(12);
+    expect(scs(result.intermediate).filter(s => s.eventId === '333').length).toBe(8);
   });
 
   it('prefilled simultaneous stages: covers labeled "Rouge 1"/"Bleu 1" with count divided by stages', () => {
@@ -820,8 +820,8 @@ describe('intermediate round modes (3-round event, round 2)', () => {
     const result = parseWCIF(mkWCIF([e], [rRouge, rBleu], [per(1, [{ aid: 100 }])]), cfg({ secondRoundMode: 'blanks' }));
     const cov = cvs(result.intermediate);
     expect(cov.map(c => c.group).sort()).toEqual(['Bleu 1', 'Rouge 1']);
-    // blankCount = ceil(8 / 2) + 2 = 6
-    expect(cov.every(c => c.numScorecards === 6)).toBe(true);
+    // blankCount = ceil(8 / 2) = 4
+    expect(cov.every(c => c.numScorecards === 4)).toBe(true);
     const blank = scs(result.intermediate).filter(s => s.eventId === '333');
     const groups = new Set(blank.map(s => s.group));
     expect(groups).toContain('Bleu 1');
@@ -945,15 +945,15 @@ describe('4-round events - semi-finals bucket', () => {
     expect(s[0]?.roundLabel).toBe('Final Round');
   });
 
-  it('semis blankCount = ceil(prev-adv-level / numGroups) + 2', () => {
-    // prev round (r2) adv level=8, 1 group in semis → ceil(8/1)+2 = 10
+  it('semis blankCount = ceil(prev-adv-level / numGroups)', () => {
+    // prev round (r2) adv level=8, 1 group in semis → ceil(8/1) = 8
     const s = scs(mk4Round().semis).filter(s => s.eventId === '333');
-    expect(s.length).toBe(10);
+    expect(s.length).toBe(8);
   });
 
-  it('finals blankCount uses round-3 advancement (level=4, 1 group) → ceil(4/1)+2 = 6', () => {
+  it('finals blankCount uses round-3 advancement (level=4, 1 group) → ceil(4/1) = 4', () => {
     const s = scs(mk4Round().finals).filter(s => s.eventId === '333');
-    expect(s.length).toBe(6);
+    expect(s.length).toBe(4);
   });
 
   it('round 2 goes to intermediate, not semis', () => {
@@ -971,11 +971,11 @@ describe('4-round events - semi-finals bucket', () => {
 
 describe('cover-before-group ordering', () => {
   it('each cover immediately precedes its own group scorecards (not all covers first)', () => {
-    // Simultaneous semis: Bleu 1 and Rouge 1 at the same timeslot, 4 blanks each.
+    // Simultaneous semis: Bleu 1 and Rouge 1 at the same timeslot, 2 blanks each.
     const e = evt('333', [
       rSpec('a', { adv: { type: 'ranking', level: 4 } }),  // r1→r2
       rSpec('a', { adv: { type: 'ranking', level: 4 } }),  // r2→r3
-      rSpec('a', { adv: { type: 'ranking', level: 4 } }),  // r3→r4 (semis, adv level=4 → blanks per stage = ceil(4/2)+2 = 4)
+      rSpec('a', { adv: { type: 'ranking', level: 4 } }),  // r3→r4 (semis, adv level=4 → blanks per stage = ceil(4/2) = 2)
       rSpec('a'),
     ]);
     const rRouge = room('Scène Rouge', [
@@ -1993,9 +1993,9 @@ describe('later rounds scheduled without groups (single implicit group fallback)
     expect(scs(result.finals).filter(s => s.eventId === '333').length).toBeGreaterThan(0);
   });
 
-  it('final blank count honors R2 ranking advancement (ceil(12/1)+2 = 14)', () => {
+  it('final blank count honors R2 ranking advancement (ceil(12/1) = 12)', () => {
     const result = mkBareLaterRounds();
-    expect(scs(result.finals).filter(s => s.eventId === '333' && s.roundNum === 3).length).toBe(14);
+    expect(scs(result.finals).filter(s => s.eventId === '333' && s.roundNum === 3).length).toBe(12);
   });
 
   it('extras include both bare later rounds', () => {
@@ -2067,10 +2067,10 @@ describe('later rounds scheduled without groups (single implicit group fallback)
     ]);
     const result = parseWCIF(mkWCIF([e], [r], manyRegistered(35)), cfg({ secondRoundMode: 'blanks' }));
     expect(cvs(result.intermediate).length).toBe(2);                 // 2 synthesized groups
-    const perGroup = Math.ceil(21 / 2) + 2;                          // field 21 over 2 groups → 13
-    expect(scs(result.intermediate).filter(s => s.eventId === '333' && s.roundNum === 2).length).toBe(perGroup * 2); // 26
-    // Chained: R2 ranking 12 → final field 12, 1 set → ceil(12/1)+2 = 14
-    expect(scs(result.finals).filter(s => s.eventId === '333' && s.roundNum === 3).length).toBe(14);
+    const perGroup = Math.ceil(21 / 2);                              // field 21 over 2 groups → 11
+    expect(scs(result.intermediate).filter(s => s.eventId === '333' && s.roundNum === 2).length).toBe(perGroup * 2); // 22
+    // Chained: R2 ranking 12 → final field 12, 1 set → ceil(12/1) = 12
+    expect(scs(result.finals).filter(s => s.eventId === '333' && s.roundNum === 3).length).toBe(12);
   });
 
   it('falls back to a single group when the bare round has no scramble sets', () => {
@@ -2103,8 +2103,8 @@ describe('later rounds scheduled without groups (single implicit group fallback)
       act('333', 3, [ch(300, '333', 3, 1, '2024-01-01T16:00:00Z')]),
     ]);
     const result = parseWCIF(mkWCIF([e], [r], manyRegistered(40)), cfg({ secondRoundMode: 'blanks' }));
-    const perGroup = Math.ceil(20 / 2) + 2;                          // field floor(0.5*40)=20 over 2 groups → 12
-    expect(scs(result.intermediate).filter(s => s.eventId === '333' && s.roundNum === 2).length).toBe(perGroup * 2); // 24
+    const perGroup = Math.ceil(20 / 2);                              // field floor(0.5*40)=20 over 2 groups → 10
+    expect(scs(result.intermediate).filter(s => s.eventId === '333' && s.roundNum === 2).length).toBe(perGroup * 2); // 20
   });
 
   it('keeps the flat 16 blank fallback when the previous round advances by attemptResult', () => {
@@ -2909,5 +2909,20 @@ describe('on-the-spot blanks', () => {
     expect(result.extras.length % 4).toBe(0);
     const tail = result.extras.slice(-4) as ScorecardEntry[];
     expect(tail.every(x => x.kind === 'scorecard' && x.eventId === '' && x.eventName === '' && x.group === '')).toBe(true);
+  });
+});
+
+describe('later-round blanks match advancement seats', () => {
+  it('top-16 final in one group prints exactly Station 01..16, no spares', () => {
+    const e = evt('222', [rSpec('a', { adv: { type: 'ranking', level: 16 } }), rSpec('a')]);
+    const r = room('Stage', [
+      act('222', 1, [ch(100, '222', 1, 1)]),
+      act('222', 2, [ch(110, '222', 2, 1, '2024-01-01T14:00:00Z')]),
+    ]);
+    const result = parseWCIF(mkWCIF([e], [r], [per(1, [{ aid: 100 }])]), cfg());
+    const cards = scs(result.finals).filter(s => s.eventId === '222');
+    expect(cards.map(c => c.group).sort()).toEqual(
+      Array.from({ length: 16 }, (_, i) => `Station ${String(i + 1).padStart(2, '0')}`));
+    expect(cvs(result.finals).filter(c => c.eventId === '222')[0]?.numScorecards).toBe(16);
   });
 });
