@@ -124,7 +124,7 @@ describe('fetchWcif', () => {
     expect(await fetchWcif('Comp2026', 'tok')).toEqual({ formatVersion: '1.0', id: 'Comp2026' });
 
     const [url, init] = callArgs(fn);
-    expect(url).toBe(`${WCA_API_URL}/competitions/Comp2026/wcif`);
+    expect(url).toBe(`${WCA_API_URL}/competitions/Comp2026/wcif/version/2`);
     expect((init?.headers as Record<string, string>).Authorization).toBe('Bearer tok');
   });
 

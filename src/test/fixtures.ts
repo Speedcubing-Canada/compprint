@@ -55,7 +55,7 @@ function round(id: string, format: RoundFormat) {
     id, format,
     timeLimit: { centiseconds: 18000, cumulativeRoundIds: [] },
     cutoff: null,
-    advancementCondition: null,
+    participationRuleset: null,
     scrambleSetCount: 1,
     results: [],
   };
@@ -123,7 +123,7 @@ export function sampleWcif(): WCIF {
   ];
 
   return {
-    formatVersion: '1.0',
+    formatVersion: '2.2',
     id: 'GrosJouetsaMontreal2026',
     name: 'Gros Jouets à Montréal 2026',
     shortName: 'Gros Jouets 2026',

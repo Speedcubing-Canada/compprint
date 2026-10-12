@@ -3,7 +3,7 @@ export type EventId =
   | '333bf' | '333fm' | '333oh' | 'clock' | 'minx'
   | 'pyram' | 'skewb' | 'sq1' | 'fto' | '444bf' | '555bf' | '333mbf';
 
-export type RoundFormat = 'a' | 'm' | '1' | '2' | '3';
+export type RoundFormat = 'a' | 'm' | '1' | '2' | '3' | '5' | 'h';
 
 export interface TimeLimit {
   centiseconds: number;
@@ -15,9 +15,21 @@ export interface Cutoff {
   attemptResult: number;
 }
 
-export interface AdvancementCondition {
-  type: 'ranking' | 'percent' | 'attemptResult';
-  level: number;
+export interface ResultCondition {
+  type: 'ranking' | 'percent' | 'resultAchieved';
+  scope: 'single' | 'average';
+  value: number | null;
+}
+
+export type ParticipationSource =
+  | { type: 'registrations' }
+  | { type: 'round'; roundId: string; resultCondition: ResultCondition }
+  | { type: 'linkedRounds'; roundIds: string[]; resultCondition: ResultCondition };
+
+export interface ParticipationRuleset {
+  // Null only for competitions from 2021 and earlier.
+  participationSource: ParticipationSource | null;
+  reservedPlaces: { nationalities: string[]; count: number } | null;
 }
 
 export interface Round {
@@ -25,7 +37,8 @@ export interface Round {
   format: RoundFormat;
   timeLimit: TimeLimit | null;
   cutoff: Cutoff | null;
-  advancementCondition: AdvancementCondition | null;
+  linkedRounds?: string[] | null;
+  participationRuleset: ParticipationRuleset | null;
   scrambleSetCount: number;
   results: unknown[];
 }
@@ -44,7 +57,7 @@ export interface Assignment {
 
 export interface PersonalBest {
   eventId: EventId;
-  best: number;
+  value: number;
   worldRanking: number;
   continentalRanking: number;
   nationalRanking: number;

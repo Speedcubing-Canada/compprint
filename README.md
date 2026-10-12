@@ -11,7 +11,7 @@
 </p>
 
 Delegates and organizers sign in with their WCA account, pick a competition they manage, choose
-what to print, and download the PDFs. The PDFs are built entirely in the browser: the WCIF is
+what to print, and download the PDFs. The PDFs are built entirely in the browser: the WCIF (v2) is
 never uploaded, and there is no database. One anonymous usage event is sent per generation so
 we can see which competitions the tool is used on and which settings people pick, see
 [Usage analytics](#usage-analytics).

@@ -84,7 +84,13 @@ function buildWcif(p: Profile): WCIF {
         timeLimit: { centiseconds: 60000, cumulativeRoundIds: [] },
         cutoff: r === 1 && (id === '444' || id === '555') ? { numberOfAttempts: 2, attemptResult: 9000 } : null,
         // Each round halves the field, which is what drives the blank-card counts.
-        advancementCondition: r < n ? { type: 'percent', level: 50 } : null,
+        participationRuleset: {
+          participationSource: r === 1 ? { type: 'registrations' } : {
+            type: 'round', roundId: `${id}-r${r - 1}`,
+            resultCondition: { type: 'percent', scope: 'average', value: 50 },
+          },
+          reservedPlaces: null,
+        },
         scrambleSetCount: p.groupsPerStage,
         results: [],
       });
@@ -113,7 +119,7 @@ function buildWcif(p: Profile): WCIF {
       roles: i <= 3 ? ['delegate'] : i <= 8 ? ['organizer'] : [],
       assignments: [],
       personalBests: newcomer ? [] : eventIds.map((eventId) => ({
-        eventId, best: 1000 + Math.floor(rnd() * 5000),
+        eventId, value: 1000 + Math.floor(rnd() * 5000),
         worldRanking: Math.floor(rnd() * 20000),
         continentalRanking: Math.floor(rnd() * 5000),
         nationalRanking: Math.floor(rnd() * 1000),
