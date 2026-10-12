@@ -4,7 +4,7 @@ import { hasUnassignedIntermediate } from './generationScope';
 import type { ScorecardEntry, CoverEntry, ScorecardData, NametTagEntry } from './wcif-parser';
 import type {
   WCIF, Event, Round, RoundFormat, Activity, ChildActivity,
-  Room, Person, EventId, AdvancementCondition, PersonalBest, Assignment,
+  Room, Person, EventId, PersonalBest, Assignment, ParticipationSource,
 } from '../types/wcif';
 import type { CompetitionSettings } from '../types/settings';
 
@@ -27,7 +27,9 @@ const BASE: CompetitionSettings = {
 };
 const cfg = (o: Partial<CompetitionSettings> = {}): CompetitionSettings => ({ ...BASE, ...o });
 
-type RoundSpec = Omit<Round, 'id'>;
+// v1-style advancement out of a round; evt() turns it into the next round's v2 participationRuleset.
+type AdvancementCondition = { type: 'ranking' | 'percent' | 'attemptResult'; level: number };
+type RoundSpec = Omit<Round, 'id'> & { adv?: AdvancementCondition | null };
 
 // Build a round spec. limitCs=null → no time limit; limitCs=undefined → default 3 min.
 function rSpec(format: RoundFormat, opts: {
@@ -42,14 +44,33 @@ function rSpec(format: RoundFormat, opts: {
     format,
     timeLimit: limitCs === null ? null : { centiseconds: limitCs ?? 18000, cumulativeRoundIds: cumulative },
     cutoff: cutoffCs !== undefined ? { numberOfAttempts: 2, attemptResult: cutoffCs } : null,
-    advancementCondition: adv,
+    participationRuleset: null,
+    adv,
     scrambleSetCount: sets,
     results: [],
   };
 }
 
 function evt(id: EventId, rounds: RoundSpec[]): Event {
-  return { id, rounds: rounds.map((r, i) => ({ ...r, id: `${id}-r${i + 1}` })), qualification: null };
+  return {
+    id,
+    rounds: rounds.map((spec, i) => {
+      const { adv: _adv, ...r } = spec; // eslint-disable-line @typescript-eslint/no-unused-vars
+      const prev = rounds[i - 1]?.adv;
+      const participationSource: ParticipationSource | null = i === 0 ? { type: 'registrations' }
+        : prev ? {
+          type: 'round', roundId: `${id}-r${i}`,
+          resultCondition: {
+            type: prev.type === 'attemptResult' ? 'resultAchieved' : prev.type, scope: 'average', value: prev.level,
+          },
+        } : null;
+      return {
+        ...r, id: `${id}-r${i + 1}`,
+        participationRuleset: r.participationRuleset ?? { participationSource, reservedPlaces: null },
+      };
+    }),
+    qualification: null,
+  };
 }
 
 // Child activity - id must be unique within the test; use 100+ to avoid uid() collisions.
@@ -1731,7 +1752,7 @@ describe('Scramble double-checking', () => {
     eventId = '333',
   ): PersonalBest {
     return {
-      eventId: eventId as EventId, best: 700, type,
+      eventId: eventId as EventId, value: 700, type,
       worldRanking: ranks.world ?? 0,
       continentalRanking: ranks.continental ?? 0,
       nationalRanking: ranks.national ?? 0,
@@ -2119,6 +2140,30 @@ describe('later rounds scheduled without groups (single implicit group fallback)
     ]);
     const result = parseWCIF(mkWCIF([e], [r], manyRegistered(30)), cfg({ secondRoundMode: 'blanks' }));
     expect(scs(result.finals).filter(s => s.eventId === '333' && s.roundNum === 2).length).toBe(16);
+  });
+
+  it('sizes dual rounds from registrations and the round after them from the linked source', () => {
+    // WCIF v2 Dual Round: R1+R2 open to everyone (Reg 9v5), R3 = top 6 across both.
+    const reg = { participationSource: { type: 'registrations' as const }, reservedPlaces: null };
+    const e = evt('333', [
+      rSpec('a'),
+      { ...rSpec('a'), participationRuleset: reg },
+      { ...rSpec('a'), participationRuleset: {
+        participationSource: {
+          type: 'linkedRounds', roundIds: ['333-r1', '333-r2'],
+          resultCondition: { type: 'ranking', scope: 'average', value: 6 },
+        },
+        reservedPlaces: null,
+      } },
+    ]);
+    const r = room('Stage', [
+      act('333', 1, [ch(100, '333', 1, 1)]),
+      bareAct('333', 2, '2024-01-01T12:00:00Z'),
+      bareAct('333', 3, '2024-01-01T14:00:00Z'),
+    ]);
+    const result = parseWCIF(mkWCIF([e], [r], manyRegistered(30)), cfg({ secondRoundMode: 'blanks' }));
+    expect(scs(result.intermediate).filter(s => s.eventId === '333' && s.roundNum === 2).length).toBe(30);
+    expect(scs(result.finals).filter(s => s.eventId === '333' && s.roundNum === 3).length).toBe(6);
   });
 
   it('prefilled cover counts use the percent field size', () => {

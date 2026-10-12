@@ -617,20 +617,29 @@ export function parseWCIF(wcif: WCIF, settings: CompetitionSettings): ParsedWCIF
     }
   }
 
-  // Chained forward from the accepted registration count: each round applies the previous
-  // round's advancement condition (ranking → top X, percent → floor(level/100 x field)).
-  // An attemptResult or absent condition stops the chain, leaving the flat blank fallback.
+  // Chained forward from the accepted registration count: each round applies its participation
+  // source to the source round's field (ranking → top X, percent → floor(value/100 x field)).
+  // Linked (dual) rounds take the largest linked field. A resultAchieved or absent condition stops
+  // the chain, leaving the flat blank fallback.
   const roundFieldSize: Record<string, number> = {};
   for (const event of wcif.events) {
     const eid = event.id;
     if (eid === '333fm') continue;
-    let field = registeredCount[eid] ?? 0;
-    for (let j = 0; j < event.rounds.length - 1; j++) {
-      const adv = event.rounds[j].advancementCondition;
-      if (adv?.type === 'ranking') field = adv.level;
-      else if (adv?.type === 'percent') field = Math.floor((adv.level / 100) * field);
-      else break;
-      roundFieldSize[`${eid}-r${j + 2}`] = field;
+    const field: Record<string, number> = {};
+    for (const [j, round] of event.rounds.entries()) {
+      const src = round.participationRuleset?.participationSource;
+      let n: number | undefined;
+      if (src?.type === 'registrations' || (!src && j === 0)) n = registeredCount[eid] ?? 0;
+      else if (src) {
+        const ids = src.type === 'round' ? [src.roundId] : src.roundIds;
+        const base = Math.max(...ids.map((id) => field[id] ?? NaN));
+        const { type, value } = src.resultCondition;
+        if (type === 'ranking' && value != null) n = value;
+        else if (type === 'percent' && value != null && !Number.isNaN(base)) n = Math.floor((value / 100) * base);
+      }
+      if (n === undefined) break;
+      field[round.id] = n;
+      if (j > 0) roundFieldSize[round.id] = n;
     }
   }
 

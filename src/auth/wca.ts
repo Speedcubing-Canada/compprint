@@ -119,7 +119,7 @@ export async function fetchManagedCompetitions(token: string) {
 }
 
 export async function fetchWcif(competitionId: string, token: string): Promise<WCIF> {
-  return authFetch(`${WCA_API_URL}/competitions/${competitionId}/wcif`, token);
+  return authFetch(`${WCA_API_URL}/competitions/${competitionId}/wcif/version/2`, token);
 }
 
 export interface CompetitionInfo {
