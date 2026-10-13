@@ -12,7 +12,7 @@ export interface TimeLimit {
 
 export interface Cutoff {
   numberOfAttempts: number;
-  attemptResult: number;
+  resultValue: number;
 }
 
 export interface ResultCondition {

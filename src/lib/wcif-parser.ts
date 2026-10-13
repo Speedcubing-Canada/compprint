@@ -608,7 +608,7 @@ export function parseWCIF(wcif: WCIF, settings: CompetitionSettings): ParsedWCIF
     numRounds[eid] = event.rounds.length;
     for (const round of event.rounds) {
       const rid = round.id;
-      roundCutoff[rid] = round.cutoff ? centisecondsToTime(round.cutoff.attemptResult) : '';
+      roundCutoff[rid] = round.cutoff ? centisecondsToTime(round.cutoff.resultValue) : '';
       roundLimit[rid] = eid === '333mbf' ? 'H1b'
         : round.timeLimit ? centisecondsToTime(round.timeLimit.centiseconds) : '';
       roundFormat[rid] = getScorecardFormat(eid, round);

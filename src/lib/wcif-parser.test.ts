@@ -43,7 +43,7 @@ function rSpec(format: RoundFormat, opts: {
   return {
     format,
     timeLimit: limitCs === null ? null : { centiseconds: limitCs ?? 18000, cumulativeRoundIds: cumulative },
-    cutoff: cutoffCs !== undefined ? { numberOfAttempts: 2, attemptResult: cutoffCs } : null,
+    cutoff: cutoffCs !== undefined ? { numberOfAttempts: 2, resultValue: cutoffCs } : null,
     participationRuleset: null,
     adv,
     scrambleSetCount: sets,
@@ -218,6 +218,15 @@ describe('scorecard format selection', () => {
     const sc = scs(result.firstRound)[0];
     expect(sc?.limit).toBe('');
     expect(sc?.isCumulative).toBe(false);
+  });
+
+  it('reads the WCIF v2 cutoff field (resultValue), never NaN', () => {
+    const c = ch(100, '444', 1, 1);
+    const e = evt('444', [rSpec('a')]);
+    e.rounds[0].cutoff = JSON.parse('{"numberOfAttempts": 2, "resultValue": 9000}');
+    const r = room('Stage', [act('444', 1, [c])]);
+    const result = parseWCIF(mkWCIF([e], [r], [per(1, [{ aid: 100 }])]), cfg());
+    expect(scs(result.firstRound)[0]?.cutoff).toBe('1:30');
   });
 });
 
