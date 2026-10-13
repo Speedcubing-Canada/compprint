@@ -82,7 +82,7 @@ function buildWcif(p: Profile): WCIF {
         id: `${id}-r${r}`,
         format: id === '666' || id === '777' ? '3' : 'a',
         timeLimit: { centiseconds: 60000, cumulativeRoundIds: [] },
-        cutoff: r === 1 && (id === '444' || id === '555') ? { numberOfAttempts: 2, attemptResult: 9000 } : null,
+        cutoff: r === 1 && (id === '444' || id === '555') ? { numberOfAttempts: 2, resultValue: 9000 } : null,
         // Each round halves the field, which is what drives the blank-card counts.
         participationRuleset: {
           participationSource: r === 1 ? { type: 'registrations' } : {
