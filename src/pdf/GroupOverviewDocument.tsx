@@ -5,7 +5,7 @@ import { getGroupOverviewStrings } from '../lib/i18n';
 import { visibleColumns } from './groupOverviewColumns';
 import {
   GROUP_OVERVIEW as G, groupBlockFitsPage,
-  PDF_FONT as FONT, PDF_FONT_BOLD as FONT_BOLD,
+  PDF_FONT as FONT, PDF_FONT_BOLD as FONT_BOLD, pdfFont,
   TABLE_BORDER as BORDER, TABLE_BORDER_INNER as BORDER_INNER,
   TABLE_HEADER_BG as HEADER_BG,
 } from './layoutConstants';
@@ -127,7 +127,7 @@ export function GroupOverviewDocument({ entries, settings }: Props) {
                 {columns.map((col, ci) => (
                   <View key={col.key} style={cellStyle(col.flex, ci === columns.length - 1, false)}>
                     {entry[col.key].map((name, ni) => (
-                      <Text key={ni} style={styles.name}>
+                      <Text key={ni} style={[styles.name, { fontFamily: pdfFont(name) }]}>
                         {/* The ordinal IS the station number when the WCIF assigns stations. */}
                         {col.key === 'competitors' ? `${ni + 1}. ${name}` : name}
                       </Text>

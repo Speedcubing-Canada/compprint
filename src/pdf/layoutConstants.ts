@@ -7,6 +7,21 @@ import type { LiveResultsMode, PaperFormat } from '../types/settings';
 // One of the 14 PDF base fonts: no embedding, identical in every viewer.
 export const PDF_FONT = 'Helvetica';
 export const PDF_FONT_BOLD = 'Helvetica-Bold';
+// Embedded Helvetica clones (scripts/makeScorecardSans.py) for letters outside WinAnsi (Ł, ư, ễ...).
+export const PDF_FONT_EXT = 'ScorecardSans';
+export const PDF_FONT_BOLD_EXT = 'ScorecardSans-Bold';
+
+// Built-in fonts only encode WinAnsi (Latin-1 plus a few cp1252 extras).
+const CP1252_EXTRA = 'ŒœŠšŽžŸƒˆ˜–—‘’‚“”„†‡•…‰‹›€™';
+export function helveticaCanDraw(text: string): boolean {
+  return [...text].every(c => c < '\x80' || (c >= '\xa0' && c <= '\xff') || CP1252_EXTRA.includes(c));
+}
+
+// Helvetica unless the text needs the embedded clone, so most PDFs embed nothing.
+export function pdfFont(text: string, bold = false): string {
+  if (helveticaCanDraw(text)) return bold ? PDF_FONT_BOLD : PDF_FONT;
+  return bold ? PDF_FONT_BOLD_EXT : PDF_FONT_EXT;
+}
 
 // Schedule tracker and Round Checklist share a clipboard, so they share their chrome.
 // Row tint stays light enough to photocopy.

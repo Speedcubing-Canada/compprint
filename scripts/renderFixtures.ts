@@ -163,13 +163,14 @@ function scorecardFixture(): ScorecardData[] {
   ]);
 }
 
-// Header name sizing: a two-line name, one too long to wrap well, one with no space, a short one.
+// Header name sizing: two lines, one line above the wrap threshold, no space, short, and two
+// that need the embedded font (Polish, Vietnamese).
+const LONG_NAMES = ['André Rodrigo César Pinheiro Monte Amado', 'Matheus de Souza Macêdo',
+  'Wolfeschlegelsteinhausenbergerdorff', 'Ali Hakim', 'Łukasz Żółtowski-Świętochowski',
+  'Nguyễn Thị Minh Khai Phương'];
 function longNameFixture(): ScorecardData[] {
-  return scorecardFixture().map((c, i) => ({
-    ...c,
-    name: ['André Rodrigo César Pinheiro Monte Amado', 'Matheus de Souza Macêdo',
-      'Wolfeschlegelsteinhausenbergerdorff', 'Ali Hakim'][i],
-  }));
+  const cards = scorecardFixture();
+  return LONG_NAMES.map((name, i) => ({ ...cards[i % cards.length], name }));
 }
 
 // A per-group cover (French, long labels) and a per-round one: the delegate's check card.

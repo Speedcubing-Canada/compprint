@@ -7,7 +7,7 @@ import { EVENT_ICONS } from '../assets/events';
 import { logoState, resolveLogo, showCompNameAboveCompetitor, type LogoState } from '../lib/logo';
 import {
   SCORECARD_CONFIGS as CONFIGS, scorecardsPerPage, scorecardRowHeight, showLiveIdLine,
-  PDF_FONT as FONT, PDF_FONT_BOLD as FONT_BOLD,
+  PDF_FONT as FONT, PDF_FONT_BOLD as FONT_BOLD, pdfFont,
 } from './layoutConstants';
 import './fontSetup';
 import { nameBox, nameLayout, NAME_LINE_HEIGHT } from './nameFit';
@@ -215,7 +215,9 @@ function ScorecardCard({
           {headerCompNameFs !== null && (
             <Text style={[styles.headerCompNameText, { fontSize: headerCompNameFs }]}>{settings.competitionName}</Text>
           )}
-          <Text style={[styles.nameText, { fontSize: name.fontSize }]}>{name.text}</Text>
+          <Text style={[styles.nameText, { fontSize: name.fontSize, fontFamily: pdfFont(name.text, true) }]}>
+            {name.text}
+          </Text>
           <Text style={styles.idText}>
             {card.wcaId}{showLiveIdLine(settings.hideWcaLiveId, card.liveId) && <>{'    '}WCA Live: <Text style={{ fontFamily: FONT_BOLD }}>{card.liveId}</Text></>}
           </Text>

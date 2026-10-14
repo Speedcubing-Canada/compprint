@@ -6,7 +6,7 @@ import { buildSlipLines, packSlipPages, type SlipLine } from './firstTimerSlipLi
 import {
   SLIP_LINE_H, SLIP_FONT_SIZE, SLIP_PAGE_PAD_TOP, SLIP_PAGE_PAD_BOTTOM,
   SLIP_MARGIN_BOTTOM, SLIP_INTRO_MARGIN_BOTTOM,
-  PDF_FONT as FONT, PDF_FONT_BOLD as FONT_BOLD,
+  PDF_FONT as FONT, pdfFont,
 } from './layoutConstants';
 import './fontSetup';
 
@@ -47,9 +47,6 @@ const styles = StyleSheet.create({
     alignSelf: 'flex-start',
     height: LINE_H,
   },
-  bold: {
-    fontFamily: FONT_BOLD,
-  },
   checkbox: {
     width: 9,
     height: 9,
@@ -62,7 +59,7 @@ const styles = StyleSheet.create({
 function TextRow({ children }: { children: string }) {
   return (
     <View style={styles.row}>
-      <Text>{children}</Text>
+      <Text style={{ fontFamily: pdfFont(children) }}>{children}</Text>
     </View>
   );
 }
@@ -71,9 +68,9 @@ function TextRow({ children }: { children: string }) {
 function Item({ prefix, value }: { prefix: string; value?: string }) {
   return (
     <View style={styles.row}>
-      <Text>
+      <Text style={{ fontFamily: pdfFont(prefix) }}>
         {prefix}
-        {value ? <Text style={styles.bold}>{` ${value}`}</Text> : null}
+        {value ? <Text style={{ fontFamily: pdfFont(value, true) }}>{` ${value}`}</Text> : null}
       </Text>
       <View style={styles.checkbox} />
     </View>

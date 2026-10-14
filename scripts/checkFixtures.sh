@@ -61,7 +61,7 @@ FIXTURE_OUT_DIR="$RENDERED" npm run --silent render:fixtures >/dev/null
 check nametags_vertical GrosJouetsaMontreal2026_nametags.pdf     nametags_vertical.pdf
 check first_timers      GrosJouetsaMontreal2026_first_timers.pdf first_timers.pdf
 check scorecards        scorecard-layout-test.pdf                scorecards.pdf
-check long_names        scorecard-long-names-test.pdf        long_names.pdf
+check long_names        scorecard-long-names-test.pdf            long_names.pdf
 check covers            cover-layout-test.pdf                    covers.pdf
 check schedule          schedule-layout-test.pdf                 schedule.pdf
 check checklist         checklist-layout-test.pdf                checklist.pdf
