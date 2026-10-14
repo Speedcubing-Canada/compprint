@@ -123,6 +123,9 @@ export interface CoverEntry {
   // Always 1 for per-group covers; the collapsed count for 'per-round-card' ones, which
   // render it instead of a group label.
   numGroups: number;
+  // Scheduled local "HH:MM"; a 'per-round-card' cover spans its whole round.
+  startTime?: string;
+  endTime?: string;
 }
 
 export type ScorecardData = ScorecardEntry | CoverEntry;
@@ -497,6 +500,23 @@ export function parseWCIF(wcif: WCIF, settings: CompetitionSettings): ParsedWCIF
     return [];
   }
 
+  const timezone = wcif.schedule.venues[0]?.timezone ?? 'UTC';
+
+  const formatLocalTime = (isoTime: string): string => {
+    try {
+      return new Intl.DateTimeFormat('en-CA', {
+        hour: '2-digit', minute: '2-digit',
+        timeZone: timezone, hour12: false,
+      }).format(new Date(isoTime));
+    } catch {
+      return isoTime.slice(11, 16);
+    }
+  };
+
+  // Scheduled local times per `${roundKey}|${groupNum}|${stage}`, for the cover cards.
+  const groupTimes: Record<string, { startTime: string; endTime: string }> = {};
+  const timesOf = (rid: string, gNum: string, stage: string) => groupTimes[`${rid}|${gNum}|${stage}`];
+
   // Activity maps
   const activityCode: Record<number, string> = {};
   const activityStage: Record<number, string> = {};
@@ -564,6 +584,9 @@ export function parseWCIF(wcif: WCIF, settings: CompetitionSettings): ParsedWCIF
         const cParts = child.activityCode.split('-');
         if (cParts.length >= 3) {
           const rk = `${cParts[0]}-${cParts[1]}`;
+          groupTimes[`${rk}|${cParts[2].slice(1)}|${stage}`] = {
+            startTime: formatLocalTime(child.startTime), endTime: formatLocalTime(child.endTime),
+          };
           if (!roundGroupCodes[rk]) roundGroupCodes[rk] = new Set();
           roundGroupCodes[rk].add(cParts[2]);
         }
@@ -730,6 +753,8 @@ export function parseWCIF(wcif: WCIF, settings: CompetitionSettings): ParsedWCIF
       existing.numScorecards += cover.numScorecards;
       existing.numGroups += 1;
       if (cover.timeslot < existing.timeslot) existing.timeslot = cover.timeslot;
+      if (cover.startTime && (!existing.startTime || cover.startTime < existing.startTime)) existing.startTime = cover.startTime;
+      if (cover.endTime && (!existing.endTime || cover.endTime > existing.endTime)) existing.endTime = cover.endTime;
       return;
     }
     // '' sorts before every real group label, keeping the cover ahead of its cards.
@@ -873,6 +898,7 @@ export function parseWCIF(wcif: WCIF, settings: CompetitionSettings): ParsedWCIF
       group: resolveGroupLabel(rid, gNum, stage, totalGroups),
       stage,
       numScorecards: ids.size,
+      ...timesOf(rid, gNum, stage),
     });
   }
 
@@ -967,6 +993,7 @@ export function parseWCIF(wcif: WCIF, settings: CompetitionSettings): ParsedWCIF
         eventName: getEventName(eventId, language),
         roundLabel: getRoundLabel(eventId, roundNum), roundNum,
         group: coverLabel, stage: blankStage(stage), numScorecards: blankCount,
+        ...timesOf(rid, gNum, stage),
       });
     }
   }
@@ -999,6 +1026,7 @@ export function parseWCIF(wcif: WCIF, settings: CompetitionSettings): ParsedWCIF
         eventName: getEventName(eventId, language),
         roundLabel: getRoundLabel(eventId, roundNum), roundNum,
         group: groupLabel, stage: blankStage(stage), numScorecards: blankCount,
+        ...timesOf(rid, gNum, stage),
       });
     }
   }
@@ -1026,6 +1054,7 @@ export function parseWCIF(wcif: WCIF, settings: CompetitionSettings): ParsedWCIF
           roundLabel: getRoundLabel(eventId, roundNum), roundNum,
           group: coverLabel, stage: blankStage(stage),
           numScorecards,
+          ...timesOf(rid, gNum, stage),
         });
       }
 
@@ -1063,6 +1092,7 @@ export function parseWCIF(wcif: WCIF, settings: CompetitionSettings): ParsedWCIF
           eventName: getEventName(eventId, language),
           roundLabel: getRoundLabel(eventId, roundNum), roundNum,
           group: groupLabel, stage: blankStage(stage), numScorecards: blankCount,
+          ...timesOf(rid, gNum, stage),
         });
       }
     }
@@ -1216,18 +1246,6 @@ export function parseWCIF(wcif: WCIF, settings: CompetitionSettings): ParsedWCIF
   }
 
   // Schedule tracker
-  const timezone = wcif.schedule.venues[0]?.timezone ?? 'UTC';
-
-  const formatLocalTime = (isoTime: string): string => {
-    try {
-      return new Intl.DateTimeFormat('en-CA', {
-        hour: '2-digit', minute: '2-digit',
-        timeZone: timezone, hour12: false,
-      }).format(new Date(isoTime));
-    } catch {
-      return isoTime.slice(11, 16);
-    }
-  };
 
   // Extract local date "YYYY-MM-DD" using formatToParts for timezone safety.
   const getLocalDate = (isoTime: string): string => {

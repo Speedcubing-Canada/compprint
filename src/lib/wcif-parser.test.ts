@@ -2271,6 +2271,29 @@ describe('scorecardCheckMode', () => {
     expect(perRound[0]?.timeslot).toBe(earliest);
   });
 
+  it('covers carry their group\'s scheduled local time; per-round-card spans the round', () => {
+    const e = evt('333', [rSpec('a'), rSpec('a')]);
+    const timed = (c: ChildActivity, end: string) => ({ ...c, endTime: end });
+    const r = room('Stage', [
+      act('333', 1, [
+        timed(ch(100, '333', 1, 1, '2024-01-01T08:00:00Z'), '2024-01-01T08:30:00Z'),
+        timed(ch(101, '333', 1, 2, '2024-01-01T08:30:00Z'), '2024-01-01T09:15:00Z'),
+      ]),
+      act('333', 2, [timed(ch(110, '333', 2, 1, '2024-01-01T13:00:00Z'), '2024-01-01T13:45:00Z')]),
+    ]);
+    const persons = [per(1, [{ aid: 100 }]), per(2, [{ aid: 101 }])];
+    const parse = (mode: CompetitionSettings['scorecardCheckMode']) =>
+      parseWCIF(mkWCIF([e], [r], persons), cfg({ scorecardCheckMode: mode }));
+    // Europe/Paris is UTC+1 in January.
+    const perGroup = parse('per-group-card');
+    expect(cvs(perGroup.firstRound).map(c => `${c.startTime}-${c.endTime}`).sort())
+      .toEqual(['09:00-09:30', '09:30-10:15']);
+    // Blank finals covers take the same path through the schedule.
+    expect(cvs(perGroup.finals).map(c => `${c.startTime}-${c.endTime}`)).toEqual(['14:00-14:45']);
+    expect(cvs(parse('per-round-card').firstRound).map(c => `${c.startTime}-${c.endTime}`))
+      .toEqual(['09:00-10:15']);
+  });
+
   it("'per-round-card' gives a multi-stage named round one cover per stage", () => {
     // Each stage is its own physical pile, so each needs its own head card.
     const e = evt('333', [rSpec('a')]);

@@ -26,7 +26,7 @@ we can see which competitions the tool is used on and which settings people pick
 
 | File | Contents |
 |---|---|
-| `{id}_round1.pdf` | Named scorecards for round 1, plus delegate/scoretaker cover cards |
+| `{id}_round1.pdf` | Named scorecards for round 1, plus delegate/scoretaker cover cards (each shows the group's planned time, with write-ins for the actual time and scramble set) |
 | `{id}_round2.pdf` | Round 2 of events with 3+ rounds; named, prefilled or blank |
 | `{id}_semis.pdf` | Round 3 of events with 4 rounds |
 | `{id}_finals.pdf` | Final round of every multi-round event |

@@ -16,6 +16,23 @@ export interface ChangelogEntry {
 /** Newest first. See "Contributing" in the README before adding an entry. */
 export const CHANGELOG: ChangelogEntry[] = [
   {
+    id: '2026-10-13',
+    items: {
+      en: [
+        'Cover cards show each group\'s planned time, with blanks for the actual time and scramble set.',
+      ],
+      fr: [
+        "Les feuilles de couverture affichent l'heure prévue du groupe, avec des espaces pour l'heure réelle et le set de mélanges.",
+      ],
+      es: [
+        'Las hojas de portada muestran la hora prevista del grupo, con espacios para la hora real y el set de mezclas.',
+      ],
+      pt: [
+        'As súmulas de capa mostram o horário previsto do grupo, com espaços para o horário real e o set de embaralhamentos.',
+      ],
+    },
+  },
+  {
     id: '2026-10-03',
     items: {
       en: [
