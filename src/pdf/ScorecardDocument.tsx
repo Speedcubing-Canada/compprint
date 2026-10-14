@@ -134,7 +134,7 @@ const styles = StyleSheet.create({
   coverCompName:     { fontSize: 12, textAlign: 'center', marginBottom: 4 },
   coverEventRound:   { fontSize: 18, textAlign: 'center', fontFamily: FONT_BOLD, marginBottom: 3 },
   coverGroup:        { fontSize: 19, textAlign: 'center', fontFamily: FONT_BOLD, marginBottom: 3 },
-  coverTiming:       { fontSize: 8.5, textAlign: 'center', color: '#555', marginBottom: 2 },
+  coverTiming:       { fontSize: 8.5, textAlign: 'center', marginBottom: 2 },
   coverDividerRow:   { flexDirection: 'row', alignItems: 'center', marginTop: 10, marginBottom: 7 },
   coverDividerLine:  { flex: 1, height: 0.75, backgroundColor: '#444' },
   coverDividerText:  { fontSize: 10, fontFamily: FONT_BOLD, marginHorizontal: 7 },
