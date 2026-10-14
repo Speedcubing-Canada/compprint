@@ -133,7 +133,8 @@ const styles = StyleSheet.create({
   },
   coverCompName:     { fontSize: 12, textAlign: 'center', marginBottom: 4 },
   coverEventRound:   { fontSize: 18, textAlign: 'center', fontFamily: FONT_BOLD, marginBottom: 3 },
-  coverGroup:        { fontSize: 19, textAlign: 'center', fontFamily: FONT_BOLD, marginBottom: 8 },
+  coverGroup:        { fontSize: 19, textAlign: 'center', fontFamily: FONT_BOLD, marginBottom: 3 },
+  coverTiming:       { fontSize: 8.5, textAlign: 'center', color: '#555', marginBottom: 2 },
   coverDividerRow:   { flexDirection: 'row', alignItems: 'center', marginTop: 10, marginBottom: 7 },
   coverDividerLine:  { flex: 1, height: 0.75, backgroundColor: '#444' },
   coverDividerText:  { fontSize: 10, fontFamily: FONT_BOLD, marginHorizontal: 7 },
@@ -332,6 +333,7 @@ function CoverCard({
       {card.group === ''
         ? <Text style={styles.coverGroup}>{cover.allGroups(card.numGroups)}</Text>
         : <LabelWithGreyTotal label={card.group} connector={strings.ofConnector} style={styles.coverGroup} />}
+      <Text style={styles.coverTiming}>{cover.timing(card.startTime, card.endTime)}</Text>
 
       <View style={styles.coverDividerRow}>
         <View style={styles.coverDividerLine} />

@@ -13,6 +13,8 @@ export interface CoverCardStrings {
   resultsChecked: string;
   // Subtitle of a 'per-round-card' cover, which covers a whole round instead of one group.
   allGroups: (n: number) => string;
+  // Scheduled time, then write-ins for the actual time and scramble set.
+  timing: (start?: string, end?: string) => string;
 }
 
 // One row per round, grouped by day and room. `groupsMade`/`scorecards` are tick-only and
@@ -151,6 +153,7 @@ const EN: ScorecardStrings = {
     incidentsLogged: '5. Incidents logged by Delegate',
     resultsChecked: '6. Results checked by Delegate',
     allGroups: (n) => (n === 1 ? 'Only 1 group' : `All ${n} groups`),
+    timing: (s, e) => `${s && e ? `Planned ${s}-${e} · ` : ''}Actual _____-_____ · Set ____`,
   },
 };
 
@@ -182,8 +185,8 @@ const FR: ScorecardStrings = {
   stationLabel: (n) => `Station ${n}`,
   cover: {
     forDelegate: 'POUR LE DÉLÉGUÉ',
-    bundledScorecards: (n) => `1. Regroupé toutes les ${n} feuilles`,
-    checkedSignatures: '2. Vérifié les signatures manquantes',
+    bundledScorecards: (n) => `1. Regrouper les ${n} feuilles`,
+    checkedSignatures: '2. Vérifier les signatures manquantes',
     incidentsCount: '3. Nombre de feuilles avec incidents : _____',
     delegateInitials: 'Initiales du Délégué ______',
     forDataEntry: 'POUR LA SAISIE DES DONNÉES',
@@ -192,6 +195,7 @@ const FR: ScorecardStrings = {
     incidentsLogged: '5. Incidents enregistrés par le Délégué',
     resultsChecked: '6. Résultats vérifiés par le Délégué',
     allGroups: (n) => (n === 1 ? 'Un seul groupe' : `Les ${n} groupes`),
+    timing: (s, e) => `${s && e ? `Prévu ${s}-${e} · ` : ''}Réel _____-_____ · Set ____`,
   },
 };
 
@@ -233,6 +237,7 @@ const ES: ScorecardStrings = {
     incidentsLogged: '5. Incidentes registrados por el Delegado',
     resultsChecked: '6. Resultados verificados por el Delegado',
     allGroups: (n) => (n === 1 ? 'Solo un grupo' : `Los ${n} grupos`),
+    timing: (s, e) => `${s && e ? `Previsto ${s}-${e} · ` : ''}Real _____-_____ · Set ____`,
   },
 };
 
@@ -276,6 +281,7 @@ const PT: ScorecardStrings = {
     incidentsLogged: '5. Incidentes registrados pelo Delegado',
     resultsChecked: '6. Resultados verificados pelo Delegado',
     allGroups: (n) => (n === 1 ? 'O único grupo' : `Os ${n} grupos`),
+    timing: (s, e) => `${s && e ? `Previsto ${s}-${e} · ` : ''}Real _____-_____ · Set ____`,
   },
 };
 

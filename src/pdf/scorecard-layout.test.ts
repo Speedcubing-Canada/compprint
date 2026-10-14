@@ -368,6 +368,18 @@ describe('Cover card allGroups line fits the card', () => {
   }
 });
 
+// Same card, regular weight: the timing line under the group label must stay on one line.
+describe('Cover card timing line fits the card', () => {
+  const COVER_TIMING_FONT = 8.5; // styles.coverTiming fontSize
+  const coverContentW = 249 - 2 * CARD_BORDER - 2 * 14;
+  for (const lc of ['en', 'fr', 'es', 'pt'] as const) {
+    it(`${lc}: "${getStrings(lc).cover.timing('10:30', '11:15')}" fits`, () => {
+      expect(helveticaWidth(getStrings(lc).cover.timing('10:30', '11:15'), COVER_TIMING_FONT))
+        .toBeLessThanOrEqual(coverContentW);
+    });
+  }
+});
+
 // "Hide WCA Live ID" is for blank and extra cards, where the line prints a dangling
 // "WCA Live:". It must never strip the ID off a card with a competitor on it.
 describe('WCA Live line visibility', () => {

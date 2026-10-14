@@ -162,6 +162,16 @@ function scorecardFixture(): ScorecardData[] {
   ]);
 }
 
+// A per-group cover (French, long labels) and a per-round one: the delegate's check card.
+const COVERS: ScorecardData[] = finalizeEntries([
+  { kind: 'cover', timeslot: 'A01', eventId: '555', eventName: 'Cube 5x5x5', roundLabel: 'Tour Final',
+    roundNum: 3, group: 'Groupe 1 de 3', stage: 'hall', numScorecards: 14, numGroups: 1,
+    startTime: '10:30', endTime: '11:15' },
+  { kind: 'cover', timeslot: 'A02', eventId: '333', eventName: '3x3x3 Cube', roundLabel: 'Round 2',
+    roundNum: 2, group: '', stage: 'hall', numScorecards: 48, numGroups: 3,
+    startTime: '13:00', endTime: '14:30' },
+]);
+
 // Two days, a second room on day 1 (the tracker's room dimension, which the checklist has
 // not) and a lunch break each day (the thick break rule). Both are ruled tables: their
 // borders and row tints show up in a pixel diff and nowhere else.
@@ -307,6 +317,11 @@ async function main() {
   await write(
     'scorecard-layout-test-a4.pdf',
     e(ScorecardDocument, { entries: cards, settings: settings({ paperFormat: 'A4' }) }),
+  );
+
+  await write(
+    'cover-layout-test.pdf',
+    e(ScorecardDocument, { entries: COVERS, settings: settings({ language: 'fr' }) }),
   );
 
   console.log(`Rendering schedule tracker (${SCHEDULE_DAYS.length} days)…`);
