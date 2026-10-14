@@ -1,11 +1,13 @@
 # Builds src/pdf/fonts/scorecard-sans-*.otf from TeX Gyre Heros 2.004 (GUST Font License):
 #   curl -LO https://www.gust.org.pl/projects/e-foundry/tex-gyre/heros/qhv2.004otf.zip && unzip qhv2.004otf.zip
-#   python3 scripts/makeScorecardSans.py <dir with texgyreheros-*.otf>
+#   pip install fonttools && python3 scripts/makeScorecardSans.py <dir with texgyreheros-*.otf>
 # Renamed because the license asks modified fonts not to reuse the original name.
 import sys
+from pathlib import Path
 from fontTools.ttLib import TTFont
 
 src_dir = sys.argv[1]
+out_dir = Path(__file__).resolve().parent.parent / 'src/pdf/fonts'
 for style, sub in (('regular', 'Regular'), ('bold', 'Bold')):
     f = TTFont(f'{src_dir}/texgyreheros-{style}.otf')
     # react-pdf lays out built-in Helvetica with ascent 900 / descent -200; Heros' taller
@@ -21,4 +23,4 @@ for style, sub in (('regular', 'Regular'), ('bold', 'Bold')):
         elif n.nameID == 3: n.string = f'{ps}; based on TeX Gyre Heros 2.004'
         elif n.nameID == 6: n.string = ps
     f['CFF '].cff.fontNames = [ps]
-    f.save(f'src/pdf/fonts/scorecard-sans-{style}.otf')
+    f.save(out_dir / f'scorecard-sans-{style}.otf')

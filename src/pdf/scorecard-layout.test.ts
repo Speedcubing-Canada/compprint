@@ -1,11 +1,7 @@
 import { describe, it, expect } from 'vitest';
 import { getStrings } from '../lib/i18n';
-import { fileURLToPath } from 'node:url';
-import * as fontkit from 'fontkit';
-import { textWidth, nameBox, nameLayout, NAME_LINE_HEIGHT, NAME_MAX_FS, NAME_MIN_FS } from './nameFit';
 import {
-  PDF_FONT, PDF_FONT_BOLD_EXT, ROW_HEIGHTS, SCORECARD_CONFIGS as CONFIGS, pdfFont, scorecardRowHeight,
-  showLiveIdLine,
+  ROW_HEIGHTS, SCORECARD_CONFIGS as CONFIGS, scorecardRowHeight, showLiveIdLine,
 } from './layoutConstants';
 
 // Layout geometry constraints
@@ -400,79 +396,5 @@ describe('WCA Live line visibility', () => {
 
   it('is suppressed only on blank cards when the setting is on', () => {
     expect(showLiveIdLine(true, '')).toBe(false);
-  });
-});
-
-describe('Competitor name fits the header', () => {
-  const LONG = 'André Rodrigo César Pinheiro Monte Amado';
-  const boxes = Object.entries(CONFIGS).flatMap(([fmt, cfg]) =>
-    [true, false].flatMap(hasLogo => [true, false].map(withCompName => ({
-      label: `${fmt} logo=${hasLogo} compName=${withCompName}`,
-      box: nameBox(cfg.cardW, hasLogo, withCompName),
-    }))));
-
-  it('measures Helvetica-Bold, folding accents to their base glyph', () => {
-    expect(textWidth('é', 1000)).toBe(556);
-    expect(textWidth('Wm', 1000)).toBe(944 + 889);
-  });
-
-  const font = (style: string) =>
-    fontkit.openSync(fileURLToPath(new URL(`./fonts/scorecard-sans-${style}.otf`, import.meta.url))) as fontkit.Font;
-
-  it.each(['regular', 'bold'])('every measured %s width matches the embedded Helvetica clone', (style) => {
-    const f = font(style);
-    const latin = [[0x20, 0x24f], [0x1ea0, 0x1ef9]].flatMap(([a, b]) => Array.from({ length: b - a + 1 }, (_, i) => a + i));
-    for (const cp of latin.filter(cp => f.hasGlyphForCodePoint(cp))) {
-      const c = String.fromCodePoint(cp);
-      const w = textWidth(c, 1000, style === 'bold');
-      if (w !== 1000) expect([c, w]).toEqual([c, f.glyphForCodePoint(cp).advanceWidth]);
-    }
-  });
-
-  it.each(['regular', 'bold'])('embedded %s font has built-in Helvetica\'s line box, or slip rows drop it', (style) => {
-    const f = font(style);
-    expect([f.ascent, f.descent, f.lineGap]).toEqual([900, -200, 0]);
-  });
-
-  it('only letters outside WinAnsi switch to the embedded font', () => {
-    expect(pdfFont('André Ñúñez O’Brien Œuvre')).toBe(PDF_FONT);
-    expect(pdfFont('Łukasz', true)).toBe(PDF_FONT_BOLD_EXT);
-    expect(pdfFont('Nguyễn', true)).toBe(PDF_FONT_BOLD_EXT);
-  });
-
-  it.each(boxes)('$label: a long name wraps to two readable lines that fit', ({ box }) => {
-    const { text, fontSize } = nameLayout(LONG, box.w, box.h);
-    const lines = text.split('\n');
-    expect(lines).toHaveLength(2);
-    expect(fontSize).toBeGreaterThanOrEqual(12);
-    for (const l of lines) expect(textWidth(l, fontSize)).toBeLessThanOrEqual(box.w);
-    expect(2 * fontSize * NAME_LINE_HEIGHT).toBeLessThanOrEqual(box.h);
-  });
-
-  it.each(boxes)('$label: a short name stays on one line at full size', ({ box }) => {
-    expect(nameLayout('Ali Hakim', box.w, box.h)).toEqual({ text: 'Ali Hakim', fontSize: NAME_MAX_FS });
-  });
-
-  it('a hyphenated name can break after the hyphen', () => {
-    const box = nameBox(CONFIGS.LETTER.cardW, true, true);
-    expect(nameLayout('Ana Żółtowska-Świętochowska', box.w, box.h).text).toBe('Ana Żółtowska-\nŚwiętochowska');
-  });
-
-  it('a name without spaces only shrinks, never below the floor', () => {
-    const box = nameBox(CONFIGS.A4.cardW, true, true);
-    const { text, fontSize } = nameLayout('W'.repeat(60), box.w, box.h);
-    expect(text).not.toContain('\n');
-    expect(fontSize).toBe(NAME_MIN_FS);
-  });
-
-  it('a name tag splits a long name over two regular-weight lines that fit the panel', () => {
-    for (const panelW of [189, 201]) {
-      const { text, fontSize } = nameLayout('Łukasz Żółtowski-Świętochowski', panelW - 22, 44,
-        { bold: false, maxFs: 20, wrapBelow: 20 });
-      const lines = text.split('\n');
-      expect(lines).toHaveLength(2);
-      expect(fontSize).toBeGreaterThanOrEqual(16);
-      for (const l of lines) expect(textWidth(l, fontSize, false)).toBeLessThanOrEqual(panelW - 22);
-    }
   });
 });

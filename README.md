@@ -61,16 +61,18 @@ it in small type above the competitor's name. The line shrinks to fit long names
 
 ### Competitor names
 
-Scorecard names are measured with real Helvetica-Bold widths and sized up to 16pt. A name that
-would drop under 11pt on one line splits over two lines, at a space or after a hyphen, wherever
-it gives the biggest font. Vertical name tags do the same, up to 20pt, for names their
-length-based rule would print under 12pt; shorter names keep the size the originals used.
+Scorecard names are measured with real Helvetica-Bold widths and sized up to 18pt. A name splits
+over two lines, at a space or after a hyphen, when one line would drop under 11pt or two lines
+print at least 3pt bigger; the originals keep 13pt+ names on one line. Vertical name tags keep
+the originals' length-based size on one line and split once two lines print at least 2pt bigger
+(up to 20pt), within the height left above the badge in each logo mode.
 
-The PDFs use the built-in Helvetica, which only covers Western European letters. Any name with
-other letters (Polish `Ł`, Vietnamese `ư`, Czech `ř`...) switches to Scorecard Sans, a Helvetica
-clone embedded only in PDFs that need it, on scorecards, name tags, first-timer slips and the
-group overview. It is TeX Gyre Heros (GUST Font License) with its line height set to match
-react-pdf's built-in Helvetica, built by `scripts/makeScorecardSans.py`.
+The PDFs use the built-in Helvetica, which only covers Western European letters. Any other Latin
+or Greek letter (Polish `Ł`, Vietnamese `ư`, Czech `ř`...) falls back, letter by letter, to
+Scorecard Sans, a Helvetica clone embedded only in PDFs that need it. This applies to every PDF
+text, competition names included. Cyrillic, CJK and other scripts are still not covered. The font
+is TeX Gyre Heros (GUST Font License, `src/pdf/fonts/LICENSE.txt`) with its line height set to
+match react-pdf's built-in Helvetica, built by `scripts/makeScorecardSans.py`.
 
 ### Stages
 

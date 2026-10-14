@@ -9,7 +9,7 @@ import { PDF_FONT_BOLD_EXT, PDF_FONT_EXT } from './layoutConstants';
 // must stay free of @react-pdf.
 Font.registerHyphenationCallback((word) => [word]);
 
-// Loaded only when a name uses them. Node (fixture script) needs a path, not a file:// URL.
+// The bundled worker gets an http(s) URL; the Node fixture script needs a POSIX path.
 const src = (url: URL) => url.protocol === 'file:' ? decodeURIComponent(url.pathname) : url.href;
 Font.register({ family: PDF_FONT_EXT, src: src(new URL('./fonts/scorecard-sans-regular.otf', import.meta.url)) });
 Font.register({ family: PDF_FONT_BOLD_EXT, src: src(new URL('./fonts/scorecard-sans-bold.otf', import.meta.url)) });

@@ -173,6 +173,10 @@ function longNameFixture(): ScorecardData[] {
   return LONG_NAMES.map((name, i) => ({ ...cards[i % cards.length], name }));
 }
 
+// Name tag sizing: one line, the old 12pt line, and names that wrap (one at the 20pt cap).
+const LONG_TAG_NAMES = ['Ali Hakim', 'Jean-Philippe Beaulieu-Roy', 'Juan Nicolás Pinzón Martínez',
+  'Łukasz Żółtowski-Świętochowski'];
+
 // A per-group cover (French, long labels) and a per-round one: the delegate's check card.
 const COVERS: ScorecardData[] = finalizeEntries([
   { kind: 'cover', timeslot: 'A01', eventId: '555', eventName: 'Cube 5x5x5', roundLabel: 'Tour Final',
@@ -337,6 +341,15 @@ async function main() {
   await write(
     'scorecard-long-names-test.pdf',
     e(ScorecardDocument, { entries: longNameFixture(), settings: settings() }),
+  );
+
+  // The tightest header: small logo beside the comp name.
+  await write(
+    'nametag-long-names-test.pdf',
+    e(NametTagDocument, {
+      nametags: LONG_TAG_NAMES.map((name, i) => ({ ...nt.entries[i], name })),
+      settings: { ...ntSettings, useDefaultLogo: true, nametagLogoMode: 'with-name', nametagLayout: 'vertical' },
+    }),
   );
 
   await write(
