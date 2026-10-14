@@ -1,6 +1,6 @@
 import { describe, it, expect, beforeEach } from 'vitest';
 import {
-  PRESETS, parsePreset, parsePresetSettings,
+  PRESETS, parsePreset, parsePresetSettings, presetLogoUrl,
   writePresetSettings, readPresetSettings, clearPresetSettings,
 } from './index';
 
@@ -74,9 +74,22 @@ describe('parsePresetSettings', () => {
       language: 'fr', secondaryLanguage: 'en', paperFormat: 'A4', secondRoundMode: 'blanks',
       useDefaultLogo: false, hideWcaLiveId: true, nametagLogoMode: 'hidden',
       nametagQrMode: 'both-sides', nametagLayout: 'horizontal',
-      scorecardCheckMode: 'none',
+      scorecardCheckMode: 'none', scrambleDoubleCheckRegionTop: 15, logo: 'abracm.png',
     };
     expect(parsePresetSettings(all)).toEqual(all);
+  });
+
+  it('takes only a positive integer region top', () => {
+    for (const bad of [0, -3, 1.5, '15', null]) {
+      expect(parsePresetSettings({ scrambleDoubleCheckRegionTop: bad })).toEqual({});
+    }
+  });
+
+  it('takes only a logo shipped in ./logos', () => {
+    expect(parsePresetSettings({ logo: 'missing.png' })).toEqual({});
+    expect(parsePresetSettings({ logo: '../ontario.json' })).toEqual({});
+    expect(presetLogoUrl('missing.png')).toBeNull();
+    expect(presetLogoUrl(undefined)).toBeNull();
   });
 
   it('returns {} for junk', () => {
@@ -165,6 +178,15 @@ describe('shipped presets', () => {
       hideWcaLiveId: true, nametagLogoMode: 'hidden', nametagLayout: 'horizontal',
     });
     expect(byId.quebec.settings).toMatchObject({ language: 'fr', secondaryLanguage: 'en' });
-    expect(byId['british-columbia'].documents.roundChecklist).toBe(true);
+    expect(byId['british-columbia'].documents).toEqual({
+      scheduleTracker: false, nametags: false, roundChecklist: true, groupOverview: true,
+    });
+    expect(byId.brasilia.documents).toEqual({
+      scheduleTracker: false, nametags: false, firstTimerSlips: true,
+    });
+    expect(byId.brasilia.settings).toEqual({
+      language: 'pt', paperFormat: 'A4', scrambleDoubleCheckRegionTop: 15, logo: 'abracm.png',
+    });
+    expect(presetLogoUrl(byId.brasilia.settings.logo)).toBeTruthy();
   });
 });

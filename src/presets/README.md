@@ -53,8 +53,14 @@ Note: mid-competition, `scheduleTracker` and `nametags` default to `false` inste
 | `nametagQrMode` | `"back-only"` `"both-sides"` | `"back-only"` |
 | `nametagLayout` | `"vertical"` `"horizontal"` | `"vertical"` |
 | `scorecardCheckMode` | `"per-group-card"` `"per-round-card"` `"none"` | `"per-group-card"` |
+| `scrambleDoubleCheckRegionTop` | positive integer (top N in the country, regulation 11i) | off |
+| `logo` | a filename in `logos/`, e.g. `"abracm.png"` | none |
 
-Competition-specific things (logo upload, custom events, WCA Live ID, round scope) are deliberately not
+For `logo`, drop the image in `logos/` (resize it first, ~600px wide is plenty for print). It seeds the
+logo upload on the settings page, so it is for organizations that print the same logo at every
+competition.
+
+Competition-specific things (custom events, WCA Live ID, round scope) are deliberately not
 seedable — they differ per competition, not per region.
 
 ## Validation

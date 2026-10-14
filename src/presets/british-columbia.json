@@ -3,7 +3,10 @@
   "name": "British Columbia",
   "region": "Canada",
   "documents": {
-    "roundChecklist": true
+    "scheduleTracker": false,
+    "nametags": false,
+    "roundChecklist": true,
+    "groupOverview": true
   },
   "settings": {}
 }
