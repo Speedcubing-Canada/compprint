@@ -27,6 +27,17 @@ export const ROW_HEIGHTS = {
   avg5: 34, 'bo2-avg5': 31, mo3: 51, 'bo1-mo3': 49, bo2: 55, bo1: 100,
 } as const;
 
+// A4 cards are 28pt taller than LETTER (373 vs 345). The rows absorb it, so the spacers keep
+// their LETTER size instead of leaving a gap around the provisional label.
+const A4_EXTRA_CARD_H = 28;
+
+/** `rows` counts the numbered attempt rows; the extra row takes its share too. */
+export function scorecardRowHeight(
+  format: keyof typeof ROW_HEIGHTS, paper: 'A4' | 'LETTER', rows: number,
+): number {
+  return ROW_HEIGHTS[format] + (paper === 'A4' ? A4_EXTRA_CARD_H / (rows + 1) : 0);
+}
+
 // Four people per page, front + back panel each.
 export const NAMETAGS_PER_PAGE = 4;
 

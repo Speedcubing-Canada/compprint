@@ -6,7 +6,7 @@ import type { Style } from '@react-pdf/types';
 import { EVENT_ICONS } from '../assets/events';
 import { logoState, resolveLogo, showCompNameAboveCompetitor, type LogoState } from '../lib/logo';
 import {
-  SCORECARDS_PER_PAGE, ROW_HEIGHTS, showLiveIdLine,
+  SCORECARDS_PER_PAGE, scorecardRowHeight, showLiveIdLine,
   PDF_FONT as FONT, PDF_FONT_BOLD as FONT_BOLD,
 } from './layoutConstants';
 import './fontSetup';
@@ -195,7 +195,6 @@ function ScorecardCard({
   cardW: number; cardH: number;
   pos: { left: number; top: number };
 }) {
-  const rowH    = ROW_HEIGHTS[card.format];
   const isMBF   = card.eventId === '333mbf';
   const doubleCheck = card.scrambleDoubleCheck === true;
   const icon    = card.iconDataUrl ?? EVENT_ICONS[card.eventId];
@@ -226,6 +225,7 @@ function ScorecardCard({
                  : [1];                                    // 'bo1-mo3': 1 pre-cutoff row
   const postRows = card.format === 'bo2-avg5' ? [3,4,5] : card.format === 'bo1-mo3' ? [2,3] : [];
   const hasCutoff = card.cutoff !== '';
+  const rowH = scorecardRowHeight(card.format, settings.paperFormat, preRows.length + postRows.length);
 
   return (
     <View style={[styles.card, { position: 'absolute', left: pos.left, top: pos.top, width: cardW, height: cardH }]}>
