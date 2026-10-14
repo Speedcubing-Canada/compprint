@@ -6,6 +6,8 @@ import ui from '../styles/ui.module.css';
 /** Where bug reports and feedback go. Imported, never re-typed - see contact-links.test.ts. */
 export const REPO_URL = 'https://github.com/Speedcubing-Canada/scorecards-v2';
 export const SUPPORT_EMAIL = 'software@speedcubingcanada.org';
+/** In public/, synced by docs-speedcubing-canada CI from public/src/scorecards-privacy-policy.md. */
+export const PRIVACY_POLICY_URL = '/scorecards-privacy-policy.pdf';
 
 /**
  * The only way an organizer can reach us, so it sits in the header on every signed-in page;

@@ -110,9 +110,12 @@ describe('UI design system', () => {
     expect(offenders).toEqual([]);
   });
 
-  it('loads Montserrat with exactly the 400;500;700 weights', () => {
+  it('self-hosts Montserrat with exactly the 400/500/700 weights', () => {
+    const main = readFileSync(fileURLToPath(new URL('../main.tsx', import.meta.url)), 'utf-8');
+    const weights = [...main.matchAll(/@fontsource\/montserrat\/(\d+)\.css/g)].map(m => m[1]);
+    expect(weights).toEqual(['400', '500', '700']);
+    // Google's CDN leaks every visitor's IP (GDPR).
     const html = readFileSync(fileURLToPath(new URL('../../index.html', import.meta.url)), 'utf-8');
-    expect(html).toContain('Montserrat:wght@400;500;700');
-    expect(html).not.toContain(';600');
+    expect(html).not.toContain('fonts.googleapis.com');
   });
 });

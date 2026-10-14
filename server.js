@@ -51,8 +51,8 @@ app.use(
         objectSrc: ["'none'"],
         scriptSrc: ["'self'", "'wasm-unsafe-eval'"],
         scriptSrcAttr: ["'none'"],
-        styleSrc: ["'self'", "'unsafe-inline'", 'https://fonts.googleapis.com'],
-        fontSrc: ["'self'", 'https://fonts.gstatic.com'],
+        styleSrc: ["'self'", "'unsafe-inline'"],
+        fontSrc: ["'self'"],
         imgSrc: ["'self'", 'data:', 'https://www.worldcubeassociation.org'],
         connectSrc: [
           "'self'",

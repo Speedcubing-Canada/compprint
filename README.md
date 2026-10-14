@@ -396,6 +396,15 @@ this?"), which is reachable from the login page too. The choice lives in `localS
 `analytics_opt_out`, so it is per browser and survives reloads, and `send()` checks it in one
 place so it covers every event.
 
+**Privacy policy:** the public policy is
+[`scorecards-privacy-policy.md`](https://github.com/Speedcubing-Canada/docs-speedcubing-canada/blob/main/public/src/scorecards-privacy-policy.md)
+in docs-speedcubing-canada. Its CI renders the PDF and opens a PR here adding it to `public/`
+(any `scorecards-*` document goes here instead of the website), which the About dialog links
+to (`PRIVACY_POLICY_URL`). Edit the markdown there, never the PDF here, and update it
+whenever the payload or the hosting changes. It promises IP addresses are kept 30 days (the
+Cloud Logging `_Default` retention), and Montserrat is self-hosted (`@fontsource/montserrat`)
+so no request goes to Google Fonts.
+
 Nothing is sent from `npm run dev` or `npm run render:fixtures`: `send()` is a no-op unless
 `import.meta.env.PROD`. `analytics.js` is the sanitiser both `server.js` and the tests use, and
 it is structural rather than a field whitelist so the payload can grow without drifting.

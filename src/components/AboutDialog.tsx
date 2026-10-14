@@ -3,7 +3,7 @@ import { Info } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import Modal from './Modal';
 import Tooltip from './Tooltip';
-import { REPO_URL, SUPPORT_EMAIL } from './ContactLinks';
+import { PRIVACY_POLICY_URL, REPO_URL, SUPPORT_EMAIL } from './ContactLinks';
 import { isOptedOut, setOptedOut } from '../lib/analytics';
 import ui from '../styles/ui.module.css';
 import s from './AboutDialog.module.css';
@@ -43,6 +43,11 @@ export default function AboutDialog({ as = 'icon' }: { as?: 'icon' | 'text' }) {
 
         <h3 className={s.section}>{t('about.privacy_title')}</h3>
         <p className={ui.dialogBody}>{t('about.privacy_body')}</p>
+        <p className={s.links}>
+          <a className={s.link} href={PRIVACY_POLICY_URL} target="_blank" rel="noopener noreferrer">
+            {t('about.privacy_link')}
+          </a>
+        </p>
 
         <label className={`${ui.toggleCard} ${optedOut ? ui.toggleCardActive : ''} ${s.optOut}`}>
           <input

@@ -52,12 +52,13 @@ describe('security headers', () => {
     expect(connect).toContain("'self'");
   });
 
-  it('allows the PDF renderer its wasm and the fonts the UI loads', async () => {
+  it('allows the PDF renderer its wasm and keeps fonts self-hosted', async () => {
     const csp = (await get('/')).headers.get('content-security-policy');
     // @react-pdf compiles through wasm; without this the download fails in production only.
     expect(csp).toContain("'wasm-unsafe-eval'");
-    expect(csp).toContain('https://fonts.googleapis.com');
-    expect(csp).toContain('https://fonts.gstatic.com');
+    // A third-party font CDN leaks every visitor's IP (GDPR).
+    expect(csp).not.toContain('fonts.googleapis.com');
+    expect(csp).not.toContain('fonts.gstatic.com');
   });
 
   it('does not announce the server framework', async () => {
