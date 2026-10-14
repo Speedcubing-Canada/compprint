@@ -90,6 +90,9 @@ describe('parsePresetSettings', () => {
     expect(parsePresetSettings({ logo: '../ontario.json' })).toEqual({});
     expect(presetLogoUrl('missing.png')).toBeNull();
     expect(presetLogoUrl(undefined)).toBeNull();
+    expect(parsePresetSettings({ logo: 'constructor' })).toEqual({});
+    expect(presetLogoUrl('constructor')).toBeNull();
+    expect(presetLogoUrl('__proto__')).toBeNull();
   });
 
   it('returns {} for junk', () => {

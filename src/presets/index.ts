@@ -32,12 +32,12 @@ const DOCUMENT_KEYS: (keyof DocumentSelection)[] = [
 
 // Filename -> asset URL, so the image stays out of the JS bundle.
 const LOGOS = Object.fromEntries(
-  Object.entries(import.meta.glob('./logos/*', { eager: true, query: '?url', import: 'default' }))
+  Object.entries(import.meta.glob('./logos/*.{png,jpg,jpeg}', { eager: true, query: '?url', import: 'default' }))
     .map(([path, url]) => [path.slice('./logos/'.length), url as string]),
 );
 
 export function presetLogoUrl(name: string | undefined): string | null {
-  return (name && LOGOS[name]) || null;
+  return name && Object.hasOwn(LOGOS, name) ? LOGOS[name] : null;
 }
 
 // Whitelist of seedable settings keys -> allowed values. 'boolean' means any boolean, 'count' a

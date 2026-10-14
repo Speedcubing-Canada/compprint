@@ -56,7 +56,7 @@ Note: mid-competition, `scheduleTracker` and `nametags` default to `false` inste
 | `scrambleDoubleCheckRegionTop` | positive integer (top N in the country, regulation 11i) | off |
 | `logo` | a filename in `logos/`, e.g. `"abracm.png"` | none |
 
-For `logo`, drop the image in `logos/` (resize it first, ~600px wide is plenty for print). It seeds the
+For `logo`, drop a PNG or JPEG in `logos/` (other types are ignored; resize it first, ~600px wide is plenty for print). It seeds the
 logo upload on the settings page, so it is for organizations that print the same logo at every
 competition.
 
