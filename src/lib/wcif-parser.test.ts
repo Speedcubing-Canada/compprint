@@ -2988,6 +2988,14 @@ describe('on-the-spot blanks', () => {
     const tail = result.extras.slice(-4) as ScorecardEntry[];
     expect(tail.every(x => x.kind === 'scorecard' && x.eventId === '' && x.eventName === '' && x.group === '')).toBe(true);
   });
+
+  // 1-up: no sheet to fill, so no padding covers and a single pure blank.
+  it('on A6, skips the padding and adds one pure blank', () => {
+    const result = parseWCIF(mkWCIF([e, e2], [r], persons()), cfg({ otsBlanks: true, scorecardsA6: true }));
+    const extras = result.extras as ScorecardEntry[];
+    expect(extras.every(x => x.kind === 'scorecard')).toBe(true);
+    expect(extras.map(x => x.eventId)).toEqual(['333', '']);
+  });
 });
 
 describe('later-round blanks match advancement seats', () => {

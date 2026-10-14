@@ -9,8 +9,9 @@ import type { CompetitionSettings } from '../types/settings';
 import { parseWCIF, emptyParsedWcif, type ParsedWCIF } from '../lib/wcif-parser';
 import { filterParsedByScope, hasUnassignedIntermediate, stageSplitSkipsRound2, type GenerationScope } from '../lib/generationScope';
 import { estimateTotalPages } from '../lib/pageEstimate';
-import { customEventPageCount } from '../lib/customScorecards';
-import { buildPdfJobs, downloadTarget } from '../lib/pdfJobs';
+import { customEventCardCount } from '../lib/customScorecards';
+import { buildPdfJobs, downloadTarget, hasOversizedPdf } from '../lib/pdfJobs';
+import { MAX_PAGES_PER_SCORECARD_PDF } from '../pdf/layoutConstants';
 import * as analytics from '../lib/analytics';
 import { readPresetId } from '../presets';
 import type { WorkerRequest, WorkerResponse } from '../pdf/scorecardWorker';
@@ -31,7 +32,10 @@ export default function GeneratePage() {
   const { token } = useAuth();
   const navigate = useNavigate();
 
-  const settings: CompetitionSettings | null = readSettings();
+  // Offered here, not on /settings: only the built job list knows whether a file is past the cap.
+  const [splitLarge, setSplitLarge] = useState(false);
+  const stored = readSettings();
+  const settings: CompetitionSettings | null = stored && { ...stored, splitLargePdfs: splitLarge };
 
   const [status, setStatus] = useState<Status>('idle');
   const [statusMsg, setStatusMsg] = useState('');
@@ -116,7 +120,7 @@ export default function GeneratePage() {
     : [];
   const customCardCount = (settings.customEvents ?? [])
     .filter(c => c.name.trim())
-    .reduce((n, c) => n + customEventPageCount(c) * 4, 0);
+    .reduce((n, c) => n + customEventCardCount(c, settings.scorecardsA6), 0);
   const scorecardCount = allEntries.filter(e => e.kind === 'scorecard').length + customCardCount;
   const coverCount     = allEntries.filter(e => e.kind === 'cover' && e.eventId).length;
   const pdfCount       = jobs.length;
@@ -231,13 +235,30 @@ export default function GeneratePage() {
               <WarningBanner>{t('warnings.stage_split_prefilled')}</WarningBanner>
             )}
 
+            {status === 'ready' && (splitLarge || hasOversizedPdf(jobs, settings.scorecardsA6)) && (
+              <label className={`${ui.toggleCard} ${s.splitToggle} ${splitLarge ? ui.toggleCardActive : ''}`}>
+                <input
+                  type="checkbox"
+                  checked={splitLarge}
+                  onChange={e => setSplitLarge(e.target.checked)}
+                  className={ui.radio}
+                />
+                <div>
+                  <div className={ui.optionLabel}>{t('generate.split_large.label')}</div>
+                  <div className={ui.optionDesc}>
+                    {t('generate.split_large.desc', { pages: MAX_PAGES_PER_SCORECARD_PDF })}
+                  </div>
+                </div>
+              </label>
+            )}
+
             {status === 'ready' && (
               <div className={s.stats}>
                 <Stat label={t('generate.stats.scorecards')} value={scorecardCount} />
                 <Stat label={t('generate.stats.cover_cards')} value={coverCount} />
                 <Stat label={t('generate.stats.pdfs')} value={pdfCount} />
                 <Stat label={t('generate.stats.total_pages')} value={totalPages} />
-                <Stat label={t('generate.stats.paper')} value={settings.paperFormat} />
+                <Stat label={t('generate.stats.paper')} value={settings.scorecardsA6 ? `${settings.paperFormat} + A6` : settings.paperFormat} />
               </div>
             )}
 

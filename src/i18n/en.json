@@ -194,6 +194,10 @@
       "total_pages": "Pages"
     },
     "download_button": "Download",
+    "split_large": {
+      "label": "Split large files",
+      "desc": "One PDF per event, in parts of at most {{pages}} pages, instead of one PDF per round. Try this if generating fails on this computer."
+    },
     "building_button": "Building ZIP…",
     "guide": {
       "title": "How to print and cut",

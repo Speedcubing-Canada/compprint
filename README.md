@@ -90,7 +90,9 @@ final that *has* been assigned is kept, and so is a group with staff but no comp
 dedicated A6 printers. Only scorecard PDFs change; every other document keeps the paper format.
 The card is the A4 card (249×373pt, same row heights) centred on the page, and the entries are
 the plain sorted order (`unstackQuadrants` undoes the cut-and-stack reorder and drops padding
-covers), so there is nothing to cut or restack.
+covers), so there is nothing to cut or restack. Nothing is padded to a sheet of 4 either: extras,
+custom events and on-the-spot blanks print one blank card where 4-up prints four. The page caps
+below count pages, so an A6 file reaches them with a quarter of the cards.
 
 ### Splitting scorecards per stage
 
@@ -247,24 +249,29 @@ time, peak heap and output size per PDF. It drives the shipping code (`parseWCIF
 npm run bench              # wc: ~1800 competitors, the upper bound we support
 npm run bench -- small     # small / medium / wc
 npm run bench -- wc --only=nametags
+npm run bench -- wc --a6     # scorecards one per A6 page
 ```
 
 @react-pdf lays out a whole document in one pass and rebuilds the node tree at each stage, so
 cost scales with node count and the scaling is superlinear once the heap gets large. Three
 things follow from that, and each has a test guarding it:
 
-- A scorecard bucket over `MAX_PAGES_PER_SCORECARD_PDF` pages is emitted as **one PDF per
-  event** (`competitionId_round1_333.pdf`, …) instead of one enormous file, and a single event
-  still over the cap is cut into sheet-aligned `_part1`/`_part2` files. Smaller competitions
-  are untouched and still get a single `_round1.pdf`. Peak heap is roughly 3 MB per page of
-  the largest single document, which is what the cap exists to bound.
+- Every scorecard and name tag file is rendered in parts of `RENDER_PART_PAGES` pages
+  (`jobElements`), one at a time, and stitched back into one PDF with pdf-lib (`mergePdfs`), so
+  the organizer gets one `_round1.pdf` however big the round. The merged file costs heap too:
+  the WC profile peaks around 1.1 GB 4-up and 0.9 GB A6.
+- When a file passes `MAX_PAGES_PER_SCORECARD_PDF` (or `MAX_PAGES_PER_NAMETAG_PDF`), /generate
+  offers "Split large files" (`splitLargePdfs`), for a machine that cannot hold the merged file:
+  one PDF per event (`competitionId_round1_333.pdf`, …), and an event still over the cap is cut
+  into sheet-aligned `_part1`/`_part2` files. That peaks around 0.75 GB 4-up. A6 unstacks before
+  splitting, so each part is a contiguous run of the deck.
 - Name tag QR codes are drawn as a single `Path`, not ~200 `Rect`s each (`src/pdf/qrPath.ts`).
-  The name tag document is capped the same way, at `MAX_PAGES_PER_NAMETAG_PDF`.
 - First-timer slips are packed into explicit pages by `packSlipPages` rather than flowed into
   one tall `Page`, because @react-pdf re-measures the overflow once per page it produces.
 
-The worker also never materialises a PDF or the ZIP in the JS heap: documents stay `Blob`s and
-the archive is streamed through fflate's `Zip`, so peak memory is one document, not all of them.
+The worker otherwise keeps PDFs out of the JS heap: documents stay `Blob`s and the archive is
+streamed through fflate's `Zip`, so peak memory is one document, not all of them. A merged file
+is the exception: pdf-lib holds it in memory while it is assembled.
 
 ## How it works
 

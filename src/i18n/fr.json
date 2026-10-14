@@ -194,6 +194,10 @@
       "total_pages": "Pages"
     },
     "download_button": "Télécharger",
+    "split_large": {
+      "label": "Diviser les gros fichiers",
+      "desc": "Un PDF par épreuve, en parties de {{pages}} pages au plus, au lieu d'un PDF par tour. Essayez-le si la génération échoue sur cet ordinateur."
+    },
     "building_button": "Création du ZIP…",
     "guide": {
       "title": "Comment imprimer et découper",

@@ -1,7 +1,7 @@
 import type { CustomEvent, CustomEventFormat } from '../types/settings';
 import type { ScorecardData, ScorecardEntry, ScorecardFormat } from './wcif-parser';
 
-const CARDS_PER_PAGE = 4;
+import { scorecardsPerPage } from '../pdf/layoutConstants';
 
 /**
  * Map a custom event's chosen format to the card layout. Mirrors the WCIF
@@ -20,12 +20,12 @@ export function resolveCustomFormat(format: CustomEventFormat, hasCutoff: boolea
 }
 
 /**
- * Build the scorecards for one custom event: without competitors, a page of 4
+ * Build the scorecards for one custom event: without competitors, a page of
  * identical blank cards; with competitors, one named card per row padded with
- * blank cards to fill the last 4-card page. liveId is always '' - custom
+ * blank cards to fill the last page. liveId is always '' - custom
  * competitions are unofficial and never reference WCA Live.
  */
-export function buildCustomEntries(custom: CustomEvent): ScorecardData[] {
+export function buildCustomEntries(custom: CustomEvent, a6 = false): ScorecardData[] {
   // bo2/bo1 have no post-cutoff phase - drop any stray cutoff value.
   const hasCutoff = custom.cutoff.trim() !== '' && custom.format !== 'bo2' && custom.format !== 'bo1';
   const format = resolveCustomFormat(custom.format, hasCutoff);
@@ -48,23 +48,17 @@ export function buildCustomEntries(custom: CustomEvent): ScorecardData[] {
     iconDataUrl: custom.iconDataUrl ?? undefined,
   };
 
-  const competitors = custom.competitors ?? [];
-  if (competitors.length === 0) {
-    return [blank, blank, blank, blank];
-  }
-
-  const entries: ScorecardData[] = competitors.map((c) => ({
+  const entries: ScorecardData[] = (custom.competitors ?? []).map((c) => ({
     ...blank,
     name: c.name,
     wcaId: c.wcaId,
   }));
-  while (entries.length % CARDS_PER_PAGE !== 0) entries.push(blank);
+  while (entries.length === 0 || entries.length % scorecardsPerPage(a6) !== 0) entries.push(blank);
   return entries;
 }
 
-/** Printed pages for one custom event. */
-export function customEventPageCount(custom: CustomEvent, perPage = CARDS_PER_PAGE): number {
-  const n = custom.competitors?.length ?? 0;
-  const cards = n > 0 ? Math.ceil(n / CARDS_PER_PAGE) * CARDS_PER_PAGE : CARDS_PER_PAGE;
-  return cards / perPage;
+/** Cards `buildCustomEntries` returns, without building them. */
+export function customEventCardCount(custom: CustomEvent, a6 = false): number {
+  const perPage = scorecardsPerPage(a6);
+  return Math.max(1, Math.ceil((custom.competitors?.length ?? 0) / perPage)) * perPage;
 }

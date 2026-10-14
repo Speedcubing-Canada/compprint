@@ -7,7 +7,7 @@
 // Run through vite-node, not node: the documents are .tsx and the icon assets are
 // `?inline` imports. --expose-gc makes the per-job heap numbers attributable.
 
-import { renderToStream } from '@react-pdf/renderer';
+import { renderToBuffer } from '@react-pdf/renderer';
 import type {
   Activity, ChildActivity, Event, EventId, Person, Room, Round, WCIF,
 } from '../src/types/wcif';
@@ -15,7 +15,8 @@ import type { CompetitionSettings } from '../src/types/settings';
 import { parseWCIF } from '../src/lib/wcif-parser';
 import { filterParsedByScope } from '../src/lib/generationScope';
 import { buildPdfJobs } from '../src/lib/pdfJobs';
-import { jobElement } from '../src/pdf/jobElement';
+import { jobElements } from '../src/pdf/jobElement';
+import { mergePdfs } from '../src/pdf/mergePdfs';
 import { testSettings } from '../src/test/fixtures';
 
 // Deterministic, so two runs of the same profile are comparable.
@@ -267,12 +268,6 @@ function watchMemory() {
   return () => { clearInterval(timer); return { peakHeap, peakRss }; };
 }
 
-async function drain(stream: NodeJS.ReadableStream): Promise<number> {
-  let bytes = 0;
-  for await (const chunk of stream) bytes += (chunk as Buffer).length;
-  return bytes;
-}
-
 async function main() {
   const args = process.argv.slice(2);
   const key = args.find((a) => !a.startsWith('--')) ?? 'wc';
@@ -290,6 +285,7 @@ async function main() {
   const settings: CompetitionSettings = testSettings({
     competitionId: 'BenchmarkComp2026',
     competitionName: 'Benchmark Competition 2026',
+    scorecardsA6: args.includes('--a6'),
   });
 
   collect();
@@ -320,7 +316,9 @@ async function main() {
     collect();
     const stopJob = watchMemory();
     const start = performance.now();
-    const bytes = await drain(await renderToStream(jobElement(job, scoped, settings)));
+    // The worker's path: page-capped parts, merged when there is more than one.
+    const parts = jobElements(job, scoped, settings).map((el) => () => renderToBuffer(el));
+    const bytes = (parts.length === 1 ? await parts[0]() : await mergePdfs(parts)).byteLength;
     const elapsed = performance.now() - start;
     const m = stopJob();
     totalTime += elapsed;

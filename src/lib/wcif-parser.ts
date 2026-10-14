@@ -1261,8 +1261,10 @@ export function parseWCIF(wcif: WCIF, settings: CompetitionSettings): ParsedWCIF
       format: roundFormat[rid], isCumulative: roundCumulative[rid],
     });
   }
+  // A6 prints 1-up: no sheet to fill, and one blank is a page to print copies of.
+  const a6 = settings.scorecardsA6 === true;
   const extrasRem = extrasEntries.length % 4;
-  if (extrasRem !== 0) for (let i = 0; i < 4 - extrasRem; i++) extrasEntries.push(EMPTY_COVER);
+  if (!a6 && extrasRem !== 0) for (let i = 0; i < 4 - extrasRem; i++) extrasEntries.push(EMPTY_COVER);
   if (settings.otsBlanks) {
     // Only the competition header is printed; the rest is written by hand.
     const pureBlank: ScorecardEntry = {
@@ -1270,7 +1272,7 @@ export function parseWCIF(wcif: WCIF, settings: CompetitionSettings): ParsedWCIF
       group: '', name: '', wcaId: '', liveId: '', gender: '',
       cutoff: '', limit: '', format: 'avg5', isCumulative: false,
     };
-    extrasEntries.push(pureBlank, pureBlank, pureBlank, pureBlank);
+    extrasEntries.push(...Array<ScorecardEntry>(a6 ? 1 : 4).fill(pureBlank));
   }
 
   // Schedule tracker

@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { buildPdfJobs, downloadTarget, guideSections } from './pdfJobs';
+import { buildPdfJobs, downloadTarget, guideSections, hasOversizedPdf } from './pdfJobs';
 import type { PdfJob } from './pdfJobs';
 import { filterParsedByScope } from './generationScope';
 import { finalizeEntries, type ParsedWCIF, type ScorecardData, type ScorecardEntry, type CoverEntry, type NametTagEntry } from './wcif-parser';
@@ -275,189 +275,101 @@ describe('guideSections', () => {
   });
 });
 
-// Past the cap, a bucket becomes one PDF per event.
-describe('splitting an oversized scorecard bucket', () => {
+// Size never splits a file: the renderer draws it in page-capped parts and merges them.
+describe('an oversized bucket', () => {
   const CAP = MAX_PAGES_PER_SCORECARD_PDF * 4;
+  const names = (n: number) => Array.from({ length: n }, (_, i) => `Name ${String(i).padStart(4, '0')}`);
 
-  // What the parser hands `buildPdfJobs`: sorted, padded to a multiple of 4, quadrant-reordered.
-  function bucket(spec: { eventId: string; timeslot: string; count: number }[]) {
-    return finalizeEntries(spec.flatMap(({ eventId, timeslot, count }) =>
-      Array.from({ length: count }, (_, i) => ({
-        ...sc(), eventId, eventName: `Event ${eventId}`, timeslot,
-        name: `Name ${String(i).padStart(4, '0')}`,
-      })),
-    ));
-  }
-
-  it('keeps a bucket at the threshold as a single PDF', () => {
-    const jobs = buildPdfJobs(
-      mkParsed({ firstRound: bucket([{ eventId: '333', timeslot: 'a01', count: CAP }]) }),
-      mkSettings(),
-    );
+  it('stays one scorecard PDF per round, every event in it', () => {
+    const cards = [...names(CAP).map(n => sc(1, n)), ...names(40).map(n => ({ ...sc(1, n), eventId: '222' as const }))];
+    const firstRound = finalizeEntries([...cards]);
+    const jobs = buildPdfJobs(mkParsed({ firstRound }), mkSettings());
     expect(jobs.map(j => j.filename)).toEqual(['Test2026_round1.pdf']);
+    expect((jobs[0] as Extract<PdfJob, { kind: 'scorecards' }>).entries).toBe(firstRound);
   });
 
-  it('splits one PDF per event once past it', () => {
-    const jobs = buildPdfJobs(mkParsed({
-      firstRound: bucket([
-        { eventId: '333', timeslot: 'a01', count: CAP },
-        { eventId: '222', timeslot: 'a02', count: 40 },
-      ]),
-    }), mkSettings());
-
-    expect(jobs.map(j => j.filename))
-      .toEqual(['Test2026_round1_333.pdf', 'Test2026_round1_222.pdf']);
-    // Ordered by when the round runs, not by event id.
-    expect(jobs.map(j => j.label))
-      .toEqual(['Round 1 (Event 333)', 'Round 1 (Event 222)']);
-  });
-
-  it('pads every file to a full 4-up sheet and loses no card', () => {
-    const counts = { '333': CAP, '222': 41, '444': 6 };
-    const jobs = buildPdfJobs(mkParsed({
-      firstRound: bucket([
-        { eventId: '333', timeslot: 'a01', count: counts['333'] },
-        { eventId: '222', timeslot: 'a02', count: counts['222'] },
-        { eventId: '444', timeslot: 'a03', count: counts['444'] },
-      ]),
-    }), mkSettings()) as Extract<PdfJob, { kind: 'scorecards' }>[];
-
-    for (const job of jobs) {
-      expect(job.entries.length % 4).toBe(0);
-      const eventId = job.filename.replace('Test2026_round1_', '').replace('.pdf', '');
-      const real = job.entries.filter(e => e.kind === 'scorecard' || e.eventId !== '');
-      // Every card of that event, and nothing from another event.
-      expect(real).toHaveLength(counts[eventId as keyof typeof counts]);
-      expect(new Set(real.map(e => e.eventId))).toEqual(new Set([eventId]));
-    }
-  });
-
-  it('leaves extras alone - they are not finalizeEntries output', () => {
-    const extras = Array.from({ length: 8 }, () => sc());
-    const jobs = buildPdfJobs(mkParsed({ extras }), mkSettings());
-    const extraJob = jobs.find(j => j.filename === 'Test2026_extras.pdf');
-    expect((extraJob as Extract<PdfJob, { kind: 'scorecards' }>).entries).toBe(extras);
+  it('stays one name tag PDF', () => {
+    const nametags = names(MAX_PAGES_PER_NAMETAG_PDF * 4 * 2 + 5).map(name => ({ name })) as unknown as NametTagEntry[];
+    const jobs = buildPdfJobs(mkParsed({ nametags }), mkSettings());
+    expect(jobs.map(j => j.filename)).toEqual(['Test2026_nametags.pdf']);
   });
 });
 
-// One event over the cap on its own gets cut into sheet-aligned parts.
-describe('splitting a single oversized event', () => {
+// Opt-in from /generate, for a machine that cannot hold one merged file.
+describe('splitting large files on request', () => {
   const CAP = MAX_PAGES_PER_SCORECARD_PDF * 4;
+  const names = (n: number) => Array.from({ length: n }, (_, i) => `Name ${String(i).padStart(4, '0')}`);
+  const event = (eventId: string, timeslot: string, n: number) =>
+    names(n).map(name => ({ ...sc(1, name), eventId, eventName: `Event ${eventId}`, timeslot }) as ScorecardEntry);
+  const split = (parsed: Partial<ParsedWCIF>, over: Partial<CompetitionSettings> = {}) =>
+    buildPdfJobs(mkParsed(parsed), mkSettings({ splitLargePdfs: true, ...over }));
+  const scorecards = (jobs: PdfJob[]) => jobs as Extract<PdfJob, { kind: 'scorecards' }>[];
 
-  function oneEvent(count: number) {
-    return finalizeEntries(Array.from({ length: count }, (_, i) => ({
-      ...sc(), eventId: '333', eventName: '3x3x3 Cube', timeslot: 'a01',
-      name: `Name ${String(i).padStart(5, '0')}`,
-    })));
-  }
-
-  const scorecardJobsOf = (count: number) =>
-    buildPdfJobs(mkParsed({ firstRound: oneEvent(count) }), mkSettings())
-      .filter(j => j.kind === 'scorecards') as Extract<PdfJob, { kind: 'scorecards' }>[];
-
-  it('is one unnumbered file while the event fits', () => {
-    expect(scorecardJobsOf(CAP).map(j => j.filename)).toEqual(['Test2026_round1.pdf']);
+  it('leaves a bucket at the cap alone', () => {
+    expect(split({ firstRound: finalizeEntries(event('333', 'a01', CAP)) }).map(j => j.filename))
+      .toEqual(['Test2026_round1.pdf']);
   });
 
-  it('numbers the parts and keeps every file under the cap', () => {
-    const jobs = scorecardJobsOf(CAP * 3 + 4);
+  it('cuts one PDF per event, in schedule order, then sheet-aligned parts', () => {
+    const jobs = scorecards(split({
+      firstRound: finalizeEntries([...event('333', 'a02', CAP * 2 + 5), ...event('222', 'a01', 6)]),
+    }));
     expect(jobs.map(j => j.filename)).toEqual([
-      'Test2026_round1_333_part1.pdf',
-      'Test2026_round1_333_part2.pdf',
-      'Test2026_round1_333_part3.pdf',
-      'Test2026_round1_333_part4.pdf',
-    ]);
-    expect(jobs.map(j => j.label)).toEqual([
-      'Round 1 (3x3x3 Cube) 1/4', 'Round 1 (3x3x3 Cube) 2/4',
-      'Round 1 (3x3x3 Cube) 3/4', 'Round 1 (3x3x3 Cube) 4/4',
+      'Test2026_round1_222.pdf',
+      'Test2026_round1_333_part1.pdf', 'Test2026_round1_333_part2.pdf', 'Test2026_round1_333_part3.pdf',
     ]);
     for (const job of jobs) expect(job.entries.length).toBeLessThanOrEqual(CAP);
+    for (const job of jobs.slice(1, -1)) expect(job.entries.length % 4).toBe(0);
+    // Every 333 card, each part re-finalized together: nothing lost or duplicated.
+    const real = jobs.slice(1).flatMap(j => j.entries).filter(e => e.kind === 'scorecard');
+    expect(real).toHaveLength(CAP * 2 + 5);
   });
 
-  it('cuts only on whole 4-up sheets, in pile order, losing nothing', () => {
-    const all = oneEvent(CAP * 2 + 17);
-    const jobs = buildPdfJobs(mkParsed({ firstRound: all }), mkSettings())
-      .filter(j => j.kind === 'scorecards') as Extract<PdfJob, { kind: 'scorecards' }>[];
-
-    // Every part but the last is a whole number of sheets, so no sheet straddles two files.
-    for (const job of jobs.slice(0, -1)) expect(job.entries.length % 4).toBe(0);
-    // Concatenating the parts reproduces the pile exactly.
-    expect(jobs.flatMap(j => j.entries)).toEqual(all);
-  });
-});
-
-describe('splitting an oversized name tag document', () => {
-  const CAP = MAX_PAGES_PER_NAMETAG_PDF * 4;
-  const mkTags = (n: number) =>
-    Array.from({ length: n }, (_, i) => ({ name: `Tag ${i}` })) as unknown as NametTagEntry[];
-  const tagJobs = (n: number) =>
-    buildPdfJobs(mkParsed({ nametags: mkTags(n) }), mkSettings())
-      .filter(j => j.kind === 'nametags') as Extract<PdfJob, { kind: 'nametags' }>[];
-
-  it('is one unnumbered file at the cap', () => {
-    const jobs = tagJobs(CAP);
-    expect(jobs.map(j => j.filename)).toEqual(['Test2026_nametags.pdf']);
-    expect(jobs[0].nametags).toHaveLength(CAP);
+  // A split cut from the 4-up order would interleave every part across the whole event.
+  it('on A6, makes each part a contiguous run of the sorted deck', () => {
+    const count = MAX_PAGES_PER_SCORECARD_PDF * 2 + 3;
+    const cards = event('333', 'a01', count);
+    const jobs = scorecards(split({ firstRound: finalizeEntries([...cards]) }, { scorecardsA6: true }));
+    expect(jobs.map(j => j.filename)).toEqual([1, 2, 3].map(i => `Test2026_round1_333_part${i}.pdf`));
+    for (const job of jobs) expect(job.entries.length).toBeLessThanOrEqual(MAX_PAGES_PER_SCORECARD_PDF);
+    expect(jobs.flatMap(j => j.entries).map(e => (e.kind === 'scorecard' ? e.name : 'cover')))
+      .toEqual(names(count));
   });
 
-  it('splits into whole-sheet parts past it, in order and losing nobody', () => {
-    const tags = mkTags(CAP * 2 + 5);
-    const jobs = buildPdfJobs(mkParsed({ nametags: tags }), mkSettings())
-      .filter(j => j.kind === 'nametags') as Extract<PdfJob, { kind: 'nametags' }>[];
-
-    expect(jobs.map(j => j.filename)).toEqual([
-      'Test2026_nametags_part1.pdf', 'Test2026_nametags_part2.pdf', 'Test2026_nametags_part3.pdf',
-    ]);
-    for (const job of jobs) expect(job.nametags.length).toBeLessThanOrEqual(CAP);
-    for (const job of jobs.slice(0, -1)) expect(job.nametags.length % 4).toBe(0);
-    expect(jobs.flatMap(j => j.nametags)).toEqual(tags);
-  });
-});
-
-// The pile is chronological, so the files are too; same slot tie-breaks on event id.
-describe('ordering the per-event files', () => {
-  const CAP = MAX_PAGES_PER_SCORECARD_PDF * 4;
-
-  // Two events, each under the cap alone, together over it: splits per event, no _partN files.
-  const PER_EVENT = Math.floor(CAP * 0.6 / 4) * 4;
-
-  function bucketOf(spec: { eventId: string; timeslots: string[] }[]) {
-    return finalizeEntries(spec.flatMap(({ eventId, timeslots }) => {
-      const perSlot = Math.ceil(PER_EVENT / timeslots.length);
-      return timeslots.flatMap((timeslot, t) =>
-        Array.from({ length: perSlot }, (_, i) => ({
-          ...sc(), eventId, eventName: `Event ${eventId}`, timeslot,
-          name: `Name ${t}-${String(i).padStart(4, '0')}`,
-        })));
-    }));
-  }
-  const names = (parsed: ParsedWCIF) =>
-    buildPdfJobs(parsed, mkSettings()).filter(j => j.kind === 'scorecards').map(j => j.filename);
-
-  it('orders by the earliest slot an event runs in, not the first one seen', () => {
-    // 444's entries include an early slot that is not its first in encounter order.
-    expect(names(mkParsed({ firstRound: bucketOf([
-      { eventId: '333', timeslots: ['a05'] },
-      { eventId: '444', timeslots: ['a09', 'a01'] },
-    ]) }))).toEqual(['Test2026_round1_444.pdf', 'Test2026_round1_333.pdf']);
-  });
-
-  it('breaks a same-slot tie on event id, both ways round', () => {
-    const tied = (first: string, second: string) => names(mkParsed({
-      firstRound: bucketOf([
-        { eventId: first, timeslots: ['a01'] },
-        { eventId: second, timeslots: ['a01'] },
+  it('still splits per event inside a stage', () => {
+    const staged = (stage: string, eventId: string, ts: string, n: number) =>
+      event(eventId, ts, n).map(e => ({ ...e, stage }));
+    const jobs = split({
+      firstRound: finalizeEntries([
+        ...staged('blue', '333', 'a01', CAP), ...staged('blue', '222', 'a02', 40), ...staged('red', '333', 'a01', 8),
       ]),
-    }));
-    expect(tied('333', '222')).toEqual(['Test2026_round1_222.pdf', 'Test2026_round1_333.pdf']);
-    expect(tied('222', '333')).toEqual(['Test2026_round1_222.pdf', 'Test2026_round1_333.pdf']);
+    }, { splitPdfsByStage: true });
+    expect(jobs.map(j => j.filename)).toEqual([
+      'Test2026_round1_blue_333.pdf', 'Test2026_round1_blue_222.pdf', 'Test2026_round1_red.pdf',
+    ]);
+  });
+
+  it('cuts name tags into whole-sheet parts, in order, losing nobody', () => {
+    const tagCap = MAX_PAGES_PER_NAMETAG_PDF * 4;
+    const nametags = names(tagCap * 2 + 5).map(name => ({ name })) as unknown as NametTagEntry[];
+    const jobs = split({ nametags }) as Extract<PdfJob, { kind: 'nametags' }>[];
+    expect(jobs.map(j => j.filename)).toEqual([1, 2, 3].map(i => `Test2026_nametags_part${i}.pdf`));
+    for (const job of jobs.slice(0, -1)) expect(job.nametags.length % 4).toBe(0);
+    expect(jobs.flatMap(j => j.nametags)).toEqual(nametags);
+  });
+
+  it('is only offered when a file is past the cap', () => {
+    const jobs = (n: number, a6 = false) =>
+      buildPdfJobs(mkParsed({ firstRound: finalizeEntries(event('333', 'a01', n)) }), mkSettings({ scorecardsA6: a6 }));
+    expect(hasOversizedPdf(jobs(CAP), false)).toBe(false);
+    expect(hasOversizedPdf(jobs(CAP + 1), false)).toBe(true);
+    // A6 holds a quarter of the cards per page cap.
+    expect(hasOversizedPdf(jobs(MAX_PAGES_PER_SCORECARD_PDF + 1, true), true)).toBe(true);
   });
 });
 
 // Colour-coded paper per stage: each stage becomes its own PDF so it is one pile at the printer.
 describe('splitting a scorecard bucket by stage', () => {
-  const CAP = MAX_PAGES_PER_SCORECARD_PDF * 4;
-
   /** What the parser hands `buildPdfJobs`: sorted, padded, quadrant-reordered. */
   function staged(spec: { stage?: string; count: number; eventId?: string; timeslot?: string }[]) {
     return finalizeEntries(spec.flatMap(({ stage, count, eventId = '333', timeslot = 'a01' }) =>
@@ -526,21 +438,6 @@ describe('splitting a scorecard bucket by stage', () => {
     expect(jobs.map(j => j.filename)).toEqual(['Test2026_round2.pdf']);
   });
 
-  it('still splits per event and per cap inside a stage', () => {
-    const jobs = split({
-      firstRound: staged([
-        { stage: 'blue', count: CAP, eventId: '333', timeslot: 'b01' },
-        { stage: 'blue', count: 40, eventId: '222', timeslot: 'b02' },
-        { stage: 'red', count: 8, eventId: '333', timeslot: 'r01' },
-      ]),
-    });
-    expect(jobs.map(j => j.filename)).toEqual([
-      'Test2026_round1_blue_333.pdf',
-      'Test2026_round1_blue_222.pdf',
-      'Test2026_round1_red.pdf',
-    ]);
-  });
-
   it('gives stage names that sanitise alike distinct filenames', () => {
     const jobs = split({
       firstRound: staged([{ stage: 'salle rouge', count: 4 }, { stage: 'salle/rouge', count: 4 }]),
@@ -560,22 +457,23 @@ describe('splitting a scorecard bucket by stage', () => {
 describe('A6 scorecards', () => {
   const names = ['Eve', 'Bob', 'Dan', 'Amy', 'Cal'];
   const entries = (): ScorecardData[] => finalizeEntries([cover(), ...names.map(n => sc(1, n))]);
-  const jobEntries = (a6: boolean) =>
-    (buildPdfJobs(mkParsed({ firstRound: entries() }), mkSettings({ scorecardsA6: a6 }))[0] as
-      Extract<PdfJob, { kind: 'scorecards' }>).entries;
+  const scorecardJobs = (parsed: ParsedWCIF, a6: boolean) =>
+    buildPdfJobs(parsed, mkSettings({ scorecardsA6: a6 })) as Extract<PdfJob, { kind: 'scorecards' }>[];
+  const label = (e: ScorecardData) => (e.kind === 'scorecard' ? e.name : 'cover');
 
   it('prints in plain sorted order with no padding covers', () => {
-    expect(jobEntries(true).map(e => (e.kind === 'scorecard' ? e.name : 'cover')))
+    expect(scorecardJobs(mkParsed({ firstRound: entries() }), true)[0].entries.map(label))
       .toEqual(['cover', 'Amy', 'Bob', 'Cal', 'Dan', 'Eve']);
   });
 
   it('leaves the 4-up order untouched otherwise', () => {
-    expect(jobEntries(false)).toEqual(entries());
+    expect(scorecardJobs(mkParsed({ firstRound: entries() }), false)[0].entries).toEqual(entries());
   });
 
-  it('drops the padding from extras but keeps their order', () => {
-    const extras = finalizeEntries([sc(1, 'Zed')]).reverse();
-    const job = buildPdfJobs(mkParsed({ extras }), mkSettings({ scorecardsA6: true }))[0];
-    expect(job.kind === 'scorecards' && job.entries).toEqual(extras.filter(e => e.kind === 'scorecard'));
+  it('keeps each stage file in sorted order', () => {
+    const staged = finalizeEntries(['Bob', 'Amy', 'Cal'].flatMap(n => [sc(1, n, 'blue'), sc(1, n, 'red')]));
+    const jobs = buildPdfJobs(mkParsed({ firstRound: staged }), mkSettings({ scorecardsA6: true, splitPdfsByStage: true })) as
+      Extract<PdfJob, { kind: 'scorecards' }>[];
+    expect(jobs.map(j => j.entries.map(label))).toEqual([['Amy', 'Bob', 'Cal'], ['Amy', 'Bob', 'Cal']]);
   });
 });

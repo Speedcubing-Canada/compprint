@@ -1,7 +1,7 @@
 import type { ParsedWCIF } from './wcif-parser';
 import type { PdfJob } from './pdfJobs';
 import type { CompetitionSettings } from '../types/settings';
-import { customEventPageCount } from './customScorecards';
+import { customEventCardCount } from './customScorecards';
 import { getFirstTimerSlipStrings } from './i18n';
 import { packSlipPages } from '../pdf/firstTimerSlipLines';
 import {
@@ -24,10 +24,10 @@ export function estimateTotalPages(
     if (job.kind === 'nametags')   pages += Math.ceil(job.nametags.length / NAMETAGS_PER_PAGE);
   }
 
-  // Each custom event is its own PDF: 4 blanks, or the CSV competitors padded to 4.
+  // Each custom event is its own PDF: a page of blanks, or the CSV competitors padded to a page.
   pages += (settings.customEvents ?? [])
     .filter((c) => c.name.trim() !== '')
-    .reduce((n, c) => n + customEventPageCount(c, perPage), 0);
+    .reduce((n, c) => n + customEventCardCount(c, settings.scorecardsA6) / perPage, 0);
 
   // A single flowing page, estimated.
   if (parsed.scheduleDays.length > 0) pages += 1;

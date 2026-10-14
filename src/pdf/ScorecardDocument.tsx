@@ -6,44 +6,10 @@ import type { Style } from '@react-pdf/types';
 import { EVENT_ICONS } from '../assets/events';
 import { logoState, resolveLogo, showCompNameAboveCompetitor, type LogoState } from '../lib/logo';
 import {
-  scorecardsPerPage, scorecardRowHeight, showLiveIdLine,
+  SCORECARD_CONFIGS as CONFIGS, scorecardsPerPage, scorecardRowHeight, showLiveIdLine,
   PDF_FONT as FONT, PDF_FONT_BOLD as FONT_BOLD,
 } from './layoutConstants';
 import './fontSetup';
-
-
-// Dimensions measured from the original Sarah-scorecard LETTER PDF output:
-//   Cards: 257×345pt  |  L/R margins: ~22pt  |  T/B margins: ~24-26pt
-//   H gap: ~53pt  |  V gap: ~52pt  (gap ≈ 2× margin on both axes)
-// A4 uses the same absolute margins/gaps; cardH fills the remaining page height.
-// LETTER: 22+257+53+257+23=612  |  24+345+52+345+26=792
-// A4:     22+249+53+249+22=595  |  22+373+52+373+22=842
-// A6 is one A4-sized card, centred: 24+249+24.6=297.6  |  23+373+23.5=419.5
-
-const CONFIGS = {
-  LETTER: {
-    cardW: 257, cardH: 345,
-    positions: [
-      { left: 22,  top: 24  },  // top-left    (L=22, T=24; H gap=53, V gap=52)
-      { left: 332, top: 24  },  // top-right
-      { left: 22,  top: 421 },  // bottom-left
-      { left: 332, top: 421 },  // bottom-right
-    ],
-  },
-  A4: {
-    cardW: 249, cardH: 373,
-    positions: [
-      { left: 22,  top: 22  },  // 22pt margins on all sides; H gap=53, V gap=52
-      { left: 324, top: 22  },
-      { left: 22,  top: 447 },
-      { left: 324, top: 447 },
-    ],
-  },
-  A6: {
-    cardW: 249, cardH: 373,
-    positions: [{ left: 24, top: 23 }],
-  },
-} as const;
 
 const BORDER      = '1.5pt solid black';
 const BORDER_THIN = '1pt solid black';

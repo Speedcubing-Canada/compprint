@@ -194,6 +194,10 @@
       "total_pages": "Páginas"
     },
     "download_button": "Baixar",
+    "split_large": {
+      "label": "Dividir arquivos grandes",
+      "desc": "Um PDF por evento, em partes de no máximo {{pages}} páginas, em vez de um PDF por rodada. Use se a geração falhar neste computador."
+    },
     "building_button": "Criando ZIP…",
     "guide": {
       "title": "Como imprimir e recortar",

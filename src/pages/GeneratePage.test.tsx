@@ -6,6 +6,10 @@ vi.mock('../auth/wca', async (importOriginal) => ({
   ...(await importOriginal<typeof import('../auth/wca')>()),
   fetchWcif: vi.fn(),
 }));
+vi.mock('../lib/pdfJobs', async (importOriginal) => ({
+  ...(await importOriginal<typeof import('../lib/pdfJobs')>()),
+  hasOversizedPdf: vi.fn(() => false),
+}));
 vi.mock('../lib/analytics', async (importOriginal) => ({
   ...(await importOriginal<typeof import('../lib/analytics')>()),
   send: vi.fn(),
@@ -16,7 +20,7 @@ import * as analytics from '../lib/analytics';
 import i18n from '../i18n/index';
 import { markAllSeen } from '../changelog';
 import { writeCompetition, writeSettings } from '../lib/flowState';
-import { buildPdfJobs } from '../lib/pdfJobs';
+import { buildPdfJobs, hasOversizedPdf } from '../lib/pdfJobs';
 import { parseWCIF } from '../lib/wcif-parser';
 import { sampleWcif, testSettings } from '../test/fixtures';
 import { renderWithProviders, signedInAuth, useEnglish } from '../test/render';
@@ -135,6 +139,25 @@ describe('GeneratePage', () => {
 
     // A second worker would render the whole bundle twice and race the first download.
     expect(posted).toHaveLength(1);
+  });
+
+  // The sample comp is small, so the cap check is stubbed rather than building a WC-sized WCIF.
+  const splitBox = () => screen.queryByRole('checkbox', { name: /Split large files/ });
+
+  it('only offers to split large files when a file is past the cap', async () => {
+    renderWithProviders(<GeneratePage />, { auth: signedInAuth });
+    await downloadButton();
+    expect(splitBox()).toBeNull();
+  });
+
+  it('hands the worker the split choice', async () => {
+    vi.mocked(hasOversizedPdf).mockReturnValue(true);
+    renderWithProviders(<GeneratePage />, { auth: signedInAuth });
+    await downloadButton();
+
+    fireEvent.click(splitBox()!);
+    fireEvent.click(await downloadButton());
+    expect((posted[0] as { settings: typeof settings }).settings.splitLargePdfs).toBe(true);
   });
 
   it('hands the worker the parsed competition when download is clicked', async () => {

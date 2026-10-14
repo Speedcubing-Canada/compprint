@@ -127,9 +127,9 @@ describe('estimateTotalPages', () => {
 });
 
 describe('estimateTotalPages with A6 scorecards', () => {
-  it('counts one page per card, custom-event blanks included', () => {
+  it('counts one page per card, and a single blank page per custom event', () => {
     const custom = { name: 'X', format: 'avg5', cutoff: '', limit: '', iconDataUrl: null } as CustomEvent;
     expect(est(mkParsed({ firstRound: scards(5) }), mkSettings({ scorecardsA6: true, customEvents: [custom] })))
-      .toBe(5 + 4);
+      .toBe(5 + 1);
   });
 });

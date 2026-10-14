@@ -1,6 +1,8 @@
 import { describe, it, expect } from 'vitest';
 import { getStrings } from '../lib/i18n';
-import { ROW_HEIGHTS, scorecardRowHeight, showLiveIdLine } from './layoutConstants';
+import {
+  ROW_HEIGHTS, SCORECARD_CONFIGS as CONFIGS, scorecardRowHeight, showLiveIdLine,
+} from './layoutConstants';
 
 // Layout geometry constraints
 // Dimensions measured from the original Sarah-scorecard LETTER PDF:
@@ -15,34 +17,17 @@ const A4_H = 842;
 const A6_W = 297.64;
 const A6_H = 419.53;
 
-const CONFIGS = {
-  LETTER: {
-    cardW: 257, cardH: 345,
-    positions: [
-      { left: 22,  top: 24  },
-      { left: 332, top: 24  },
-      { left: 22,  top: 421 },
-      { left: 332, top: 421 },
-    ],
-  },
-  A4: {
-    cardW: 249, cardH: 373,
-    positions: [
-      { left: 22,  top: 22  },
-      { left: 324, top: 22  },
-      { left: 22,  top: 447 },
-      { left: 324, top: 447 },
-    ],
-  },
-} as const;
-
 // A6 printers have their own non-printable border; 5mm is the usual worst case.
 describe('A6 scorecard geometry', () => {
-  const card = CONFIGS.A4;
-  const pos = { left: 24, top: 23 };
+  const card = CONFIGS.A6;
+  const [pos] = card.positions;
   const MIN_MARGIN = 14; // 5mm
 
-  it('the A4 card fits centred on the A6 page with a printable margin all round', () => {
+  it('reuses the A4 card, so the A4 row heights apply', () => {
+    expect([card.cardW, card.cardH]).toEqual([CONFIGS.A4.cardW, CONFIGS.A4.cardH]);
+  });
+
+  it('the card fits centred on the A6 page with a printable margin all round', () => {
     const right = A6_W - pos.left - card.cardW;
     const bottom = A6_H - pos.top - card.cardH;
     for (const m of [pos.left, pos.top, right, bottom]) expect(m).toBeGreaterThanOrEqual(MIN_MARGIN);

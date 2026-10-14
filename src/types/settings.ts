@@ -60,6 +60,8 @@ export interface CompetitionSettings {
   paperFormat: PaperFormat;
   // One scorecard per A6 page, in plain sorted order. Every other document keeps `paperFormat`.
   scorecardsA6: boolean;
+  // Chosen on /generate, only offered when a file would pass the page cap. Absent = merged.
+  splitLargePdfs?: boolean;
   secondRoundMode: SecondRoundMode;
   logoDataUrl: string | null;
   // The bundled Speedcubing Canada logo when no custom logo is uploaded.

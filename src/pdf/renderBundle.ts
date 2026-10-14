@@ -4,7 +4,8 @@ import type { ParsedWCIF } from '../lib/wcif-parser';
 import type { CompetitionSettings, LocaleCode } from '../types/settings';
 import { buildPdfJobs, downloadTarget, type PdfJob } from '../lib/pdfJobs';
 import { getWorkerStrings } from '../lib/i18n';
-import { jobElement } from './jobElement';
+import { jobElements } from './jobElement';
+import { mergePdfs } from './mergePdfs';
 
 // Split out of scorecardWorker.ts so it imports neither `self` nor the Buffer polyfill and
 // can run outside a worker.
@@ -23,10 +24,13 @@ export type WorkerResponse =
 
 export type Post = (msg: WorkerResponse) => void;
 
-function renderJob(
+async function renderJob(
   job: PdfJob, parsed: ParsedWCIF, settings: CompetitionSettings,
 ): Promise<Blob> {
-  return pdf(jobElement(job, parsed, settings)).toBlob();
+  const elements = jobElements(job, parsed, settings);
+  if (elements.length === 1) return pdf(elements[0]).toBlob();
+  const merged = await mergePdfs(elements.map(el => async () => (await pdf(el).toBlob()).arrayBuffer()));
+  return new Blob([merged as BlobPart], { type: 'application/pdf' });
 }
 
 // Bytes held in the JS heap before the pending chunks are folded into a Blob part.
