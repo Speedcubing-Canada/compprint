@@ -164,7 +164,12 @@
       "csv_optional": "opcional",
       "csv_hint": "Um competidor por linha: Nome ou Nome,WCAID. Imprime uma súmula nomeada por linha (mais súmulas em branco para completar a última página) em vez de 4 súmulas em branco. Linhas começando com # são ignoradas.",
       "csv_count": "{{count}} competidor(es) carregado(s)",
-      "add_custom_event": "+ Adicionar evento personalizado"
+      "add_custom_event": "+ Adicionar evento personalizado",
+      "final_stations_title": "Números de estação nas finais",
+      "final_stations_label": "Imprimir números de estação",
+      "final_stations_count": "Estações por palco",
+      "final_stations_hint": "As súmulas em branco de uma final com um só grupo levam número de estação se ela couber nas estações. Indique o número de estações para verificar.",
+      "final_stations_detected": "As súmulas em branco de uma final com um só grupo levam número de estação se ela couber nas {{count}} estações encontradas no WCIF. Indique um número para substituí-lo."
     },
     "generate_button": "Gerar →",
     "ots": {

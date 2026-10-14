@@ -72,7 +72,7 @@ export default function SettingsPage() {
   const docs = (generationScope as { documents?: DocumentSelection }).documents;
   const showScorecards = docs?.scorecards !== false;
   const showNametags   = docs?.nametags   !== false;
-  const { showSecondRoundMode, multiStage } = readDetection();
+  const { showSecondRoundMode, multiStage, detectedStations } = readDetection();
 
   // Primary follows the interface language; secondary starts at None so single-language
   // users have nothing to clear.
@@ -109,6 +109,8 @@ export default function SettingsPage() {
     scorecardCheckMode: preset.scorecardCheckMode ?? 'per-group-card',
     splitPdfsByStage: false,
     otsBlanks: false,
+    finalStationNumbers: true,
+    stationsPerStage: null,
     // Regulation 11i binds every competition, so there is no switch: "off" is both ranking
     // rules unticked with no round or CSV rule. A whole round is only worth double-checking
     // at a championship, whose finals 11i1f singles out.
@@ -133,7 +135,7 @@ export default function SettingsPage() {
     liveResultsMode, wcaLiveId, hideWcaLiveId, nametagLogoMode, nametagQrMode, nametagLayout,
     scorecardCheckMode, customEvents, splitPdfsByStage, scrambleDoubleCheckRounds,
     scrambleDoubleCheckOverrides, scrambleDoubleCheckWorldTop, scrambleDoubleCheckRegionTop,
-    scrambleDoubleCheckRegionScope, otsBlanks,
+    scrambleDoubleCheckRegionScope, otsBlanks, finalStationNumbers, stationsPerStage,
   } = draft;
 
   // Not part of the draft, but stored so a restored upload isn't nameless.
@@ -829,6 +831,39 @@ export default function SettingsPage() {
                 onChange={handleDcOverridesChange}
               />
 
+              </section>
+
+              <section className={s.section}>
+                <h3 className={ui.sectionHeading}>{t('settings.advanced.final_stations_title')}</h3>
+                <p className={ui.hint}>
+                  {detectedStations != null
+                    ? t('settings.advanced.final_stations_detected', { count: detectedStations })
+                    : t('settings.advanced.final_stations_hint')}
+                </p>
+                <div className={`${ui.toggleCard} ${s.rankingCard} ${finalStationNumbers ? ui.toggleCardActive : ''}`}>
+                  <label className={s.rankingRule}>
+                    <input
+                      type="checkbox"
+                      checked={finalStationNumbers}
+                      onChange={e => patch({ finalStationNumbers: e.target.checked })}
+                      className={ui.radio}
+                    />
+                    <span className={ui.optionLabel}>{t('settings.advanced.final_stations_label')}</span>
+                  </label>
+                  {/* Empty = the detected count. */}
+                  <input
+                    type="text"
+                    inputMode="numeric"
+                    value={stationsPerStage ?? ''}
+                    placeholder={detectedStations != null ? String(detectedStations) : ''}
+                    disabled={!finalStationNumbers}
+                    aria-label={t('settings.advanced.final_stations_count')}
+                    onChange={e => patch({ stationsPerStage: Number(e.target.value.replace(/\D/g, '').slice(0, 3)) || null })}
+                    className={`${ui.textInput} ${s.rankingInput}`}
+                    autoComplete="off"
+                    spellCheck={false}
+                  />
+                </div>
               </section>
 
               {multiStage && (

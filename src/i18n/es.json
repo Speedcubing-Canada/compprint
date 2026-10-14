@@ -164,7 +164,12 @@
       "csv_optional": "opcional",
       "csv_hint": "Un competidor por línea: Nombre o Nombre,WCAID. Imprime una hoja con nombre por línea (más hojas en blanco para completar la última página) en lugar de 4 hojas en blanco. Las líneas que comienzan con # se ignoran.",
       "csv_count": "{{count}} competidor(es) cargado(s)",
-      "add_custom_event": "+ Agregar evento personalizado"
+      "add_custom_event": "+ Agregar evento personalizado",
+      "final_stations_title": "Números de estación en finales",
+      "final_stations_label": "Imprimir números de estación",
+      "final_stations_count": "Estaciones por escenario",
+      "final_stations_hint": "Las hojas en blanco de una final de un solo grupo llevan número de estación si cabe en las estaciones. Indica el número de estaciones para comprobarlo.",
+      "final_stations_detected": "Las hojas en blanco de una final de un solo grupo llevan número de estación si cabe en las {{count}} estaciones encontradas en el WCIF. Indica un número para reemplazarlo."
     },
     "generate_button": "Generar →",
     "ots": {

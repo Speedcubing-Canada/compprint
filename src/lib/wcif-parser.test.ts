@@ -19,6 +19,7 @@ const BASE: CompetitionSettings = {
   wcaLiveId: null, wcaLivePersonIds: null,
   hideWcaLiveId: false, nametagLogoMode: 'hidden', nametagQrMode: 'back-only', nametagLayout: 'vertical',
   splitPdfsByStage: false, otsBlanks: false,
+  finalStationNumbers: true, stationsPerStage: null,
   customEvents: [], scorecardCheckMode: 'per-group-card',
   scrambleDoubleCheck: false, scrambleDoubleCheckRounds: ['finals'], scrambleDoubleCheckOverrides: {},
   scrambleDoubleCheckWorldTop: 50, scrambleDoubleCheckRegionTop: null, scrambleDoubleCheckRegionScope: 'national',
@@ -3001,5 +3002,55 @@ describe('later-round blanks match advancement seats', () => {
     expect(cards.map(c => c.group).sort()).toEqual(
       Array.from({ length: 16 }, (_, i) => `Station ${String(i + 1).padStart(2, '0')}`));
     expect(cvs(result.finals).filter(c => c.eventId === '222')[0]?.numScorecards).toBe(16);
+  });
+});
+
+describe('finals station numbers', () => {
+  // Top-16 final, one group, one room. `stations` writes Groupifier's RoomConfig.
+  function finalGroups(settings: Partial<CompetitionSettings>, opts: { stations?: number; assigned?: number } = {}) {
+    const e = evt('222', [rSpec('a', { adv: { type: 'ranking', level: 16 } }), rSpec('a')]);
+    const r = room('Stage', [
+      act('222', 1, [ch(100, '222', 1, 1)]),
+      act('222', 2, [ch(110, '222', 2, 1, '2024-01-01T14:00:00Z')]),
+    ]);
+    if (opts.stations != null)
+      r.extensions = [{ id: 'groupifier.RoomConfig', data: { stations: opts.stations } }];
+    const result = parseWCIF(mkWCIF([e], [r], [per(1, [{ aid: 100, station: opts.assigned }])]), cfg(settings));
+    return { stations: result.stations, groups: new Set(scs(result.finals).map(c => c.group)) };
+  }
+  const stationary = (g: Set<string>) => g.has('Station 01') && g.has('Station 16');
+
+  it('keeps station numbers when no station count is known', () => {
+    const { groups, stations } = finalGroups({});
+    expect(stationary(groups)).toBe(true);
+    expect(stations).toBeNull();
+  });
+
+  it('drops them when the toggle is off', () => {
+    expect(stationary(finalGroups({ finalStationNumbers: false }).groups)).toBe(false);
+  });
+
+  it('drops them when the field exceeds the override', () => {
+    expect(stationary(finalGroups({ stationsPerStage: 12 }).groups)).toBe(false);
+    expect(stationary(finalGroups({ stationsPerStage: 16 }).groups)).toBe(true);
+  });
+
+  it('reads the Groupifier room station count', () => {
+    const small = finalGroups({}, { stations: 10 });
+    expect(stationary(small.groups)).toBe(false);
+    expect(small.stations).toEqual({ count: 10, source: 'groupifier' });
+    expect(stationary(finalGroups({}, { stations: 20 }).groups)).toBe(true);
+  });
+
+  it('falls back to the highest assigned station (Delegate Dashboard)', () => {
+    const r = finalGroups({}, { assigned: 8 });
+    expect(stationary(r.groups)).toBe(false);
+    expect(r.stations).toEqual({ count: 8, source: 'assignments' });
+  });
+
+  it('prefers Groupifier over assigned stations, and the override over both', () => {
+    expect(finalGroups({}, { stations: 20, assigned: 8 }).stations).toEqual({ count: 20, source: 'groupifier' });
+    expect(stationary(finalGroups({}, { stations: 20, assigned: 8 }).groups)).toBe(true);
+    expect(stationary(finalGroups({ stationsPerStage: 10 }, { stations: 20 }).groups)).toBe(false);
   });
 });

@@ -30,7 +30,7 @@ function mkParsed(over: Partial<ParsedWCIF> = {}): ParsedWCIF {
     firstRound: [], intermediate: [], semis: [], finals: [],
     nametags: [], firstTimers: [], extras: [], scheduleDays: [], checkingDays: [],
     groupOverview: [],
-    laterRoundsWithAssignments: [], hasGroups: true, stageCount: 1,
+    laterRoundsWithAssignments: [], hasGroups: true, stageCount: 1, stations: null,
     ...over,
   };
 }

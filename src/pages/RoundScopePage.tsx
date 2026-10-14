@@ -34,10 +34,6 @@ const baseDocuments = (isMidComp: boolean): DocumentSelection => ({
   groupOverview: false,
 });
 
-function persistScope(scope: GenerationScope, showSecondRoundMode: boolean, multiStage: boolean) {
-  writeScope(scope, { showSecondRoundMode, multiStage });
-}
-
 export default function RoundScopePage() {
   const { t, i18n } = useTranslation();
   const { token } = useAuth();
@@ -101,6 +97,7 @@ export default function RoundScopePage() {
           customEvents: [],
           // Detection-only parse; the real mode is chosen later on /settings.
           scorecardCheckMode: 'per-group-card', splitPdfsByStage: false, otsBlanks: false,
+          finalStationNumbers: true, stationsPerStage: null,
           scrambleDoubleCheck: false, scrambleDoubleCheckRounds: [], scrambleDoubleCheckOverrides: {},
           scrambleDoubleCheckWorldTop: null, scrambleDoubleCheckRegionTop: null,
           scrambleDoubleCheckRegionScope: 'national',
@@ -214,7 +211,9 @@ export default function RoundScopePage() {
       : { mode: 'everything', documents };
 
     const showSecondRoundMode = hasUnassignedIntermediate(filterParsedByScope(parsed, scope));
-    persistScope(scope, showSecondRoundMode, parsed.stageCount > 1);
+    writeScope(scope, {
+      showSecondRoundMode, multiStage: parsed.stageCount > 1, detectedStations: parsed.stations?.count ?? null,
+    });
     // /settings prefers a previous submission to any seed, so the old one has to go.
     if (presetId !== readPresetId()) clearSettings();
     // Always write or clear, so switching presets leaves nothing of the previous one.

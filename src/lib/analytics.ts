@@ -76,6 +76,7 @@ function competitionSize(parsed: ParsedWCIF, wcif: WCIF | null) {
     groups,
     stages: stages.size,
     days: parsed.scheduleDays.length,
+    stations: parsed.stations,
   };
 }
 
@@ -124,6 +125,8 @@ export function buildGenerateEvent(args: {
       hideWcaLiveId: settings.hideWcaLiveId,
       splitPdfsByStage: settings.splitPdfsByStage,
       otsBlanks: settings.otsBlanks,
+      finalStationNumbers: settings.finalStationNumbers,
+      stationsPerStage: settings.stationsPerStage,
       secondRoundMode: settings.secondRoundMode,
       scorecardCheckMode: settings.scorecardCheckMode,
       scrambleDoubleCheck: settings.scrambleDoubleCheck,

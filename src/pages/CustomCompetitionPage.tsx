@@ -46,7 +46,7 @@ export default function CustomCompetitionPage() {
         mode: 'everything',
         documents: { scorecards: true, scheduleTracker: false, nametags: false, roundChecklist: false, firstTimerSlips: false, groupOverview: false },
       },
-      { showSecondRoundMode: false, multiStage: false },
+      { showSecondRoundMode: false, multiStage: false, detectedStations: null },
     );
     writeCustom(events.filter(e => e.name.trim() !== ''));
     navigate('/settings');

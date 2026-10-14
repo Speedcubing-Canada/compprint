@@ -20,15 +20,19 @@ export const CHANGELOG: ChangelogEntry[] = [
     items: {
       en: [
         'Cover cards show each group\'s planned time, with blanks for the actual time and scramble set.',
+        'Final station numbers can be turned off, and are skipped when the final has more competitors than stations.',
       ],
       fr: [
         "Les feuilles de couverture affichent l'heure prévue du groupe, avec des espaces pour l'heure réelle et le set de mélanges.",
+        'Les numéros de station en finale peuvent être désactivés, et sont omis quand la finale a plus de participants que de stations.',
       ],
       es: [
         'Las hojas de portada muestran la hora prevista del grupo, con espacios para la hora real y el set de mezclas.',
+        'Los números de estación en finales se pueden desactivar, y se omiten si la final tiene más competidores que estaciones.',
       ],
       pt: [
         'As súmulas de capa mostram o horário previsto do grupo, com espaços para o horário real e o set de embaralhamentos.',
+        'Os números de estação nas finais podem ser desativados, e são omitidos quando a final tem mais competidores que estações.',
       ],
     },
   },
