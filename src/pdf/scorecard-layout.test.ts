@@ -1,5 +1,6 @@
 import { describe, it, expect } from 'vitest';
 import { getStrings } from '../lib/i18n';
+import { boldWidth, nameBox, nameLayout, NAME_LINE_HEIGHT, NAME_MAX_FS, NAME_MIN_FS } from './nameFit';
 import {
   ROW_HEIGHTS, SCORECARD_CONFIGS as CONFIGS, scorecardRowHeight, showLiveIdLine,
 } from './layoutConstants';
@@ -396,5 +397,39 @@ describe('WCA Live line visibility', () => {
 
   it('is suppressed only on blank cards when the setting is on', () => {
     expect(showLiveIdLine(true, '')).toBe(false);
+  });
+});
+
+describe('Competitor name fits the header', () => {
+  const LONG = 'André Rodrigo César Pinheiro Monte Amado';
+  const boxes = Object.entries(CONFIGS).flatMap(([fmt, cfg]) =>
+    [true, false].flatMap(hasLogo => [true, false].map(withCompName => ({
+      label: `${fmt} logo=${hasLogo} compName=${withCompName}`,
+      box: nameBox(cfg.cardW, hasLogo, withCompName),
+    }))));
+
+  it('measures Helvetica-Bold, folding accents to their base glyph', () => {
+    expect(boldWidth('é', 1000)).toBe(556);
+    expect(boldWidth('Wm', 1000)).toBe(944 + 889);
+  });
+
+  it.each(boxes)('$label: a long name wraps to two readable lines that fit', ({ box }) => {
+    const { text, fontSize } = nameLayout(LONG, box.w, box.h);
+    const lines = text.split('\n');
+    expect(lines).toHaveLength(2);
+    expect(fontSize).toBeGreaterThanOrEqual(12);
+    for (const l of lines) expect(boldWidth(l, fontSize)).toBeLessThanOrEqual(box.w);
+    expect(2 * fontSize * NAME_LINE_HEIGHT).toBeLessThanOrEqual(box.h);
+  });
+
+  it.each(boxes)('$label: a short name stays on one line at full size', ({ box }) => {
+    expect(nameLayout('Ali Hakim', box.w, box.h)).toEqual({ text: 'Ali Hakim', fontSize: NAME_MAX_FS });
+  });
+
+  it('a name without spaces only shrinks, never below the floor', () => {
+    const box = nameBox(CONFIGS.A4.cardW, true, true);
+    const { text, fontSize } = nameLayout('W'.repeat(60), box.w, box.h);
+    expect(text).not.toContain('\n');
+    expect(fontSize).toBe(NAME_MIN_FS);
   });
 });

@@ -163,6 +163,15 @@ function scorecardFixture(): ScorecardData[] {
   ]);
 }
 
+// Header name sizing: a two-line name, one too long to wrap well, one with no space, a short one.
+function longNameFixture(): ScorecardData[] {
+  return scorecardFixture().map((c, i) => ({
+    ...c,
+    name: ['André Rodrigo César Pinheiro Monte Amado', 'Matheus de Souza Macêdo',
+      'Wolfeschlegelsteinhausenbergerdorff', 'Ali Hakim'][i],
+  }));
+}
+
 // A per-group cover (French, long labels) and a per-round one: the delegate's check card.
 const COVERS: ScorecardData[] = finalizeEntries([
   { kind: 'cover', timeslot: 'A01', eventId: '555', eventName: 'Cube 5x5x5', roundLabel: 'Tour Final',
@@ -322,6 +331,11 @@ async function main() {
   await write(
     'scorecard-layout-test-a6.pdf',
     e(ScorecardDocument, { entries: cards, settings: settings({ scorecardsA6: true }) }),
+  );
+
+  await write(
+    'scorecard-long-names-test.pdf',
+    e(ScorecardDocument, { entries: longNameFixture(), settings: settings() }),
   );
 
   await write(

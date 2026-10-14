@@ -10,6 +10,7 @@ import {
   PDF_FONT as FONT, PDF_FONT_BOLD as FONT_BOLD,
 } from './layoutConstants';
 import './fontSetup';
+import { nameBox, nameLayout, NAME_LINE_HEIGHT } from './nameFit';
 
 const BORDER      = '1.5pt solid black';
 const BORDER_THIN = '1pt solid black';
@@ -32,16 +33,6 @@ const COLS_6 = ['scrambler', 'scramblerCheck', 'attempt', 'result', 'judge', 'co
 function coverEventFontSize(text: string): number {
   const available = 241;
   return Math.min(18, Math.max(10, Math.floor(available / Math.max(text.length * 0.6, 1))));
-}
-
-// Scale name font to fit the nameCell on one line (Helvetica-Bold ~0.65pt/pt/char).
-// Card inner width ≈ 248pt (257 - 2×border - 2×paddingH).
-//   'custom'  → 80pt logo cell           → nameCell ≈ 162pt → available ≈ 158pt
-//   'default' → 80pt comp name + logo    → nameCell ≈ 162pt → available ≈ 158pt
-//   'none'    → 26pt comp name cell      → nameCell ≈ 216pt → available ≈ 210pt
-function nameFontSize(name: string, state: 'custom' | 'default' | 'none'): number {
-  const available = state === 'none' ? 210 : 158;
-  return Math.min(18, Math.max(7, Math.floor(available / Math.max(name.length * 0.65, 1))));
 }
 
 // Comp name line above the competitor name: shrinks to stay on one line in the 158pt name cell
@@ -71,7 +62,7 @@ const styles = StyleSheet.create({
   defaultCompNameText: { fontSize: 7.5, textAlign: 'center', color: '#111', flex: 1, paddingRight: 2 },
   defaultLogoImg: { width: 30, height: 30, objectFit: 'contain' },
   nameCell: { flex: 1, justifyContent: 'center', alignItems: 'center', paddingHorizontal: 3 },
-  nameText: { fontFamily: FONT_BOLD, textAlign: 'center' },
+  nameText: { fontFamily: FONT_BOLD, textAlign: 'center', lineHeight: NAME_LINE_HEIGHT },
   headerCompNameText: { textAlign: 'center', color: '#111', marginBottom: 3 },
   idText: { fontSize: 7.5, textAlign: 'center', marginTop: 2, color: '#222' },
 
@@ -197,6 +188,8 @@ function ScorecardCard({
                  : [1];                                    // 'bo1-mo3': 1 pre-cutoff row
   const postRows = card.format === 'bo2-avg5' ? [3,4,5] : card.format === 'bo1-mo3' ? [2,3] : [];
   const hasCutoff = card.cutoff !== '';
+  const box = nameBox(cardW, headerLogo !== null && logoMode !== 'none', headerCompNameFs !== null);
+  const name = nameLayout(card.name || ' ', box.w, box.h);
   // A6 reuses the A4 card, so it takes the A4 row heights.
   const rowH = scorecardRowHeight(card.format, settings.scorecardsA6 ? 'A4' : settings.paperFormat, preRows.length + postRows.length);
 
@@ -222,9 +215,7 @@ function ScorecardCard({
           {headerCompNameFs !== null && (
             <Text style={[styles.headerCompNameText, { fontSize: headerCompNameFs }]}>{settings.competitionName}</Text>
           )}
-          <Text style={[styles.nameText, { fontSize: nameFontSize(card.name || ' ', logoMode) }]}>
-            {card.name || ' '}
-          </Text>
+          <Text style={[styles.nameText, { fontSize: name.fontSize }]}>{name.text}</Text>
           <Text style={styles.idText}>
             {card.wcaId}{showLiveIdLine(settings.hideWcaLiveId, card.liveId) && <>{'    '}WCA Live: <Text style={{ fontFamily: FONT_BOLD }}>{card.liveId}</Text></>}
           </Text>
