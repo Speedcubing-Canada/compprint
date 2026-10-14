@@ -53,7 +53,10 @@
       "a4": "A4",
       "a4_desc": "210 × 297 mm - chaque feuille est A6 (105 × 148,5 mm)",
       "letter": "Letter",
-      "letter_desc": "8,5 × 11 po - chaque feuille est 107,95 × 139,7 mm"
+      "letter_desc": "8,5 × 11 po - chaque feuille est 107,95 × 139,7 mm",
+      "a6_label": "Feuilles de score en A6",
+      "a6_desc": "Une feuille de score par page A6, pour les imprimantes A6.",
+      "a6_info": "Seuls les PDF de feuilles de score sont concernés. Les badges et les autres documents restent générés en {{format}}."
     },
     "subsequent_rounds": {
       "title": "Tours suivants",
@@ -191,6 +194,10 @@
       "total_pages": "Pages"
     },
     "download_button": "Télécharger",
+    "split_large": {
+      "label": "Diviser les gros fichiers",
+      "desc": "Un PDF par épreuve, en parties de {{pages}} pages au plus, au lieu d'un PDF par tour. Essayez-le si la génération échoue sur cet ordinateur."
+    },
     "building_button": "Création du ZIP…",
     "guide": {
       "title": "Comment imprimer et découper",
@@ -206,7 +213,8 @@
           "cut": "Découpez chaque feuille en 4 le long des lignes de coupe, et gardez les morceaux séparés par position : haut-gauche, haut-droite, bas-gauche, bas-droite. Chacune de ces quatre piles est déjà dans le bon ordre.",
           "stack": "Posez la pile haut-gauche sur la pile haut-droite, puis la bas-gauche, puis la bas-droite. Ce paquet unique contient tous les groupes de tous les tours, dans l'ordre de l'horaire.",
           "covers": "Une feuille de couverture marque le début de chaque groupe : vous prenez chaque groupe sur le dessus du paquet au fur et à mesure du tour."
-        }
+        },
+        "a6_callout": "Les feuilles de score sortent une par page, déjà triées. Aucune découpe nécessaire."
       },
       "schedule": "Suivi de l'horaire : s'imprime tel quel, une page par journée. Affichez-le à la scène ou remettez-le à l'équipe de plancher.",
       "checking": "Liste de vérification des tours : s'imprime telle quelle, un tableau par journée. Cochez chaque tour à mesure que ses feuilles reviennent.",

@@ -1,11 +1,11 @@
 import type { ParsedWCIF } from './wcif-parser';
 import type { PdfJob } from './pdfJobs';
 import type { CompetitionSettings } from '../types/settings';
-import { customEventPageCount } from './customScorecards';
+import { customEventCardCount } from './customScorecards';
 import { getFirstTimerSlipStrings } from './i18n';
 import { packSlipPages } from '../pdf/firstTimerSlipLines';
 import {
-  SCORECARDS_PER_PAGE, NAMETAGS_PER_PAGE, estimateGroupOverviewPages,
+  scorecardsPerPage, NAMETAGS_PER_PAGE, estimateGroupOverviewPages,
 } from '../pdf/layoutConstants';
 
 /**
@@ -18,15 +18,16 @@ export function estimateTotalPages(
   let pages = 0;
 
   // Per job, not per parse: a split bucket pads each file to a full sheet separately.
+  const perPage = scorecardsPerPage(settings.scorecardsA6);
   for (const job of jobs) {
-    if (job.kind === 'scorecards') pages += Math.ceil(job.entries.length / SCORECARDS_PER_PAGE);
+    if (job.kind === 'scorecards') pages += Math.ceil(job.entries.length / perPage);
     if (job.kind === 'nametags')   pages += Math.ceil(job.nametags.length / NAMETAGS_PER_PAGE);
   }
 
-  // Each custom event is its own PDF: a page of blanks, or ceil(n/4) with CSV competitors.
+  // Each custom event is its own PDF: a page of blanks, or the CSV competitors padded to a page.
   pages += (settings.customEvents ?? [])
     .filter((c) => c.name.trim() !== '')
-    .reduce((n, c) => n + customEventPageCount(c), 0);
+    .reduce((n, c) => n + customEventCardCount(c, settings.scorecardsA6) / perPage, 0);
 
   // A single flowing page, estimated.
   if (parsed.scheduleDays.length > 0) pages += 1;

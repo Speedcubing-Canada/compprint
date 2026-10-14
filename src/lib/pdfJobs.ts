@@ -1,16 +1,15 @@
 import {
-  finalizeEntries, realEntries,
+  finalizeEntries, realEntries, unstackQuadrants,
   type ScorecardData, type ParsedWCIF, type NametTagEntry,
 } from './wcif-parser';
 import type { CompetitionSettings, CustomEvent } from '../types/settings';
 import {
-  SCORECARDS_PER_PAGE, MAX_PAGES_PER_SCORECARD_PDF,
+  scorecardsPerPage, MAX_PAGES_PER_SCORECARD_PDF,
   NAMETAGS_PER_PAGE, MAX_PAGES_PER_NAMETAG_PDF,
 } from '../pdf/layoutConstants';
 
-const CARDS_PER_PDF = MAX_PAGES_PER_SCORECARD_PDF * SCORECARDS_PER_PAGE;
-const TAGS_PER_PDF  = MAX_PAGES_PER_NAMETAG_PDF  * NAMETAGS_PER_PAGE;
-
+const cardsPerPdf = (a6: boolean) => MAX_PAGES_PER_SCORECARD_PDF * scorecardsPerPage(a6);
+const TAGS_PER_PDF = MAX_PAGES_PER_NAMETAG_PDF * NAMETAGS_PER_PAGE;
 const cmp = (a: string, b: string) => (a < b ? -1 : a > b ? 1 : 0);
 
 /**
@@ -45,12 +44,21 @@ function byStage(entries: ScorecardData[]): Map<string, ScorecardData[]> | null 
   return out.size > 1 ? out : null;
 }
 
-/** One PDF, or one per event past the cap. Splits pre-padding: finalizeEntries re-pads and reorders each event. */
+/** A6 prints 1-up, so it undoes the cut-and-stack order and its padding. */
+const finalizeFor = (a6: boolean) => (list: ScorecardData[]) =>
+  a6 ? unstackQuadrants(finalizeEntries(list)) : finalizeEntries(list);
+
+/**
+ * One PDF, or one per stage. Past the cap, `splitLarge` also cuts one PDF per event and that
+ * event into sheet-aligned parts; otherwise the renderer draws the big file in parts and merges
+ * them. `entries` must already be in `a6`'s order.
+ */
 function scorecardJobs(
   entries: ScorecardData[], competitionId: string, slug: string, label: string,
-  splitStages = false,
+  splitStages: boolean, a6: boolean, splitLarge: boolean,
 ): PdfJob[] {
   if (entries.length === 0) return [];
+  const finalize = finalizeFor(a6);
 
   const stages = splitStages ? byStage(entries) : null;
   if (stages) {
@@ -60,12 +68,12 @@ function scorecardJobs(
       // finalizeEntries per stage: each file pads and quadrant-reorders on its own, so no
       // printed sheet ever straddles two stages.
       scorecardJobs(
-        finalizeEntries(stages.get(stage)!), competitionId,
-        `${slug}_${slugs[i]}`, `${label} (${titleCase(stage)})`,
+        finalize(stages.get(stage)!), competitionId,
+        `${slug}_${slugs[i]}`, `${label} (${titleCase(stage)})`, false, a6, splitLarge,
       ));
   }
 
-  if (entries.length <= CARDS_PER_PDF)
+  if (!splitLarge || entries.length <= cardsPerPdf(a6))
     return [{ kind: 'scorecards', filename: `${competitionId}_${slug}.pdf`, entries, label }];
 
   const byEvent = new Map<string, ScorecardData[]>();
@@ -84,15 +92,15 @@ function scorecardJobs(
     }))
     .sort((a, b) => cmp(a.minTimeslot, b.minTimeslot) || cmp(a.eventId, b.eventId))
     .flatMap(({ eventId, eventName, list }) =>
-      splitToCap(finalizeEntries(list), `${competitionId}_${slug}_${eventId}`, `${label} (${eventName})`));
+      splitToCap(finalize(list), `${competitionId}_${slug}_${eventId}`, `${label} (${eventName})`, a6));
 }
 
-/** Cuts on 4-card sheet boundaries, so no printed sheet straddles two files. */
-function splitToCap(entries: ScorecardData[], base: string, label: string): PdfJob[] {
-  if (entries.length <= CARDS_PER_PDF)
+/** Cuts on sheet boundaries, so no printed sheet straddles two files. */
+function splitToCap(entries: ScorecardData[], base: string, label: string, a6: boolean): PdfJob[] {
+  if (entries.length <= cardsPerPdf(a6))
     return [{ kind: 'scorecards', filename: `${base}.pdf`, entries, label }];
 
-  const chunks = evenChunks(entries, CARDS_PER_PDF, SCORECARDS_PER_PAGE);
+  const chunks = evenChunks(entries, cardsPerPdf(a6), scorecardsPerPage(a6));
   return chunks.map((slice, i) => ({
     kind: 'scorecards',
     filename: `${base}_part${i + 1}.pdf`,
@@ -110,10 +118,10 @@ function evenChunks<T>(items: T[], cap: number, unit: number): T[][] {
   return out;
 }
 
-/** One PDF, or equal parts of one past the cap. */
-function nametagJobs(nametags: NametTagEntry[], competitionId: string): PdfJob[] {
+/** One PDF, or with `splitLarge` equal parts of one past the cap. */
+function nametagJobs(nametags: NametTagEntry[], competitionId: string, splitLarge: boolean): PdfJob[] {
   if (nametags.length === 0) return [];
-  if (nametags.length <= TAGS_PER_PDF)
+  if (!splitLarge || nametags.length <= TAGS_PER_PDF)
     return [{ kind: 'nametags', filename: `${competitionId}_nametags.pdf`, label: 'Name Tags', nametags }];
 
   const chunks = evenChunks(nametags, TAGS_PER_PDF, NAMETAGS_PER_PAGE);
@@ -123,6 +131,13 @@ function nametagJobs(nametags: NametTagEntry[], competitionId: string): PdfJob[]
     label: `Name Tags ${i + 1}/${chunks.length}`,
     nametags: slice,
   }));
+}
+
+/** Whether any file is past the page cap, i.e. whether `splitLargePdfs` would change anything. */
+export function hasOversizedPdf(jobs: PdfJob[], a6: boolean): boolean {
+  return jobs.some(j =>
+    (j.kind === 'scorecards' && j.entries.length > cardsPerPdf(a6))
+    || (j.kind === 'nametags' && j.nametags.length > TAGS_PER_PDF));
 }
 
 /** Custom-event and stage names become filenames, so strip anything a filesystem dislikes. */
@@ -155,10 +170,15 @@ export function buildPdfJobs(parsed: ParsedWCIF, settings: CompetitionSettings):
   const jobs: PdfJob[] = [];
 
   const stages = settings.splitPdfsByStage === true;
-  jobs.push(...scorecardJobs(parsed.firstRound,   id, 'round1', 'Round 1', stages));
-  jobs.push(...scorecardJobs(parsed.intermediate, id, 'round2', 'Round 2', stages));
-  jobs.push(...scorecardJobs(parsed.semis,        id, 'semis',  'Semis',  stages));
-  jobs.push(...scorecardJobs(parsed.finals,       id, 'finals', 'Finals', stages));
+  const a6 = settings.scorecardsA6 === true;
+  const splitLarge = settings.splitLargePdfs === true;
+  // The parser hands back the 4-up order; A6 unstacks it before any split, so each part is a
+  // contiguous run of the sorted deck.
+  const bucket = (list: ScorecardData[]) => (a6 ? unstackQuadrants(list) : list);
+  jobs.push(...scorecardJobs(bucket(parsed.firstRound),   id, 'round1', 'Round 1', stages, a6, splitLarge));
+  jobs.push(...scorecardJobs(bucket(parsed.intermediate), id, 'round2', 'Round 2', stages, a6, splitLarge));
+  jobs.push(...scorecardJobs(bucket(parsed.semis),        id, 'semis',  'Semis',  stages, a6, splitLarge));
+  jobs.push(...scorecardJobs(bucket(parsed.finals),       id, 'finals', 'Finals', stages, a6, splitLarge));
   // Never split: extras are not produced by finalizeEntries, so they must not go back through it.
   if (parsed.extras.length > 0)
     jobs.push({ kind: 'scorecards', filename: `${id}_extras.pdf`, entries: parsed.extras, label: 'Extras' });
@@ -170,7 +190,7 @@ export function buildPdfJobs(parsed: ParsedWCIF, settings: CompetitionSettings):
   // Already emptied by filterParsedByScope unless the Group Overview was selected.
   if (parsed.groupOverview.length > 0)
     jobs.push({ kind: 'group-overview', filename: `${id}_group_overview.pdf`, label: 'Group Overview' });
-  jobs.push(...nametagJobs(parsed.nametags, id));
+  jobs.push(...nametagJobs(parsed.nametags, id, splitLarge));
   if (parsed.firstTimers.length > 0)
     jobs.push({ kind: 'first-timers', filename: `${id}_first_timers.pdf`, label: 'First-Timer Slips' });
 
@@ -189,7 +209,7 @@ export function buildPdfJobs(parsed: ParsedWCIF, settings: CompetitionSettings):
 
 /**
  * Driven by the jobs, not the settings, so a schedule-only download is never told how to cut
- * scorecards. Custom-event cards print 4-up alongside ordinary ones, so they fold in.
+ * scorecards. Custom-event cards print alongside ordinary ones, so they fold in.
  */
 export type GuideSection =
   | 'scorecards' | 'schedule' | 'checking' | 'group-overview' | 'nametags' | 'first-timers';

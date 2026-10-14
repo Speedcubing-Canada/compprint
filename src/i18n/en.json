@@ -53,7 +53,10 @@
       "a4": "A4",
       "a4_desc": "210 × 297 mm - each scorecard is A6 (105 × 148.5 mm)",
       "letter": "Letter",
-      "letter_desc": "8.5 × 11 in - each scorecard is 107.95 × 139.7 mm"
+      "letter_desc": "8.5 × 11 in - each scorecard is 107.95 × 139.7 mm",
+      "a6_label": "Scorecards on A6",
+      "a6_desc": "One scorecard per A6 page, for A6 printers.",
+      "a6_info": "Only the scorecard PDFs are affected. Name tags and the other documents are still generated on {{format}}."
     },
     "subsequent_rounds": {
       "title": "Subsequent rounds",
@@ -191,6 +194,10 @@
       "total_pages": "Pages"
     },
     "download_button": "Download",
+    "split_large": {
+      "label": "Split large files",
+      "desc": "One PDF per event, in parts of at most {{pages}} pages, instead of one PDF per round. Try this if generating fails on this computer."
+    },
     "building_button": "Building ZIP…",
     "guide": {
       "title": "How to print and cut",
@@ -206,7 +213,8 @@
           "cut": "Cut every sheet into 4 along the cut lines, and keep the pieces separated by position: top-left, top-right, bottom-left, bottom-right. Each of those four piles is already in the right order.",
           "stack": "Put the top-left pile on the top-right one, then the bottom-left, then the bottom-right. That single deck holds every group of every round, in schedule order.",
           "covers": "A cover card marks the start of each group, so you can take each group off the top of the deck as the round runs."
-        }
+        },
+        "a6_callout": "The scorecards come out one per page, already sorted. No cutting needed."
       },
       "schedule": "Schedule tracker: prints as-is, one page per day. Post it at the stage or hand it to the run team.",
       "checking": "Round checklist: prints as-is, one table per day. Tick each round off as its scorecards come back in.",

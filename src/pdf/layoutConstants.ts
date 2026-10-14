@@ -18,8 +18,48 @@ export const TABLE_HEADER_BG = '#d8d8d8';
 // 2x2 grid.
 export const SCORECARDS_PER_PAGE = 4;
 
-// Past this, a bucket splits into one PDF per event. See "Generation performance" in the README.
+export const scorecardsPerPage = (a6: boolean) => (a6 ? 1 : SCORECARDS_PER_PAGE);
+
+// Dimensions measured from the original Sarah-scorecard LETTER PDF output:
+//   Cards: 257×345pt  |  L/R margins: ~22pt  |  T/B margins: ~24-26pt
+//   H gap: ~53pt  |  V gap: ~52pt  (gap ≈ 2× margin on both axes)
+// A4 uses the same absolute margins/gaps; cardH fills the remaining page height.
+// LETTER: 22+257+53+257+23=612  |  24+345+52+345+26=792
+// A4:     22+249+53+249+22=595  |  22+373+52+373+22=842
+// A6 is one A4-sized card, centred: 24+249+24.6=297.6  |  23+373+23.5=419.5
+
+export const SCORECARD_CONFIGS = {
+  LETTER: {
+    cardW: 257, cardH: 345,
+    positions: [
+      { left: 22,  top: 24  },  // top-left    (L=22, T=24; H gap=53, V gap=52)
+      { left: 332, top: 24  },  // top-right
+      { left: 22,  top: 421 },  // bottom-left
+      { left: 332, top: 421 },  // bottom-right
+    ],
+  },
+  A4: {
+    cardW: 249, cardH: 373,
+    positions: [
+      { left: 22,  top: 22  },  // 22pt margins on all sides; H gap=53, V gap=52
+      { left: 324, top: 22  },
+      { left: 22,  top: 447 },
+      { left: 324, top: 447 },
+    ],
+  },
+  A6: {
+    cardW: 249, cardH: 373,
+    positions: [{ left: 24, top: 23 }],
+  },
+} as const;
+
+// Past this, /generate offers to split a file per event and into parts. See "Generation
+// performance" in the README.
 export const MAX_PAGES_PER_SCORECARD_PDF = 250;
+
+// Pages @react-pdf draws at once; a bigger file is rendered in parts and merged. 100 beat 250
+// on WC-scale heap and time.
+export const RENDER_PART_PAGES = 100;
 
 // Tuned so the flex spacers around the provisional label stay 6-8pt each; the budget
 // formula is in ScorecardDocument.tsx, the guard in scorecard-layout.test.ts.
@@ -41,7 +81,7 @@ export function scorecardRowHeight(
 // Four people per page, front + back panel each.
 export const NAMETAGS_PER_PAGE = 4;
 
-// Same ceiling, same reason.
+// Same cap, same choice.
 export const MAX_PAGES_PER_NAMETAG_PDF = 250;
 
 // The compact layout is tight enough that the QR side must stay uncluttered.

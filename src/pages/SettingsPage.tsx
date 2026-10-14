@@ -108,6 +108,7 @@ export default function SettingsPage() {
     nametagLayout: preset.nametagLayout ?? 'vertical',
     scorecardCheckMode: preset.scorecardCheckMode ?? 'per-group-card',
     splitPdfsByStage: false,
+    scorecardsA6: false,
     otsBlanks: false,
     finalStationNumbers: true,
     stationsPerStage: null,
@@ -135,7 +136,7 @@ export default function SettingsPage() {
     liveResultsMode, wcaLiveId, hideWcaLiveId, nametagLogoMode, nametagQrMode, nametagLayout,
     scorecardCheckMode, customEvents, splitPdfsByStage, scrambleDoubleCheckRounds,
     scrambleDoubleCheckOverrides, scrambleDoubleCheckWorldTop, scrambleDoubleCheckRegionTop,
-    scrambleDoubleCheckRegionScope, otsBlanks, finalStationNumbers, stationsPerStage,
+    scrambleDoubleCheckRegionScope, otsBlanks, finalStationNumbers, stationsPerStage, scorecardsA6,
   } = draft;
 
   // Not part of the draft, but stored so a restored upload isn't nameless.
@@ -410,6 +411,27 @@ export default function SettingsPage() {
               </label>
             ))}
           </fieldset>
+          {showScorecards && (
+            <label className={`${ui.toggleCard} ${s.a6Toggle} ${scorecardsA6 ? ui.toggleCardActive : ''}`}>
+              <input
+                type="checkbox"
+                checked={scorecardsA6}
+                onChange={e => patch({ scorecardsA6: e.target.checked })}
+                className={ui.radio}
+              />
+              <div>
+                <div className={ui.optionLabel}>{t('settings.paper.a6_label')}</div>
+                <div className={ui.optionDesc}>{t('settings.paper.a6_desc')}</div>
+              </div>
+            </label>
+          )}
+          {showScorecards && scorecardsA6 && (
+            <div className={s.warningWrap}>
+              <WarningBanner tone="info">
+                {t('settings.paper.a6_info', { format: paperFormat === 'A4' ? t('settings.paper.a4') : t('settings.paper.letter') })}
+              </WarningBanner>
+            </div>
+          )}
         </section>
 
         {showScorecards && showSecondRoundMode && (

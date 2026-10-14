@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { resolveCustomFormat, buildCustomEntries, customEventPageCount } from './customScorecards';
+import { resolveCustomFormat, buildCustomEntries, customEventCardCount } from './customScorecards';
 import type { CustomEvent } from '../types/settings';
 import type { ScorecardEntry } from './wcif-parser';
 
@@ -130,17 +130,24 @@ describe('buildCustomEntries', () => {
   });
 });
 
-describe('customEventPageCount', () => {
-  it('is 1 page for a blank custom event', () => {
-    expect(customEventPageCount(makeEvent())).toBe(1);
-    expect(customEventPageCount(makeEvent({ competitors: [] }))).toBe(1);
+describe('customEventCardCount', () => {
+  const comp = (n: number) => Array.from({ length: n }, (_, i) => ({ name: `P${i}`, wcaId: '' }));
+
+  it('matches buildCustomEntries, 4-up and A6', () => {
+    for (const a6 of [false, true])
+      for (const n of [0, 1, 4, 5, 9]) {
+        const ev = makeEvent({ competitors: comp(n) });
+        expect(customEventCardCount(ev, a6)).toBe(buildCustomEntries(ev, a6).length);
+      }
   });
 
-  it('is ceil(n/4) pages with competitors', () => {
-    const comp = (n: number) => Array.from({ length: n }, (_, i) => ({ name: `P${i}`, wcaId: '' }));
-    expect(customEventPageCount(makeEvent({ competitors: comp(1) }))).toBe(1);
-    expect(customEventPageCount(makeEvent({ competitors: comp(4) }))).toBe(1);
-    expect(customEventPageCount(makeEvent({ competitors: comp(5) }))).toBe(2);
-    expect(customEventPageCount(makeEvent({ competitors: comp(9) }))).toBe(3);
+  it('pads to a 4-card sheet, a page of 4 blanks with no competitors', () => {
+    expect(customEventCardCount(makeEvent())).toBe(4);
+    expect(customEventCardCount(makeEvent({ competitors: comp(5) }))).toBe(8);
+  });
+
+  it('does not pad on A6, one blank with no competitors', () => {
+    expect(customEventCardCount(makeEvent(), true)).toBe(1);
+    expect(customEventCardCount(makeEvent({ competitors: comp(5) }), true)).toBe(5);
   });
 });

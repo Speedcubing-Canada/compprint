@@ -21,18 +21,26 @@ export const CHANGELOG: ChangelogEntry[] = [
       en: [
         'Cover cards show each group\'s planned time, with blanks for the actual time and scramble set.',
         'Final station numbers can be turned off, and are skipped when the final has more competitors than stations.',
+        'Scorecards can now print one per A6 page, for A6 printers.',
+        'Large competitions get one scorecard PDF per round again, with an option to split.',
       ],
       fr: [
         "Les feuilles de couverture affichent l'heure prévue du groupe, avec des espaces pour l'heure réelle et le set de mélanges.",
         'Les numéros de station en finale peuvent être désactivés, et sont omis quand la finale a plus de participants que de stations.',
+        'Les feuilles de score peuvent maintenant s\'imprimer une par page A6, pour les imprimantes A6.',
+        'Les grandes compétitions retrouvent un seul PDF de feuilles de score par tour, avec une option pour diviser.',
       ],
       es: [
         'Las hojas de portada muestran la hora prevista del grupo, con espacios para la hora real y el set de mezclas.',
         'Los números de estación en finales se pueden desactivar, y se omiten si la final tiene más competidores que estaciones.',
+        'Las hojas de puntuación ahora pueden imprimirse una por página A6, para impresoras A6.',
+        'Las competencias grandes vuelven a tener un solo PDF de hojas de puntuación por ronda, con opción de dividir.',
       ],
       pt: [
         'As súmulas de capa mostram o horário previsto do grupo, com espaços para o horário real e o set de embaralhamentos.',
         'Os números de estação nas finais podem ser desativados, e são omitidos quando a final tem mais competidores que estações.',
+        'As súmulas agora podem ser impressas uma por página A6, para impressoras A6.',
+        'Competições grandes voltam a ter um único PDF de súmulas por rodada, com opção de dividir.',
       ],
     },
   },

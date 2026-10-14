@@ -18,7 +18,7 @@ const BASE: CompetitionSettings = {
   logoDataUrl: null, useDefaultLogo: false, scorecardCompNameWithLogo: false, liveResultsMode: 'wca-live',
   wcaLiveId: null, wcaLivePersonIds: null,
   hideWcaLiveId: false, nametagLogoMode: 'hidden', nametagQrMode: 'back-only', nametagLayout: 'vertical',
-  splitPdfsByStage: false, otsBlanks: false,
+  splitPdfsByStage: false, otsBlanks: false, scorecardsA6: false,
   finalStationNumbers: true, stationsPerStage: null,
   customEvents: [], scorecardCheckMode: 'per-group-card',
   scrambleDoubleCheck: false, scrambleDoubleCheckRounds: ['finals'], scrambleDoubleCheckOverrides: {},
@@ -2987,6 +2987,14 @@ describe('on-the-spot blanks', () => {
     expect(result.extras.length % 4).toBe(0);
     const tail = result.extras.slice(-4) as ScorecardEntry[];
     expect(tail.every(x => x.kind === 'scorecard' && x.eventId === '' && x.eventName === '' && x.group === '')).toBe(true);
+  });
+
+  // 1-up: no sheet to fill, so no padding covers and a single pure blank.
+  it('on A6, skips the padding and adds one pure blank', () => {
+    const result = parseWCIF(mkWCIF([e, e2], [r], persons()), cfg({ otsBlanks: true, scorecardsA6: true }));
+    const extras = result.extras as ScorecardEntry[];
+    expect(extras.every(x => x.kind === 'scorecard')).toBe(true);
+    expect(extras.map(x => x.eventId)).toEqual(['333', '']);
   });
 });
 

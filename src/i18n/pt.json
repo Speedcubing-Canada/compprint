@@ -53,7 +53,10 @@
       "a4": "A4",
       "a4_desc": "210 × 297 mm - cada súmula é A6 (105 × 148,5 mm)",
       "letter": "Carta",
-      "letter_desc": "8,5 × 11 pol - cada súmula é 107,95 × 139,7 mm"
+      "letter_desc": "8,5 × 11 pol - cada súmula é 107,95 × 139,7 mm",
+      "a6_label": "Súmulas em A6",
+      "a6_desc": "Uma súmula por página A6, para impressoras A6.",
+      "a6_info": "Apenas os PDFs de súmulas são afetados. Os crachás e os demais documentos continuam sendo gerados em {{format}}."
     },
     "subsequent_rounds": {
       "title": "Rodadas seguintes",
@@ -191,6 +194,10 @@
       "total_pages": "Páginas"
     },
     "download_button": "Baixar",
+    "split_large": {
+      "label": "Dividir arquivos grandes",
+      "desc": "Um PDF por evento, em partes de no máximo {{pages}} páginas, em vez de um PDF por rodada. Use se a geração falhar neste computador."
+    },
     "building_button": "Criando ZIP…",
     "guide": {
       "title": "Como imprimir e recortar",
@@ -206,7 +213,8 @@
           "cut": "Recorte cada súmula em 4 pelas linhas de corte e mantenha os pedaços separados por posição: superior-esquerda, superior-direita, inferior-esquerda, inferior-direita. Cada uma dessas quatro pilhas já está na ordem certa.",
           "stack": "Coloque a pilha superior-esquerda sobre a superior-direita, depois a inferior-esquerda e depois a inferior-direita. Esse maço único contém todos os grupos de todas as rodadas, na ordem do cronograma.",
           "covers": "Uma súmula de capa marca o início de cada grupo, então basta ir tirando cada grupo do topo do maço conforme a rodada acontece."
-        }
+        },
+        "a6_callout": "As súmulas saem uma por página, já ordenadas. Não é preciso cortar."
       },
       "schedule": "Acompanhamento do cronograma: imprima como está, uma folha por dia. Fixe no palco ou entregue à equipe do palco.",
       "checking": "Checklist de rodadas: imprima como está, uma tabela por dia. Marque cada rodada conforme as súmulas voltam.",

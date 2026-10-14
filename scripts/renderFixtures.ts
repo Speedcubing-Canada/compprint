@@ -52,6 +52,7 @@ function settings(over: Partial<CompetitionSettings> = {}): CompetitionSettings 
     nametagLayout: 'vertical',
     scorecardCheckMode: 'per-group-card',
     scrambleDoubleCheck: false,
+    scorecardsA6: false,
     ...over,
   });
 }
@@ -317,6 +318,10 @@ async function main() {
   await write(
     'scorecard-layout-test-a4.pdf',
     e(ScorecardDocument, { entries: cards, settings: settings({ paperFormat: 'A4' }) }),
+  );
+  await write(
+    'scorecard-layout-test-a6.pdf',
+    e(ScorecardDocument, { entries: cards, settings: settings({ scorecardsA6: true }) }),
   );
 
   await write(

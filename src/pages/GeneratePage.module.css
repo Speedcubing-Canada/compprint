@@ -6,6 +6,10 @@
   margin-bottom: var(--space-6);
 }
 
+.splitToggle {
+  margin-bottom: var(--space-6);
+}
+
 .stats {
   display: grid;
   grid-template-columns: repeat(5, 1fr);

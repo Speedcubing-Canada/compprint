@@ -321,6 +321,14 @@ function reorderQuadrants<T>(items: T[]): T[] {
   return result;
 }
 
+/** Inverse of the cut-and-stack order, minus padding covers: plain sorted order for 1-up printing. */
+export function unstackQuadrants(items: ScorecardData[]): ScorecardData[] {
+  const out: ScorecardData[] = [];
+  for (let q = 0; q < 4; q++)
+    for (let i = q; i < items.length; i += 4) out.push(items[i]);
+  return realEntries(out);
+}
+
 // Competitor names are the only sort key that needs collation; timeslots, event ids, stage
 // keys and group labels are ASCII and compare faster as plain strings. One shared Collator,
 // because `localeCompare` rebuilds one per call and these comparators run n log n times.
@@ -1253,8 +1261,10 @@ export function parseWCIF(wcif: WCIF, settings: CompetitionSettings): ParsedWCIF
       format: roundFormat[rid], isCumulative: roundCumulative[rid],
     });
   }
+  // A6 prints 1-up: no sheet to fill, and one blank is a page to print copies of.
+  const a6 = settings.scorecardsA6 === true;
   const extrasRem = extrasEntries.length % 4;
-  if (extrasRem !== 0) for (let i = 0; i < 4 - extrasRem; i++) extrasEntries.push(EMPTY_COVER);
+  if (!a6 && extrasRem !== 0) for (let i = 0; i < 4 - extrasRem; i++) extrasEntries.push(EMPTY_COVER);
   if (settings.otsBlanks) {
     // Only the competition header is printed; the rest is written by hand.
     const pureBlank: ScorecardEntry = {
@@ -1262,7 +1272,7 @@ export function parseWCIF(wcif: WCIF, settings: CompetitionSettings): ParsedWCIF
       group: '', name: '', wcaId: '', liveId: '', gender: '',
       cutoff: '', limit: '', format: 'avg5', isCumulative: false,
     };
-    extrasEntries.push(pureBlank, pureBlank, pureBlank, pureBlank);
+    extrasEntries.push(...Array<ScorecardEntry>(a6 ? 1 : 4).fill(pureBlank));
   }
 
   // Schedule tracker
