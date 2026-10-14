@@ -164,7 +164,12 @@
       "csv_optional": "optional",
       "csv_hint": "One competitor per line: Name or Name,WCAID. Prints one named scorecard per row (plus blanks to fill the last page) instead of 4 blank cards. Lines starting with # are ignored.",
       "csv_count": "{{count}} competitor(s) loaded",
-      "add_custom_event": "+ Add custom event"
+      "add_custom_event": "+ Add custom event",
+      "final_stations_title": "Station numbers on finals",
+      "final_stations_label": "Print station numbers",
+      "final_stations_count": "Stations per stage",
+      "final_stations_hint": "A one-group final's blank scorecards get station numbers when it fits the stations. Type the station count to check it.",
+      "final_stations_detected": "A one-group final's blank scorecards get station numbers when it fits the {{count}} stations found in the WCIF. Type a number to override it."
     },
     "generate_button": "Generate →",
     "ots": {

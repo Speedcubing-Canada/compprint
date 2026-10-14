@@ -98,6 +98,15 @@ One exception: a round 2 set to "prefilled" is filled with the round 1 qualifier
 on a stage until round 1 is over, so it stays a single PDF. The settings and generate pages both
 say so when the combination is selected.
 
+### Station numbers on finals
+
+A final run as one group on one stage prints "Station 01..N" on its blank scorecards instead of
+the group label, but only when the field fits the room's stations. The station count comes
+from, in order: the "Stations per stage" box (Settings > Advanced), Groupifier's
+`groupifier.RoomConfig` room extension, then the highest `stationNumber` assigned in that room
+(Delegate Dashboard numbers stations per assignment and stores no room count). With no count
+anywhere the final stays stationary. The "Print station numbers" checkbox turns it off entirely.
+
 ### On-the-spot registration
 
 People registered on the day are not in the WCIF. When the WCA API reports

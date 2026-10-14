@@ -164,7 +164,12 @@
       "csv_optional": "optionnel",
       "csv_hint": "Un compétiteur par ligne : Nom ou Nom,WCAID. Imprime une feuille nominative par ligne (plus des feuilles vides pour compléter la dernière page) au lieu de 4 feuilles vides. Les lignes commençant par # sont ignorées.",
       "csv_count": "{{count}} compétiteur(s) chargé(s)",
-      "add_custom_event": "+ Ajouter une épreuve personnalisée"
+      "add_custom_event": "+ Ajouter une épreuve personnalisée",
+      "final_stations_title": "Numéros de station en finale",
+      "final_stations_label": "Imprimer les numéros de station",
+      "final_stations_count": "Stations par scène",
+      "final_stations_hint": "Les feuilles vierges d'une finale à un seul groupe portent un numéro de station si elle tient sur les stations. Indiquez le nombre de stations pour le vérifier.",
+      "final_stations_detected": "Les feuilles vierges d'une finale à un seul groupe portent un numéro de station si elle tient sur les {{count}} stations trouvées dans le WCIF. Indiquez un nombre pour le remplacer."
     },
     "generate_button": "Générer →",
     "ots": {

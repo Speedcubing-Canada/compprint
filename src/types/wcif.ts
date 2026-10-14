@@ -113,6 +113,7 @@ export interface Room {
   name: string;
   color: string;
   activities: Activity[];
+  extensions?: { id: string; data: unknown }[];
 }
 
 export interface Venue {

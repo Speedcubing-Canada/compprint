@@ -33,6 +33,8 @@ export interface ScopeDetection {
   // Whether any round runs across 2+ stages. Gates the per-stage PDF split on /settings,
   // which has no WCIF of its own.
   multiStage: boolean;
+  // Station count read from the WCIF, shown as the default of the finals station override.
+  detectedStations?: number | null;
 }
 
 function readJson<T>(key: string, fallback: T): T {
@@ -101,6 +103,7 @@ export function readDetection(): ScopeDetection {
     // Opposite default: without the scope parse the stage count is unknown, and offering a
     // per-stage split we cannot honour is worse than not offering it.
     multiStage: raw?.multiStage === true,
+    detectedStations: raw?.detectedStations ?? null,
   };
 }
 
@@ -150,6 +153,8 @@ export function readSettings(): CompetitionSettings | null {
   if (s.hideWcaLiveId === undefined) s.hideWcaLiveId = false;
   if (s.splitPdfsByStage === undefined) s.splitPdfsByStage = false;
   if (s.otsBlanks === undefined) s.otsBlanks = false;
+  if (s.finalStationNumbers === undefined) s.finalStationNumbers = true;
+  if (s.stationsPerStage === undefined) s.stationsPerStage = null;
   if (s.liveResultsMode === undefined) s.liveResultsMode = 'wca-live';
   if (s.isCustomCompetition === undefined) s.isCustomCompetition = false;
   if (s.scorecardCheckMode === undefined) s.scorecardCheckMode = 'per-group-card';

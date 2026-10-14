@@ -260,6 +260,8 @@ export interface ParsedWCIF {
   laterRoundsWithAssignments: { eventId: string; roundNum: number }[];
   // Most stages any one round runs across. 1 when the competition uses a single room.
   stageCount: number;
+  // First room's station count found in the WCIF, `null` when no tool recorded one.
+  stations: { count: number; source: 'groupifier' | 'assignments' } | null;
 }
 
 // A ParsedWCIF with nothing in it - used by custom (non-WCA) competitions, which
@@ -279,6 +281,7 @@ export function emptyParsedWcif(): ParsedWCIF {
     hasGroups: true,
     laterRoundsWithAssignments: [],
     stageCount: 1,
+    stations: null,
   };
 }
 
@@ -598,6 +601,20 @@ export function parseWCIF(wcif: WCIF, settings: CompetitionSettings): ParsedWCIF
     }
   });
 
+  // Groupifier records each room's station count. Delegate Dashboard only numbers stations per
+  // assignment, so the highest one used in the room is the floor.
+  const roomStations: ParsedWCIF['stations'][] = allRooms.map((room) => {
+    const n = (room.extensions?.find((e) => e.id === 'groupifier.RoomConfig')?.data as
+      { stations?: unknown } | undefined)?.stations;
+    return typeof n === 'number' && n > 0 ? { count: n, source: 'groupifier' } : null;
+  });
+  for (const person of wcif.persons)
+    for (const { activityId, stationNumber } of person.assignments ?? []) {
+      const idx = activityRoomIdx[activityId];
+      if (stationNumber == null || idx == null || roomStations[idx]?.source === 'groupifier') continue;
+      roomStations[idx] = { count: Math.max(stationNumber, roomStations[idx]?.count ?? 0), source: 'assignments' };
+    }
+
   // Derived from unique group codes, so one group running in two rooms counts once.
   const numGroups: Record<string, number> = Object.fromEntries(
     Object.entries(roundGroupCodes).map(([k, s]) => [k, s.size]),
@@ -903,7 +920,7 @@ export function parseWCIF(wcif: WCIF, settings: CompetitionSettings): ParsedWCIF
   }
 
   // Collect schedule data for intermediate rounds and finals
-  interface GroupInfo { gNum: string; stage: string; totalGroups: number; timeslot: string; }
+  interface GroupInfo { gNum: string; stage: string; totalGroups: number; timeslot: string; roomIdx: number; }
   interface RoundData { eventId: string; roundNum: number; rid: string; groups: GroupInfo[]; minTs: string; }
 
   const finalsRounds: Record<string, RoundData> = {};
@@ -939,7 +956,7 @@ export function parseWCIF(wcif: WCIF, settings: CompetitionSettings): ParsedWCIF
           const gNum = groupPart.slice(1);
           const stage = activityStage[child.id]?.toLowerCase() ?? 'hall';
           const totalGroups = numGroups[rid] ?? 1;
-          const groupInfo: GroupInfo = { gNum, stage, totalGroups, timeslot: ts };
+          const groupInfo: GroupInfo = { gNum, stage, totalGroups, timeslot: ts, roomIdx: activityRoomIdx[child.id] };
 
           const target = isFinal ? finalsRounds : isRound2 ? round2Rounds : semisRounds;
           if (!target[rid]) target[rid] = { eventId, roundNum, rid, groups: [], minTs: ts };
@@ -959,20 +976,23 @@ export function parseWCIF(wcif: WCIF, settings: CompetitionSettings): ParsedWCIF
     });
   }
 
-  // Finals: blank entries (station numbers only when single group in single stage)
+  // Finals: blank entries (station numbers only when single group in single stage, and it fits)
   for (const { eventId, roundNum, rid, groups } of Object.values(finalsRounds)) {
     const totalGroups = groups[0]?.totalGroups ?? groups.length;
     const numStages = roundStages[rid]?.size ?? 1;
     // One logical group across simultaneous stages: each gets its own labeled stack.
     const isMultiStageSingleGroup = totalGroups === 1 && numStages > 1;
     // Station numbers only for one group in one stage: event+round already names the stack.
-    const useStationNumbers = totalGroups === 1 && numStages <= 1;
+    const canBeStationary = settings.finalStationNumbers && totalGroups === 1 && numStages <= 1;
     const stageCount = isMultiStageSingleGroup ? groups.length : totalGroups;
     const field = roundFieldSize[rid];
 
-    for (const { gNum, stage, timeslot } of sortGroups(groups)) {
+    for (const { gNum, stage, timeslot, roomIdx } of sortGroups(groups)) {
       const coverLabel = resolveGroupLabel(rid, gNum, stage, totalGroups);
       const blankCount = field != null ? Math.ceil(field / stageCount) : 16;
+      // Unknown station count: nothing says the round can't be stationary.
+      const stations = settings.stationsPerStage ?? roomStations[roomIdx]?.count;
+      const useStationNumbers = canBeStationary && (stations == null || blankCount <= stations);
 
       for (let i = 0; i < blankCount; i++) {
         const cardGroup = useStationNumbers
@@ -1522,5 +1542,6 @@ export function parseWCIF(wcif: WCIF, settings: CompetitionSettings): ParsedWCIF
     // Real groups only, so a fresh WCIF with synthesized ones still reports "no groups yet".
     hasGroups: roundsWithRealGroups.size > 0,
     stageCount: Object.values(roundStages).reduce((m, set) => Math.max(m, set.size), 1),
+    stations: roomStations.find(Boolean) ?? null,
   };
 }

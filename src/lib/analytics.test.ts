@@ -68,6 +68,7 @@ function parsed(): ParsedWCIF {
       ] as ParsedWCIF['checkingDays'][number]['rows'] },
       { dayLabel: 'Day 2', rows: [{ groupCount: 2 }] as ParsedWCIF['checkingDays'][number]['rows'] },
     ],
+    stations: { count: 24, source: 'groupifier' },
   };
 }
 
@@ -112,6 +113,13 @@ describe('buildGenerateEvent', () => {
   it('sizes the competition from the unfiltered parse', () => {
     expect(generate().size).toEqual({
       competitors: 3, events: 3, rounds: 4, groups: 9, stages: 2, days: 2,
+      stations: { count: 24, source: 'groupifier' },
+    });
+  });
+
+  it('reports the finals station toggle and override', () => {
+    expect(generate({ finalStationNumbers: false, stationsPerStage: 12 }).settings).toMatchObject({
+      finalStationNumbers: false, stationsPerStage: 12,
     });
   });
 

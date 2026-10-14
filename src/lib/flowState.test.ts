@@ -66,7 +66,7 @@ describe('generation scope', () => {
   it('round-trips scope and detection together', () => {
     writeScope(scope, { showSecondRoundMode: false, multiStage: false });
     expect(readScope()).toEqual(scope);
-    expect(readDetection()).toEqual({ showSecondRoundMode: false, multiStage: false });
+    expect(readDetection()).toEqual({ showSecondRoundMode: false, multiStage: false, detectedStations: null });
   });
 
   it('falls back to the everything-scope when unset', () => {
@@ -103,13 +103,20 @@ describe('generation scope', () => {
     expect(readDetection().multiStage).toBe(false);
   });
 
+  it('round-trips the detected station count, null when absent', () => {
+    writeScope(DEFAULT_SCOPE, { showSecondRoundMode: false, multiStage: false, detectedStations: 24 });
+    expect(readDetection().detectedStations).toBe(24);
+    sessionStorage.setItem('generation_detection', JSON.stringify({ showSecondRoundMode: true }));
+    expect(readDetection().detectedStations).toBeNull();
+  });
+
   // Absent detection means the scope step was bypassed, so the Round 2 mode shows.
   it('shows the second-round mode when detection is absent or corrupt', () => {
-    expect(readDetection()).toEqual({ showSecondRoundMode: true, multiStage: false });
+    expect(readDetection()).toEqual({ showSecondRoundMode: true, multiStage: false, detectedStations: null });
     sessionStorage.setItem('generation_detection', 'null');
-    expect(readDetection()).toEqual({ showSecondRoundMode: true, multiStage: false });
+    expect(readDetection()).toEqual({ showSecondRoundMode: true, multiStage: false, detectedStations: null });
     sessionStorage.setItem('generation_detection', '{');
-    expect(readDetection()).toEqual({ showSecondRoundMode: true, multiStage: false });
+    expect(readDetection()).toEqual({ showSecondRoundMode: true, multiStage: false, detectedStations: null });
   });
 });
 
@@ -210,6 +217,8 @@ describe('settings restore', () => {
       generationScope: { mode: 'everything', documents: DEFAULT_SCOPE.documents },
       hideWcaLiveId: false,
       splitPdfsByStage: false,
+      finalStationNumbers: true,
+      stationsPerStage: null,
       liveResultsMode: 'wca-live',
       isCustomCompetition: false,
       scorecardCheckMode: 'per-group-card',
@@ -266,7 +275,7 @@ describe('clearing', () => {
     fillFlow();
     clearDownstream();
     expect(readStoredScope()).toBeNull();
-    expect(readDetection()).toEqual({ showSecondRoundMode: true, multiStage: false });
+    expect(readDetection()).toEqual({ showSecondRoundMode: true, multiStage: false, detectedStations: null });
     expect(readHasGroups()).toBe(true);
     expect(readSettings()).toBeNull();
     expect(readFileName('logo')).toBeNull();
