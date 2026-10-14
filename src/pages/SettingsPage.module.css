@@ -317,3 +317,8 @@
   color: var(--text-muted);
 }
 
+
+/* Clear of the paper radios, so it reads as its own switch rather than a third format. */
+.a6Toggle {
+  margin-top: var(--space-5);
+}

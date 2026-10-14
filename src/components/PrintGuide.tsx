@@ -23,7 +23,7 @@ const NOTES = {
  * if the four quadrant piles stay separate and are stacked 1-2-3-4. Organisers have re-sorted
  * a whole competition by hand for want of this card.
  */
-export default function PrintGuide({ jobs }: { jobs: PdfJob[] }) {
+export default function PrintGuide({ jobs, a6 = false }: { jobs: PdfJob[]; a6?: boolean }) {
   const { t } = useTranslation();
   const sections = guideSections(jobs);
   if (sections.length === 0) return null;
@@ -37,7 +37,9 @@ export default function PrintGuide({ jobs }: { jobs: PdfJob[] }) {
         {t('generate.guide.title')}
       </h3>
 
-      {hasScorecards && (
+      {hasScorecards && a6 && <p className={s.callout}>{t('generate.guide.scorecards.a6_callout')}</p>}
+
+      {hasScorecards && !a6 && (
         <>
           <p className={s.callout}>{t('generate.guide.scorecards.callout')}</p>
           <CutDiagram />

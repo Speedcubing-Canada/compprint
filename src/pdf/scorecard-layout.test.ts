@@ -12,6 +12,8 @@ const LETTER_W = 612;
 const LETTER_H = 792;
 const A4_W = 595;
 const A4_H = 842;
+const A6_W = 297.64;
+const A6_H = 419.53;
 
 const CONFIGS = {
   LETTER: {
@@ -33,6 +35,21 @@ const CONFIGS = {
     ],
   },
 } as const;
+
+// A6 printers have their own non-printable border; 5mm is the usual worst case.
+describe('A6 scorecard geometry', () => {
+  const card = CONFIGS.A4;
+  const pos = { left: 24, top: 23 };
+  const MIN_MARGIN = 14; // 5mm
+
+  it('the A4 card fits centred on the A6 page with a printable margin all round', () => {
+    const right = A6_W - pos.left - card.cardW;
+    const bottom = A6_H - pos.top - card.cardH;
+    for (const m of [pos.left, pos.top, right, bottom]) expect(m).toBeGreaterThanOrEqual(MIN_MARGIN);
+    expect(Math.abs(pos.left - right)).toBeLessThan(1);
+    expect(Math.abs(pos.top - bottom)).toBeLessThan(1);
+  });
+});
 
 describe('Scorecard layout geometry', () => {
   for (const [fmt, page] of [['LETTER', { w: LETTER_W, h: LETTER_H }], ['A4', { w: A4_W, h: A4_H }]] as const) {

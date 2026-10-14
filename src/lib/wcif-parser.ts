@@ -321,6 +321,14 @@ function reorderQuadrants<T>(items: T[]): T[] {
   return result;
 }
 
+/** Inverse of the cut-and-stack order, minus padding covers: plain sorted order for 1-up printing. */
+export function unstackQuadrants(items: ScorecardData[]): ScorecardData[] {
+  const out: ScorecardData[] = [];
+  for (let q = 0; q < 4; q++)
+    for (let i = q; i < items.length; i += 4) out.push(items[i]);
+  return realEntries(out);
+}
+
 // Competitor names are the only sort key that needs collation; timeslots, event ids, stage
 // keys and group labels are ASCII and compare faster as plain strings. One shared Collator,
 // because `localeCompare` rebuilds one per call and these comparators run n log n times.

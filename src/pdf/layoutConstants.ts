@@ -18,6 +18,8 @@ export const TABLE_HEADER_BG = '#d8d8d8';
 // 2x2 grid.
 export const SCORECARDS_PER_PAGE = 4;
 
+export const scorecardsPerPage = (a6: boolean) => (a6 ? 1 : SCORECARDS_PER_PAGE);
+
 // Past this, a bucket splits into one PDF per event. See "Generation performance" in the README.
 export const MAX_PAGES_PER_SCORECARD_PDF = 250;
 

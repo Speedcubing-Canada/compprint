@@ -62,8 +62,9 @@ export function buildCustomEntries(custom: CustomEvent): ScorecardData[] {
   return entries;
 }
 
-/** Printed pages for one custom event (4 cards per page). */
-export function customEventPageCount(custom: CustomEvent): number {
+/** Printed pages for one custom event. */
+export function customEventPageCount(custom: CustomEvent, perPage = CARDS_PER_PAGE): number {
   const n = custom.competitors?.length ?? 0;
-  return n > 0 ? Math.ceil(n / CARDS_PER_PAGE) : 1;
+  const cards = n > 0 ? Math.ceil(n / CARDS_PER_PAGE) * CARDS_PER_PAGE : CARDS_PER_PAGE;
+  return cards / perPage;
 }

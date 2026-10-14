@@ -53,7 +53,10 @@
       "a4": "A4",
       "a4_desc": "210 × 297 mm - cada hoja es A6 (105 × 148,5 mm)",
       "letter": "Carta",
-      "letter_desc": "8,5 × 11 in - cada hoja es 107,95 × 139,7 mm"
+      "letter_desc": "8,5 × 11 in - cada hoja es 107,95 × 139,7 mm",
+      "a6_label": "Hojas de puntuación en A6",
+      "a6_desc": "Una hoja de puntuación por página A6, para impresoras A6.",
+      "a6_info": "Solo se ven afectados los PDF de hojas de puntuación. Las etiquetas de nombre y los demás documentos se siguen generando en {{format}}."
     },
     "subsequent_rounds": {
       "title": "Rondas siguientes",
@@ -206,7 +209,8 @@
           "cut": "Recorta cada hoja en 4 por las líneas de corte y mantén los trozos separados por posición: arriba-izquierda, arriba-derecha, abajo-izquierda, abajo-derecha. Cada uno de esos cuatro montones ya está en el orden correcto.",
           "stack": "Pon el montón de arriba-izquierda sobre el de arriba-derecha, luego el de abajo-izquierda y luego el de abajo-derecha. Ese único mazo contiene todos los grupos de todas las rondas, en orden de horario.",
           "covers": "Una hoja de portada marca el inicio de cada grupo, así que puedes ir tomando cada grupo de encima del mazo según avanza la ronda."
-        }
+        },
+        "a6_callout": "Las hojas de puntuación salen una por página, ya ordenadas. No hace falta cortar."
       },
       "schedule": "Seguimiento del horario: se imprime tal cual, una página por día. Colócalo en el escenario o entrégalo al equipo de sala.",
       "checking": "Lista de rondas: se imprime tal cual, una tabla por día. Marca cada ronda a medida que vuelven sus hojas de puntuación.",

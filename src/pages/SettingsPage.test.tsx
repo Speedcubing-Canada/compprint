@@ -454,3 +454,20 @@ describe('on-the-spot registration', () => {
     expect(readSettings()?.otsBlanks).toBe(false);
   });
 });
+
+// A6 only reshapes the scorecards, so the notice must say the rest stays on the paper format.
+describe('A6 scorecards', () => {
+  const box = () => screen.getByRole('checkbox', { name: /Scorecards on A6/ }) as HTMLInputElement;
+  const notice = () => screen.queryByText(/Only the scorecard PDFs are affected/);
+
+  it('shows the notice, naming the paper format, only once ticked', async () => {
+    await renderSettings();
+    expect(box().checked).toBe(false);
+    expect(notice()).toBeNull();
+
+    fireEvent.click(box());
+    expect(notice()?.textContent).toMatch(/still generated on Letter/);
+    generate();
+    expect(readSettings()?.scorecardsA6).toBe(true);
+  });
+});

@@ -58,6 +58,8 @@ export interface CompetitionSettings {
   // badges use this one. `null` = single-language output.
   secondaryLanguage: LocaleCode | null;
   paperFormat: PaperFormat;
+  // One scorecard per A6 page, in plain sorted order. Every other document keeps `paperFormat`.
+  scorecardsA6: boolean;
   secondRoundMode: SecondRoundMode;
   logoDataUrl: string | null;
   // The bundled Speedcubing Canada logo when no custom logo is uploaded.

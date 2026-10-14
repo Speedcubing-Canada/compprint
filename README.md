@@ -84,6 +84,14 @@ long before anyone qualifies for them, and a round scheduled as a bare time bloc
 synthesized so its scorecards still generate; either would otherwise print four empty columns. A
 final that *has* been assigned is kept, and so is a group with staff but no competitors yet.
 
+### A6 scorecards
+
+"Scorecards on A6" (Settings, under the paper format) prints one scorecard per A6 page for
+dedicated A6 printers. Only scorecard PDFs change; every other document keeps the paper format.
+The card is the A4 card (249×373pt, same row heights) centred on the page, and the entries are
+the plain sorted order (`unstackQuadrants` undoes the cut-and-stack reorder and drops padding
+covers), so there is nothing to cut or restack.
+
 ### Splitting scorecards per stage
 
 "One PDF per stage" (Settings > Advanced) turns each round into one file per stage,

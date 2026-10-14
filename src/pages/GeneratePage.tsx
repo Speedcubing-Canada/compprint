@@ -255,7 +255,7 @@ export default function GeneratePage() {
               <p className={s.downloadFilename}>{filename}</p>
             )}
 
-            <PrintGuide jobs={jobs} />
+            <PrintGuide jobs={jobs} a6={settings.scorecardsA6} />
           </>
         )}
       </main>

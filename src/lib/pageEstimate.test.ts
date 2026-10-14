@@ -125,3 +125,11 @@ describe('estimateTotalPages', () => {
     expect(est(parsed, mkSettings())).toBe(4);
   });
 });
+
+describe('estimateTotalPages with A6 scorecards', () => {
+  it('counts one page per card, custom-event blanks included', () => {
+    const custom = { name: 'X', format: 'avg5', cutoff: '', limit: '', iconDataUrl: null } as CustomEvent;
+    expect(est(mkParsed({ firstRound: scards(5) }), mkSettings({ scorecardsA6: true, customEvents: [custom] })))
+      .toBe(5 + 4);
+  });
+});

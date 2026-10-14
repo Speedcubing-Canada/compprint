@@ -6,7 +6,7 @@ import type { Style } from '@react-pdf/types';
 import { EVENT_ICONS } from '../assets/events';
 import { logoState, resolveLogo, showCompNameAboveCompetitor, type LogoState } from '../lib/logo';
 import {
-  SCORECARDS_PER_PAGE, scorecardRowHeight, showLiveIdLine,
+  scorecardsPerPage, scorecardRowHeight, showLiveIdLine,
   PDF_FONT as FONT, PDF_FONT_BOLD as FONT_BOLD,
 } from './layoutConstants';
 import './fontSetup';
@@ -18,6 +18,7 @@ import './fontSetup';
 // A4 uses the same absolute margins/gaps; cardH fills the remaining page height.
 // LETTER: 22+257+53+257+23=612  |  24+345+52+345+26=792
 // A4:     22+249+53+249+22=595  |  22+373+52+373+22=842
+// A6 is one A4-sized card, centred: 24+249+24.6=297.6  |  23+373+23.5=419.5
 
 const CONFIGS = {
   LETTER: {
@@ -37,6 +38,10 @@ const CONFIGS = {
       { left: 22,  top: 447 },
       { left: 324, top: 447 },
     ],
+  },
+  A6: {
+    cardW: 249, cardH: 373,
+    positions: [{ left: 24, top: 23 }],
   },
 } as const;
 
@@ -226,7 +231,8 @@ function ScorecardCard({
                  : [1];                                    // 'bo1-mo3': 1 pre-cutoff row
   const postRows = card.format === 'bo2-avg5' ? [3,4,5] : card.format === 'bo1-mo3' ? [2,3] : [];
   const hasCutoff = card.cutoff !== '';
-  const rowH = scorecardRowHeight(card.format, settings.paperFormat, preRows.length + postRows.length);
+  // A6 reuses the A4 card, so it takes the A4 row heights.
+  const rowH = scorecardRowHeight(card.format, settings.scorecardsA6 ? 'A4' : settings.paperFormat, preRows.length + postRows.length);
 
   return (
     <View style={[styles.card, { position: 'absolute', left: pos.left, top: pos.top, width: cardW, height: cardH }]}>
@@ -374,8 +380,9 @@ interface Props {
 }
 
 export function ScorecardDocument({ entries, settings }: Props) {
-  const size   = settings.paperFormat;
+  const size   = settings.scorecardsA6 ? 'A6' : settings.paperFormat;
   const config = CONFIGS[size];
+  const perPage = scorecardsPerPage(settings.scorecardsA6);
   const cardStrings  = getStrings(settings.language, settings.secondaryLanguage);
   const coverStrings = getStrings(settings.language);
   const logoMode     = logoState(settings);
@@ -383,7 +390,7 @@ export function ScorecardDocument({ entries, settings }: Props) {
   const headerCompNameFs = showCompNameAboveCompetitor(settings)
     ? headerCompNameFontSize(settings.competitionName) : null;
   const pages: ScorecardData[][] = [];
-  for (let i = 0; i < entries.length; i += SCORECARDS_PER_PAGE) pages.push(entries.slice(i, i + SCORECARDS_PER_PAGE));
+  for (let i = 0; i < entries.length; i += perPage) pages.push(entries.slice(i, i + perPage));
 
   return (
     <Document title={`${settings.competitionName} - Scorecards`} author="WCA Scorecard Generator">

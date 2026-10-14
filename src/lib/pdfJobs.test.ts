@@ -2,7 +2,7 @@ import { describe, it, expect } from 'vitest';
 import { buildPdfJobs, downloadTarget, guideSections } from './pdfJobs';
 import type { PdfJob } from './pdfJobs';
 import { filterParsedByScope } from './generationScope';
-import { finalizeEntries, type ParsedWCIF, type ScorecardEntry, type CoverEntry, type NametTagEntry } from './wcif-parser';
+import { finalizeEntries, type ParsedWCIF, type ScorecardData, type ScorecardEntry, type CoverEntry, type NametTagEntry } from './wcif-parser';
 import { MAX_PAGES_PER_SCORECARD_PDF, MAX_PAGES_PER_NAMETAG_PDF } from '../pdf/layoutConstants';
 import type { CompetitionSettings, CustomEvent } from '../types/settings';
 
@@ -553,5 +553,29 @@ describe('splitting a scorecard bucket by stage', () => {
   it('zips the stage files rather than shipping a bare PDF', () => {
     const jobs = split({ firstRound: staged([{ stage: 'blue', count: 4 }, { stage: 'red', count: 4 }]) });
     expect(downloadTarget(jobs, 'Test2026').filename).toBe('Test2026_pdfs.zip');
+  });
+});
+
+// A6 prints one card per page, so the cut-and-stack order and its padding must be gone.
+describe('A6 scorecards', () => {
+  const names = ['Eve', 'Bob', 'Dan', 'Amy', 'Cal'];
+  const entries = (): ScorecardData[] => finalizeEntries([cover(), ...names.map(n => sc(1, n))]);
+  const jobEntries = (a6: boolean) =>
+    (buildPdfJobs(mkParsed({ firstRound: entries() }), mkSettings({ scorecardsA6: a6 }))[0] as
+      Extract<PdfJob, { kind: 'scorecards' }>).entries;
+
+  it('prints in plain sorted order with no padding covers', () => {
+    expect(jobEntries(true).map(e => (e.kind === 'scorecard' ? e.name : 'cover')))
+      .toEqual(['cover', 'Amy', 'Bob', 'Cal', 'Dan', 'Eve']);
+  });
+
+  it('leaves the 4-up order untouched otherwise', () => {
+    expect(jobEntries(false)).toEqual(entries());
+  });
+
+  it('drops the padding from extras but keeps their order', () => {
+    const extras = finalizeEntries([sc(1, 'Zed')]).reverse();
+    const job = buildPdfJobs(mkParsed({ extras }), mkSettings({ scorecardsA6: true }))[0];
+    expect(job.kind === 'scorecards' && job.entries).toEqual(extras.filter(e => e.kind === 'scorecard'));
   });
 });

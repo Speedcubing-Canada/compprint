@@ -1,5 +1,5 @@
 import {
-  finalizeEntries, realEntries,
+  finalizeEntries, realEntries, unstackQuadrants,
   type ScorecardData, type ParsedWCIF, type NametTagEntry,
 } from './wcif-parser';
 import type { CompetitionSettings, CustomEvent } from '../types/settings';
@@ -155,13 +155,20 @@ export function buildPdfJobs(parsed: ParsedWCIF, settings: CompetitionSettings):
   const jobs: PdfJob[] = [];
 
   const stages = settings.splitPdfsByStage === true;
-  jobs.push(...scorecardJobs(parsed.firstRound,   id, 'round1', 'Round 1', stages));
-  jobs.push(...scorecardJobs(parsed.intermediate, id, 'round2', 'Round 2', stages));
-  jobs.push(...scorecardJobs(parsed.semis,        id, 'semis',  'Semis',  stages));
-  jobs.push(...scorecardJobs(parsed.finals,       id, 'finals', 'Finals', stages));
+  // ponytail: A6 still splits on the 4-up page cap, so a part past it is sorted within itself only.
+  const oneUp = (list: PdfJob[]) => settings.scorecardsA6
+    ? list.map(j => (j.kind === 'scorecards' ? { ...j, entries: unstackQuadrants(j.entries) } : j))
+    : list;
+  jobs.push(...oneUp(scorecardJobs(parsed.firstRound,   id, 'round1', 'Round 1', stages)));
+  jobs.push(...oneUp(scorecardJobs(parsed.intermediate, id, 'round2', 'Round 2', stages)));
+  jobs.push(...oneUp(scorecardJobs(parsed.semis,        id, 'semis',  'Semis',  stages)));
+  jobs.push(...oneUp(scorecardJobs(parsed.finals,       id, 'finals', 'Finals', stages)));
   // Never split: extras are not produced by finalizeEntries, so they must not go back through it.
-  if (parsed.extras.length > 0)
-    jobs.push({ kind: 'scorecards', filename: `${id}_extras.pdf`, entries: parsed.extras, label: 'Extras' });
+  // Not quadrant-reordered either, so A6 only drops the padding.
+  if (parsed.extras.length > 0) {
+    const entries = settings.scorecardsA6 ? realEntries(parsed.extras) : parsed.extras;
+    jobs.push({ kind: 'scorecards', filename: `${id}_extras.pdf`, entries, label: 'Extras' });
+  }
   if (parsed.scheduleDays.length > 0)
     jobs.push({ kind: 'schedule', filename: `${id}_schedule.pdf`, label: 'Schedule Tracker' });
   // Already emptied by filterParsedByScope unless the Round Checklist was selected.
