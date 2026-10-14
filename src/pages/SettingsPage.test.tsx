@@ -340,6 +340,35 @@ describe('live results mode', () => {
   });
 });
 
+describe('finals station numbers', () => {
+  const box = () => screen.getByRole('checkbox', { name: 'Print station numbers' }) as HTMLInputElement;
+  const count = () => screen.getByRole('textbox', { name: 'Stations per stage' }) as HTMLInputElement;
+
+  it('shows the detected count and saves a digits-only override', async () => {
+    writeScope(DEFAULT_SCOPE, { showSecondRoundMode: false, multiStage: false, detectedStations: 16 });
+    await renderSettings();
+    fireEvent.click(advancedToggle());
+
+    expect(screen.getByText(/the 16 stations found/)).toBeTruthy();
+    expect(count().placeholder).toBe('16');
+    fireEvent.change(count(), { target: { value: '1a2' } });
+    generate();
+    expect(readSettings()).toMatchObject({ finalStationNumbers: true, stationsPerStage: 12 });
+  });
+
+  it('unticking disables the count and an emptied count saves null', async () => {
+    writeSettings(stored({ stationsPerStage: 8 }));
+    await renderSettings();
+    fireEvent.click(advancedToggle());
+
+    fireEvent.change(count(), { target: { value: '' } });
+    fireEvent.click(box());
+    expect(count().disabled).toBe(true);
+    generate();
+    expect(readSettings()).toMatchObject({ finalStationNumbers: false, stationsPerStage: null });
+  });
+});
+
 // Colour-coded paper per stage. The checkbox is hidden unless the scope step actually saw more
 // than one stage, because the split cannot do anything for a single-room competition.
 describe('per-stage PDF split', () => {
