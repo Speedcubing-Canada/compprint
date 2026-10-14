@@ -14,22 +14,35 @@ export interface Preset {
   settings: PresetSettings;
 }
 
-// Excludes anything competition-specific: ids, logos, custom events, generationScope.
+// Excludes anything competition-specific: ids, custom events, generationScope.
 export type PresetSettings = Partial<Pick<CompetitionSettings,
   | 'language' | 'secondaryLanguage' | 'paperFormat' | 'secondRoundMode'
   | 'useDefaultLogo' | 'hideWcaLiveId'
   | 'nametagLogoMode' | 'nametagQrMode' | 'nametagLayout'
-  | 'scorecardCheckMode'
->>;
+  | 'scorecardCheckMode' | 'scrambleDoubleCheckRegionTop'
+>> & {
+  // A filename in ./logos, for an organization that prints the same logo at every competition.
+  logo?: string;
+};
 
 const DOCUMENT_KEYS: (keyof DocumentSelection)[] = [
   'scorecards', 'scheduleTracker', 'nametags', 'roundChecklist', 'firstTimerSlips',
   'groupOverview',
 ];
 
-// Whitelist of seedable settings keys -> allowed values. `true` means "any boolean";
-// an array means "one of these"; secondaryLanguage additionally accepts null.
-const SETTING_VALUES: Record<keyof PresetSettings, readonly string[] | 'boolean'> = {
+// Filename -> asset URL, so the image stays out of the JS bundle.
+const LOGOS = Object.fromEntries(
+  Object.entries(import.meta.glob('./logos/*.{png,jpg,jpeg}', { eager: true, query: '?url', import: 'default' }))
+    .map(([path, url]) => [path.slice('./logos/'.length), url as string]),
+);
+
+export function presetLogoUrl(name: string | undefined): string | null {
+  return name && Object.hasOwn(LOGOS, name) ? LOGOS[name] : null;
+}
+
+// Whitelist of seedable settings keys -> allowed values. 'boolean' means any boolean, 'count' a
+// positive integer; an array means "one of these"; secondaryLanguage additionally accepts null.
+const SETTING_VALUES: Record<keyof PresetSettings, readonly string[] | 'boolean' | 'count'> = {
   language: ['en', 'fr', 'es', 'pt'],
   secondaryLanguage: ['en', 'fr', 'es', 'pt'],
   paperFormat: ['A4', 'LETTER'],
@@ -40,6 +53,8 @@ const SETTING_VALUES: Record<keyof PresetSettings, readonly string[] | 'boolean'
   nametagQrMode: ['back-only', 'both-sides'],
   nametagLayout: ['vertical', 'horizontal'],
   scorecardCheckMode: ['per-group-card', 'per-round-card', 'none'],
+  scrambleDoubleCheckRegionTop: 'count',
+  logo: Object.keys(LOGOS),
 };
 
 const SETTING_KEYS = Object.keys(SETTING_VALUES) as (keyof PresetSettings)[];
@@ -85,6 +100,8 @@ export function parsePresetSettings(raw: unknown): PresetSettings {
     const allowed = SETTING_VALUES[key];
     if (allowed === 'boolean') {
       if (typeof value === 'boolean') out[key] = value;
+    } else if (allowed === 'count') {
+      if (Number.isInteger(value) && (value as number) > 0) out[key] = value;
     } else if (key === 'secondaryLanguage' && value === null) {
       out[key] = null;
     } else if (typeof value === 'string' && allowed.includes(value)) {

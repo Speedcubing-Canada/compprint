@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest';
 import { getStrings } from '../lib/i18n';
-import { ROW_HEIGHTS, showLiveIdLine } from './layoutConstants';
+import { ROW_HEIGHTS, scorecardRowHeight, showLiveIdLine } from './layoutConstants';
 
 // Layout geometry constraints
 // Dimensions measured from the original Sarah-scorecard LETTER PDF:
@@ -129,6 +129,17 @@ describe('Scorecard attempt-row heights', () => {
     expect(spacer('bo1')).toBeLessThanOrEqual(12);
     expect(Math.abs(spacer('bo1') - spacer('avg5'))).toBeLessThanOrEqual(4);
   });
+
+  // A4 cards are 28pt taller; left to the spacers, that opened a ~20pt gap on each side of
+  // the provisional label. The rows absorb it instead.
+  for (const [fmt, { rows, cutoffLine }] of Object.entries(FORMAT_ROWS)) {
+    it(`${fmt} spacers are the same on A4 as on LETTER`, () => {
+      const spacer = (paper: 'A4' | 'LETTER', innerH: number) => (innerH - FIXED_H
+        - (cutoffLine ? CUTOFF_LINE_H : 0)
+        - (rows + 1) * scorecardRowHeight(fmt as keyof typeof ROW_HEIGHTS, paper, rows)) / 2;
+      expect(spacer('A4', INNER_H + 28)).toBeCloseTo(spacer('LETTER', INNER_H));
+    });
+  }
 });
 
 // Nametag vertical layout geometry

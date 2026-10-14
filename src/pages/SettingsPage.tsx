@@ -14,7 +14,7 @@ import {
   readFileName, readScope, readSettings, writeCustom, writeFileName, writeSettings,
 } from '../lib/flowState';
 import { stageSplitSkipsRound2 } from '../lib/generationScope';
-import { readPresetSettings } from '../presets';
+import { readPresetSettings, presetLogoUrl } from '../presets';
 import { SCC_DEFAULT_LOGO } from '../assets/scc-logo';
 import Header from '../components/Header';
 import WarningBanner from '../components/WarningBanner';
@@ -95,7 +95,7 @@ export default function SettingsPage() {
     secondaryLanguage: preset.secondaryLanguage ?? null,
     paperFormat: preset.paperFormat ?? 'LETTER',
     secondRoundMode: preset.secondRoundMode ?? 'prefilled',
-    logoDataUrl: null,
+    logoDataUrl: presetLogoUrl(preset.logo),
     useDefaultLogo: preset.useDefaultLogo ?? isCanadianLanguage(i18n.resolvedLanguage ?? i18n.language),
     scorecardCompNameWithLogo: false,
     // Overwritten on mount by the competition's own setting, unless modeTouched.
@@ -116,7 +116,7 @@ export default function SettingsPage() {
     scrambleDoubleCheckRounds: isChampionship(competitionName) ? ['finals'] : [],
     scrambleDoubleCheckOverrides: {},
     scrambleDoubleCheckWorldTop: DC_WORLD_TOP_DEFAULT,
-    scrambleDoubleCheckRegionTop: null,
+    scrambleDoubleCheckRegionTop: preset.scrambleDoubleCheckRegionTop ?? null,
     scrambleDoubleCheckRegionScope: 'national',
     customEvents: [],
     ...restorableSettings(previous),
@@ -137,7 +137,7 @@ export default function SettingsPage() {
   } = draft;
 
   // Not part of the draft, but stored so a restored upload isn't nameless.
-  const [logoName, setLogoName] = useState<string | null>(() => readFileName('logo'));
+  const [logoName, setLogoName] = useState<string | null>(() => readFileName('logo') ?? preset.logo ?? null);
   const [wcaLiveFetchStatus, setWcaLiveFetchStatus] = useState<'loading' | 'found' | 'not-found'>('loading');
   // A restored or hand-picked choice beats the WCA record, which may not be updated yet.
   const [modeTouched, setModeTouched] = useState(previous?.liveResultsMode !== undefined);

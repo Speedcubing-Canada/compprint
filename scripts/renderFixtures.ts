@@ -304,6 +304,10 @@ async function main() {
     'scorecard-layout-test.pdf',
     e(ScorecardDocument, { entries: cards, settings: settings() }),
   );
+  await write(
+    'scorecard-layout-test-a4.pdf',
+    e(ScorecardDocument, { entries: cards, settings: settings({ paperFormat: 'A4' }) }),
+  );
 
   console.log(`Rendering schedule tracker (${SCHEDULE_DAYS.length} days)…`);
   await write(

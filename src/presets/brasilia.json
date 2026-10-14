@@ -1,0 +1,16 @@
+{
+  "id": "brasilia",
+  "name": "Brasília",
+  "region": "Brazil",
+  "documents": {
+    "scheduleTracker": false,
+    "nametags": false,
+    "firstTimerSlips": true
+  },
+  "settings": {
+    "language": "pt",
+    "paperFormat": "A4",
+    "scrambleDoubleCheckRegionTop": 15,
+    "logo": "abracm.png"
+  }
+}
