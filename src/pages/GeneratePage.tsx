@@ -236,7 +236,7 @@ export default function GeneratePage() {
             )}
 
             {status === 'ready' && mergesRounds(settings)
-              && hasOversizedPdf(jobs.filter(j => j.kind === 'scorecards'), settings.scorecardsA6) && (
+              && hasOversizedPdf(jobs.filter(j => j.filename.endsWith('_scorecards.pdf')), settings.scorecardsA6) && (
               <WarningBanner>{t('warnings.merge_rounds_large')}</WarningBanner>
             )}
 

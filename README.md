@@ -127,8 +127,9 @@ say so when the combination is selected.
 
 "One PDF for all rounds" (Settings > Advanced, `mergeScorecardRounds`) puts round 1, round 2,
 semis and finals in a single `{id}_scorecards.pdf`, for organizers who print from one file. It is
-off by default and on in the Brasília preset. Each round is already padded to whole sheets, so the
-rounds are concatenated as-is and no printed sheet mixes two rounds. Extras stay in their own file.
+off by default and on in the Brasília preset. The rounds are joined in sorted order and stacked
+once, so the cut deck reads round 1, round 2, semis, finals; a sheet can hold the end of one round
+and the start of the next. A single round keeps its per-round filename. Extras stay in their own file.
 Stage splitting and "Split large files" both win over it, because re-sorting a mixed-round deck
 per stage or event would break the prefilled round 2 order. On a large competition the merged
 file passes the page cap, and /generate warns that it can be slow or fail (see below).

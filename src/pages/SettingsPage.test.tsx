@@ -423,6 +423,33 @@ describe('per-stage PDF split', () => {
   });
 });
 
+// The stage split re-sorts every bucket, so it wins over the merge and the toggle says so.
+describe('one PDF for all rounds', () => {
+  const box = () => screen.getByRole('checkbox', { name: /One PDF for all rounds/ }) as HTMLInputElement;
+
+  it('is seeded from the preset and saved', async () => {
+    writePresetSettings({ mergeScorecardRounds: true });
+    await renderSettings();
+    fireEvent.click(advancedToggle());
+    expect(box().checked).toBe(true);
+    generate();
+    expect(readSettings()?.mergeScorecardRounds).toBe(true);
+  });
+
+  it('greys out and says why once scorecards are split per stage', async () => {
+    writeScope(DEFAULT_SCOPE, { showSecondRoundMode: false, multiStage: true });
+    writeSettings(stored({ mergeScorecardRounds: true }));
+    await renderSettings();
+    fireEvent.click(advancedToggle());
+    expect(box().disabled).toBe(false);
+
+    fireEvent.click(screen.getByRole('checkbox', { name: /One PDF per stage/ }));
+    expect(box().disabled).toBe(true);
+    expect(box().checked).toBe(false);
+    expect(screen.getByText(/Not available while scorecards are split per stage/)).toBeTruthy();
+  });
+});
+
 // `on_the_spot_registration` seeds the blanks and shows what to fix by hand.
 describe('on-the-spot registration', () => {
   const box = () => screen.getByRole('checkbox', { name: /Add blanks for on-the-spot/ }) as HTMLInputElement;

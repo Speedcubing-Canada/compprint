@@ -14,6 +14,7 @@ import {
   readFileName, readScope, readSettings, writeCustom, writeFileName, writeSettings,
 } from '../lib/flowState';
 import { stageSplitSkipsRound2 } from '../lib/generationScope';
+import { mergesRounds } from '../lib/pdfJobs';
 import { readPresetSettings, presetLogoUrl } from '../presets';
 import { SCC_DEFAULT_LOGO } from '../assets/scc-logo';
 import Header from '../components/Header';
@@ -135,10 +136,11 @@ export default function SettingsPage() {
     language, secondaryLanguage, paperFormat, secondRoundMode, logoDataUrl, useDefaultLogo,
     scorecardCompNameWithLogo,
     liveResultsMode, wcaLiveId, hideWcaLiveId, nametagLogoMode, nametagQrMode, nametagLayout,
-    scorecardCheckMode, customEvents, splitPdfsByStage, mergeScorecardRounds, scrambleDoubleCheckRounds,
+    scorecardCheckMode, customEvents, splitPdfsByStage, scrambleDoubleCheckRounds,
     scrambleDoubleCheckOverrides, scrambleDoubleCheckWorldTop, scrambleDoubleCheckRegionTop,
     scrambleDoubleCheckRegionScope, otsBlanks, finalStationNumbers, stationsPerStage, scorecardsA6,
   } = draft;
+  const merged = mergesRounds(draft);
 
   // Not part of the draft, but stored so a restored upload isn't nameless.
   const [logoName, setLogoName] = useState<string | null>(() => readFileName('logo') ?? preset.logo ?? null);
@@ -889,29 +891,6 @@ export default function SettingsPage() {
                 </div>
               </section>
 
-              {!isCustom && (
-                <section className={s.section}>
-                  <h3 className={ui.sectionHeading}>
-                    {t('settings.advanced.merge_rounds_title')}
-                  </h3>
-                  <label className={`${ui.toggleCard} ${mergeScorecardRounds && !splitPdfsByStage ? ui.toggleCardActive : ''}`}>
-                    <input
-                      type="checkbox"
-                      checked={mergeScorecardRounds && !splitPdfsByStage}
-                      disabled={splitPdfsByStage}
-                      onChange={e => patch({ mergeScorecardRounds: e.target.checked })}
-                      className={ui.radio}
-                    />
-                    <div>
-                      <div className={ui.optionLabel}>{t('settings.advanced.merge_rounds_label')}</div>
-                      <div className={ui.optionDesc}>
-                        {t(splitPdfsByStage ? 'settings.advanced.merge_rounds_stage_split' : 'settings.advanced.merge_rounds_desc')}
-                      </div>
-                    </div>
-                  </label>
-                </section>
-              )}
-
               {multiStage && (
                 <section className={s.section}>
                   <h3 className={ui.sectionHeading}>
@@ -936,6 +915,27 @@ export default function SettingsPage() {
                   )}
                 </section>
               )}
+
+              <section className={s.section}>
+                <h3 className={ui.sectionHeading}>
+                  {t('settings.advanced.merge_rounds_title')}
+                </h3>
+                <label className={`${ui.toggleCard} ${merged ? ui.toggleCardActive : ''}`}>
+                  <input
+                    type="checkbox"
+                    checked={merged}
+                    disabled={splitPdfsByStage}
+                    onChange={e => patch({ mergeScorecardRounds: e.target.checked })}
+                    className={ui.radio}
+                  />
+                  <div>
+                    <div className={ui.optionLabel}>{t('settings.advanced.merge_rounds_label')}</div>
+                    <div className={ui.optionDesc}>
+                      {t(splitPdfsByStage ? 'settings.advanced.merge_rounds_stage_split' : 'settings.advanced.merge_rounds_desc')}
+                    </div>
+                  </div>
+                </label>
+              </section>
 
               {everything && (
                 <section className={s.section}>

@@ -2,7 +2,7 @@ import { describe, it, expect } from 'vitest';
 import { buildPdfJobs, downloadTarget, guideSections, hasOversizedPdf } from './pdfJobs';
 import type { PdfJob } from './pdfJobs';
 import { filterParsedByScope } from './generationScope';
-import { finalizeEntries, type ParsedWCIF, type ScorecardData, type ScorecardEntry, type CoverEntry, type NametTagEntry } from './wcif-parser';
+import { finalizeEntries, stackQuadrants, type ParsedWCIF, type ScorecardData, type ScorecardEntry, type CoverEntry, type NametTagEntry } from './wcif-parser';
 import { MAX_PAGES_PER_SCORECARD_PDF, MAX_PAGES_PER_NAMETAG_PDF } from '../pdf/layoutConstants';
 import type { CompetitionSettings, CustomEvent } from '../types/settings';
 
@@ -302,12 +302,37 @@ describe('merging every round into one scorecard PDF', () => {
   });
   const names = (jobs: PdfJob[]) => jobs.map(j => j.filename);
 
-  it('emits one PDF holding each round in order, extras still apart', () => {
-    const jobs = buildPdfJobs(rounds, mkSettings({ mergeScorecardRounds: true }));
-    expect(names(jobs)).toEqual(['Test2026_scorecards.pdf', 'Test2026_extras.pdf']);
-    expect((jobs[0] as Extract<PdfJob, { kind: 'scorecards' }>).entries).toEqual([
-      ...rounds.firstRound, ...rounds.intermediate, ...rounds.semis, ...rounds.finals,
-    ]);
+  it('emits one PDF and leaves extras apart', () => {
+    expect(names(buildPdfJobs(rounds, mkSettings({ mergeScorecardRounds: true }))))
+      .toEqual(['Test2026_scorecards.pdf', 'Test2026_extras.pdf']);
+  });
+
+  // The print guide: cut every sheet, then stack the top-left, top-right, bottom-left and
+  // bottom-right piles. Joining per-round stacks interleaved the rounds in that deck.
+  it('cuts and stacks into each round in turn, keeping prefilled round 2 unsorted', () => {
+    const cards = (round: number, ns: string[]) => ns.map(n => sc(round, n));
+    const firstRound = finalizeEntries(cards(1, ['A0', 'A1', 'A2', 'A3', 'A4', 'A5']));
+    const intermediate = stackQuadrants(cards(2, ['B2', 'B0', 'B1']));
+    const jobs = buildPdfJobs(mkParsed({ firstRound, intermediate }), mkSettings({ mergeScorecardRounds: true }));
+    const { entries } = jobs[0] as Extract<PdfJob, { kind: 'scorecards' }>;
+    expect(entries.length % 4).toBe(0);
+    const piles = [0, 1, 2, 3].flatMap(q => entries.filter((_, i) => i % 4 === q));
+    expect(piles.flatMap(e => (e.kind === 'scorecard' ? [e.name] : [])))
+      .toEqual(['A0', 'A1', 'A2', 'A3', 'A4', 'A5', 'B2', 'B0', 'B1']);
+  });
+
+  it('prints each round in turn, unpadded, on A6', () => {
+    const firstRound = finalizeEntries([sc(1, 'A1'), sc(1, 'A0')]);
+    const finals = finalizeEntries([sc(4, 'D0')]);
+    const jobs = buildPdfJobs(mkParsed({ firstRound, finals }), mkSettings({ mergeScorecardRounds: true, scorecardsA6: true }));
+    expect((jobs[0] as Extract<PdfJob, { kind: 'scorecards' }>).entries.map(e => e.kind === 'scorecard' && e.name))
+      .toEqual(['A0', 'A1', 'D0']);
+  });
+
+  // "Latest round only" reprints must still say which round they are.
+  it('keeps the round name when only one round has cards', () => {
+    const jobs = buildPdfJobs(mkParsed({ finals: [sc(4, 'D')] }), mkSettings({ mergeScorecardRounds: true }));
+    expect(names(jobs)).toEqual(['Test2026_finals.pdf']);
   });
 
   it('gives way to the stage split and the large-file split', () => {
