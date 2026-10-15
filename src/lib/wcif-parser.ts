@@ -50,6 +50,12 @@ export interface FirstTimerEntry {
   blank?: boolean;
 }
 
+// Drops the "(local name)" suffix. NFC, since the PDF fonts have accented letters but no
+// standalone combining marks (a decomposed ư would lose its horn).
+function printedName(name: string): string {
+  return name.replace(/ \(.*\)$/, '').normalize('NFC');
+}
+
 function buildDuties(
   assignments: Assignment[],
   code: Assignment['assignmentCode'],
@@ -792,7 +798,7 @@ export function parseWCIF(wcif: WCIF, settings: CompetitionSettings): ParsedWCIF
   for (const person of wcif.persons) {
     if (!person.registration || person.registration.status !== 'accepted') continue;
 
-    const name = person.name.replace(/ \(.*\)$/, '');
+    const name = printedName(person.name);
     const isFemale = person.gender === 'f';
     const wcaId = person.wcaId
       ? person.wcaId
@@ -1139,7 +1145,7 @@ export function parseWCIF(wcif: WCIF, settings: CompetitionSettings): ParsedWCIF
   for (const person of wcif.persons) {
     if (!person.registration || person.registration.status !== 'accepted') continue;
 
-    const name = person.name.replace(/ \(.*\)$/, '');
+    const name = printedName(person.name);
     const isFemale = person.gender === 'f';
 
     // Newcomers (no WCA ID) get a first-timer confirmation slip.
@@ -1461,7 +1467,7 @@ export function parseWCIF(wcif: WCIF, settings: CompetitionSettings): ParsedWCIF
 
   for (const person of wcif.persons) {
     if (!person.registration || person.registration.status !== 'accepted') continue;
-    const name = person.name.replace(/ \(.*\)$/, '');
+    const name = printedName(person.name);
     for (const a of person.assignments) {
       const bucket = overviewBuckets.get(a.activityId);
       if (!bucket) continue;

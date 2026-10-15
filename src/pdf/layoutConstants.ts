@@ -1,12 +1,16 @@
-import type { LiveResultsMode, PaperFormat } from '../types/settings';
+import type { LiveResultsMode, NametTagLogoMode, PaperFormat } from '../types/settings';
 
 // Shared by the PDF documents (worker) and the page-count estimator (main thread).
 // Must stay free of any @react-pdf import, or the estimator drags the PDF engine into
 // the main bundle.
 
-// One of the 14 PDF base fonts: no embedding, identical in every viewer.
-export const PDF_FONT = 'Helvetica';
-export const PDF_FONT_BOLD = 'Helvetica-Bold';
+// One of the 14 PDF base fonts: no embedding, identical in every viewer. Letters outside
+// WinAnsi (Ł, ư, ễ...) fall through, per glyph, to an embedded Helvetica clone
+// (scripts/makeScorecardSans.py), so PDFs without them embed nothing.
+export const PDF_FONT_EXT = 'ScorecardSans';
+export const PDF_FONT_BOLD_EXT = 'ScorecardSans-Bold';
+export const PDF_FONT = ['Helvetica', PDF_FONT_EXT];
+export const PDF_FONT_BOLD = ['Helvetica-Bold', PDF_FONT_BOLD_EXT];
 
 // Schedule tracker and Round Checklist share a clipboard, so they share their chrome.
 // Row tint stays light enough to photocopy.
@@ -27,6 +31,13 @@ export const scorecardsPerPage = (a6: boolean) => (a6 ? 1 : SCORECARDS_PER_PAGE)
 // LETTER: 22+257+53+257+23=612  |  24+345+52+345+26=792
 // A4:     22+249+53+249+22=595  |  22+373+52+373+22=842
 // A6 is one A4-sized card, centred: 24+249+24.6=297.6  |  23+373+23.5=419.5
+
+// Scorecard header: card border and padding, the left cell (logo or comp name) and the name
+// cell beside it. idLineH and compNameLineH are the rendered lines under/over the name.
+export const SCORECARD_HEADER = {
+  h: 56, cardBorder: 1.5, cardPadH: 3, logoCellW: 80, compNameCellW: 26, nameCellPadH: 3,
+  idLineH: 11, compNameLineH: 12,
+} as const;
 
 export const SCORECARD_CONFIGS = {
   LETTER: {
@@ -83,6 +94,26 @@ export const NAMETAGS_PER_PAGE = 4;
 
 // Same cap, same choice.
 export const MAX_PAGES_PER_NAMETAG_PDF = 250;
+
+// Vertical name tag panels.
+export const NAMETAG_CONFIGS = {
+  LETTER: { panelW: 189, panelH: 292, margin: 12, gapH: 4, gapV: 4 },
+  A4:     { panelW: 201, panelH: 283, margin: 12, gapH: 4, gapV: 4 },
+} as const;
+
+// Empirical top-section height, for the duty font-size estimate. 'logo-only' adds ~19pt of
+// header (28pt logo vs 8.5pt text); compact compresses it to fit the 147pt card.
+export function nametagTopSectionH(logoMode: NametTagLogoMode, compact = false) {
+  if (compact) return logoMode === 'logo-only' ? 75 : 65;
+  return logoMode === 'logo-only' ? 146 : 127;
+}
+
+// Vertical top section minus all but the name: header, badge (22 + 4), icons (6 + 12 + 4),
+// WCA ID (13pt line + 4) and the name's own 6pt margin. More and the badge drops.
+export function nametagNameH(logoMode: NametTagLogoMode) {
+  const header = logoMode === 'hidden' ? 8.5 * 1.1 + 4 : logoMode === 'with-name' ? 20 + 3 : 28 + 4;
+  return nametagTopSectionH(logoMode) - header - 26 - 22 - (13 * 1.1 + 4) - 6;
+}
 
 // The compact layout is tight enough that the QR side must stay uncluttered.
 export function eventIconsVisible({ isQrSide, compact }: { isQrSide: boolean; compact: boolean }): boolean {

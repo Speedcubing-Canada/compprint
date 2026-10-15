@@ -7,10 +7,12 @@ import { getNametTagStrings, type NametTagStrings } from '../lib/i18n';
 import { resolveLogo } from '../lib/logo';
 import { qrPathData } from './qrPath';
 import {
-  NAMETAGS_PER_PAGE, eventIconsVisible, liveQrTarget,
+  NAMETAGS_PER_PAGE, NAMETAG_CONFIGS, eventIconsVisible, liveQrTarget, nametagNameH,
+  nametagTopSectionH as topSectionH,
   PDF_FONT as FONT, PDF_FONT_BOLD as FONT_BOLD,
 } from './layoutConstants';
 import './fontSetup';
+import { nametagName, NAME_LINE_HEIGHT } from './nameFit';
 
 
 // Vertical layout: landscape page, 4 slots wide × 2 tall = 8 slots = 4 pairs.
@@ -27,10 +29,7 @@ import './fontSetup';
 //   Cards are landscape (244x147pt LETTER = 86x52mm) and slot straight in, no rotation.
 //   Sized for 90x55mm badge holders with ~2mm clearance per edge.
 
-const CONFIGS = {
-  LETTER: { panelW: 189, panelH: 292, margin: 12, gapH: 4, gapV: 4 },
-  A4:     { panelW: 201, panelH: 283, margin: 12, gapH: 4, gapV: 4 },
-} as const;
+const CONFIGS = NAMETAG_CONFIGS;
 
 // Both paper formats use the same card size: the badge holder dictates it, not the paper.
 const H_CONFIGS = {
@@ -59,11 +58,6 @@ function QrSvg({ url, size }: { url: string; size: number }) {
 }
 
 const NBSP = ' ';
-
-function nameFontSize(name: string, panelW: number) {
-  const avail = panelW - 14;
-  return Math.min(20, Math.max(9, Math.floor(avail / Math.max(name.length * 0.55, 1))));
-}
 
 function badgeColors(role: NametTagRole) {
   if (role === 'delegate' || role === 'organizer')
@@ -105,14 +99,13 @@ function PanelTop({ entry, panelW, compName, titleText, logoMode, logoDataUrl, c
   compact?: boolean; showWcaId?: boolean; showEvents?: boolean;
 }) {
   const { bg, fg } = badgeColors(entry.role);
-  const maxNameFs = compact ? 14 : 20;
-  const nameFs = Math.min(maxNameFs, nameFontSize(entry.name, panelW));
+  const name = nametagName(entry.name, panelW, nametagNameH(logoMode), compact);
   const iconSz = compact ? 9 : 12;
   // Compact tags top-pack with equal gaps on both sides, so the role badge lands at the same
   // Y on front and back and the two align across the pair. Event icons follow the badge, so
   // hiding them on the QR side does not move it.
   const compNameStyle = compact ? [s.compName, { fontSize: 7, marginBottom: 4 }] : s.compName;
-  const nameStyle = compact ? [s.name, { fontSize: nameFs, marginBottom: 4 }] : [s.name, { fontSize: nameFs }];
+  const nameStyle = compact ? [s.name, { fontSize: name.fontSize, marginBottom: 4 }] : [s.name, { fontSize: name.fontSize }];
   const badgeStyle = compact
     ? [s.badge, { backgroundColor: bg, marginBottom: 2 }]
     : [s.badge, { backgroundColor: bg }];
@@ -129,7 +122,7 @@ function PanelTop({ entry, panelW, compName, titleText, logoMode, logoDataUrl, c
       ) : (
         <Text style={compNameStyle}>{compName}</Text>
       )}
-      <Text style={nameStyle}>{entry.name}</Text>
+      <Text style={[...nameStyle, { lineHeight: NAME_LINE_HEIGHT }]}>{name.text}</Text>
       {!compact && <View style={{ flex: 1 }} />}
       <View style={badgeStyle}>
         <Text style={[s.badgeText, { color: fg }]}>{titleText}</Text>
@@ -175,13 +168,6 @@ function QrSection({ entry, qr, qrSize, compact = false }: {
       </View>
     </View>
   );
-}
-
-// Empirical top-section height, for the duty font-size estimate. 'logo-only' adds ~19pt of
-// header (28pt logo vs 8.5pt text); compact compresses it to fit the 147pt card.
-function topSectionH(logoMode: NametTagLogoMode, compact = false) {
-  if (compact) return logoMode === 'logo-only' ? 75 : 65;
-  return logoMode === 'logo-only' ? 146 : 127;
 }
 
 // Positions one card in its grid slot; border, padding and content live on the inner View.

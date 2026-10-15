@@ -59,6 +59,21 @@ the competition name, or the competition name only. A custom logo drops the name
 that don't contain it, "Show the competition name on scorecards" (settings, logo section) prints
 it in small type above the competitor's name. The line shrinks to fit long names (5pt minimum).
 
+### Competitor names
+
+Scorecard names are measured with real Helvetica-Bold widths and sized up to 18pt. A name splits
+over two lines, at a space or after a hyphen, when one line would drop under 11pt or two lines
+print at least 3pt bigger; the originals keep 13pt+ names on one line. Vertical name tags keep
+the originals' length-based size on one line and split once two lines print at least 2pt bigger
+(up to 20pt), within the height left above the badge in each logo mode.
+
+The PDFs use the built-in Helvetica, which only covers Western European letters. Any other Latin
+or Greek letter (Polish `Ł`, Vietnamese `ư`, Czech `ř`...) falls back, letter by letter, to
+Scorecard Sans, a Helvetica clone embedded only in PDFs that need it. This applies to every PDF
+text, competition names included. Cyrillic, CJK and other scripts are still not covered. The font
+is TeX Gyre Heros (GUST Font License, `src/pdf/fonts/LICENSE.txt`) with its line height set to
+match react-pdf's built-in Helvetica, built by `scripts/makeScorecardSans.py`.
+
 ### Stages
 
 Competitions model stages two ways, and both are recognised. Most give each stage its own WCIF

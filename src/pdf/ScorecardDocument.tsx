@@ -6,12 +6,13 @@ import type { Style } from '@react-pdf/types';
 import { EVENT_ICONS } from '../assets/events';
 import { logoState, resolveLogo, showCompNameAboveCompetitor, type LogoState } from '../lib/logo';
 import {
-  SCORECARD_CONFIGS as CONFIGS, scorecardsPerPage, scorecardRowHeight, showLiveIdLine,
+  SCORECARD_CONFIGS as CONFIGS, SCORECARD_HEADER as H, scorecardsPerPage, scorecardRowHeight, showLiveIdLine,
   PDF_FONT as FONT, PDF_FONT_BOLD as FONT_BOLD,
 } from './layoutConstants';
 import './fontSetup';
+import { nameBox, nameLayout, NAME_LINE_HEIGHT } from './nameFit';
 
-const BORDER      = '1.5pt solid black';
+const BORDER      = `${H.cardBorder}pt solid black`;
 const BORDER_THIN = '1pt solid black';
 
 // Column widths: match HTML original proportions 75/55/290/70/70 out of 560px
@@ -34,16 +35,6 @@ function coverEventFontSize(text: string): number {
   return Math.min(18, Math.max(10, Math.floor(available / Math.max(text.length * 0.6, 1))));
 }
 
-// Scale name font to fit the nameCell on one line (Helvetica-Bold ~0.65pt/pt/char).
-// Card inner width ≈ 248pt (257 - 2×border - 2×paddingH).
-//   'custom'  → 80pt logo cell           → nameCell ≈ 162pt → available ≈ 158pt
-//   'default' → 80pt comp name + logo    → nameCell ≈ 162pt → available ≈ 158pt
-//   'none'    → 26pt comp name cell      → nameCell ≈ 216pt → available ≈ 210pt
-function nameFontSize(name: string, state: 'custom' | 'default' | 'none'): number {
-  const available = state === 'none' ? 210 : 158;
-  return Math.min(18, Math.max(7, Math.floor(available / Math.max(name.length * 0.65, 1))));
-}
-
 // Comp name line above the competitor name: shrinks to stay on one line in the 158pt name cell
 // (Helvetica ~0.5pt/pt/char).
 function headerCompNameFontSize(name: string): number {
@@ -56,22 +47,22 @@ const styles = StyleSheet.create({
   card: {
     border: BORDER, borderRadius: 7.5,
     paddingTop: 5, paddingBottom: 5,
-    paddingHorizontal: 3,
+    paddingHorizontal: H.cardPadH,
     fontFamily: FONT, overflow: 'hidden',
   },
 
   // Header (comp name | logo | competitor name + id)
-  header: { flexDirection: 'row', height: 56 },
-  compNameCell: { width: 26, justifyContent: 'center', alignItems: 'center' },
+  header: { flexDirection: 'row', height: H.h },
+  compNameCell: { width: H.compNameCellW, justifyContent: 'center', alignItems: 'center' },
   compNameText: { fontSize: 8, textAlign: 'center', color: '#111' },
-  logoCell: { width: 80, justifyContent: 'center', alignItems: 'center' },
+  logoCell: { width: H.logoCellW, justifyContent: 'center', alignItems: 'center' },
   logoImg: { width: 54, height: 54, objectFit: 'contain' },
   // Default-logo cell: comp name text (left) + SCC logo (right), both centred vertically
-  defaultLogoCell: { width: 80, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', paddingHorizontal: 2 },
+  defaultLogoCell: { width: H.logoCellW, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', paddingHorizontal: 2 },
   defaultCompNameText: { fontSize: 7.5, textAlign: 'center', color: '#111', flex: 1, paddingRight: 2 },
   defaultLogoImg: { width: 30, height: 30, objectFit: 'contain' },
-  nameCell: { flex: 1, justifyContent: 'center', alignItems: 'center', paddingHorizontal: 3 },
-  nameText: { fontFamily: FONT_BOLD, textAlign: 'center' },
+  nameCell: { flex: 1, justifyContent: 'center', alignItems: 'center', paddingHorizontal: H.nameCellPadH },
+  nameText: { fontFamily: FONT_BOLD, textAlign: 'center', lineHeight: NAME_LINE_HEIGHT },
   headerCompNameText: { textAlign: 'center', color: '#111', marginBottom: 3 },
   idText: { fontSize: 7.5, textAlign: 'center', marginTop: 2, color: '#222' },
 
@@ -197,6 +188,10 @@ function ScorecardCard({
                  : [1];                                    // 'bo1-mo3': 1 pre-cutoff row
   const postRows = card.format === 'bo2-avg5' ? [3,4,5] : card.format === 'bo1-mo3' ? [2,3] : [];
   const hasCutoff = card.cutoff !== '';
+  const leftCell = headerLogo && logoMode === 'custom' ? 'logo'
+    : headerLogo && logoMode === 'default' ? 'compNameLogo' : 'compName';
+  const box = nameBox(cardW, leftCell !== 'compName', headerCompNameFs !== null);
+  const name = nameLayout(card.name, box.w, box.h);
   // A6 reuses the A4 card, so it takes the A4 row heights.
   const rowH = scorecardRowHeight(card.format, settings.scorecardsA6 ? 'A4' : settings.paperFormat, preRows.length + postRows.length);
 
@@ -204,11 +199,11 @@ function ScorecardCard({
     <View style={[styles.card, { position: 'absolute', left: pos.left, top: pos.top, width: cardW, height: cardH }]}>
       {/* Header: custom logo (alone) | comp name + SCC logo | comp name only */}
       <View style={styles.header}>
-        {logoMode === 'custom' && headerLogo ? (
+        {leftCell === 'logo' && headerLogo ? (
           <View style={styles.logoCell}>
             <Image src={headerLogo} style={styles.logoImg} />
           </View>
-        ) : logoMode === 'default' && headerLogo ? (
+        ) : leftCell === 'compNameLogo' && headerLogo ? (
           <View style={styles.defaultLogoCell}>
             <Text style={styles.defaultCompNameText}>{settings.competitionName}</Text>
             <Image src={headerLogo} style={styles.defaultLogoImg} />
@@ -222,8 +217,8 @@ function ScorecardCard({
           {headerCompNameFs !== null && (
             <Text style={[styles.headerCompNameText, { fontSize: headerCompNameFs }]}>{settings.competitionName}</Text>
           )}
-          <Text style={[styles.nameText, { fontSize: nameFontSize(card.name || ' ', logoMode) }]}>
-            {card.name || ' '}
+          <Text style={[styles.nameText, { fontSize: name.fontSize }]}>
+            {name.text}
           </Text>
           <Text style={styles.idText}>
             {card.wcaId}{showLiveIdLine(settings.hideWcaLiveId, card.liveId) && <>{'    '}WCA Live: <Text style={{ fontFamily: FONT_BOLD }}>{card.liveId}</Text></>}
