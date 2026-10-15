@@ -93,8 +93,8 @@ export interface CompetitionSettings {
   // One scorecard PDF per stage instead of one per round, for printing each stage on its own
   // paper colour. Only splits rounds where every card knows its stage and 2+ stages ran.
   splitPdfsByStage: boolean;
-  // Splits win over it: re-finalizing a mixed-round deck would re-sort prefilled round 2.
-  mergeScorecardRounds: boolean;
+  // One scorecard PDF for every round; both splits win over it. Missing from older blobs.
+  mergeScorecardRounds?: boolean;
   // One page each of blank name tags, first-timer slips and scorecards for people registered
   // on the day. Seeded from the competition's `on_the_spot_registration` flag.
   otsBlanks: boolean;

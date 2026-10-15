@@ -20,7 +20,7 @@ const cmp = (a: string, b: string) => (a < b ? -1 : a > b ? 1 : 0);
  * the worker, not on every render of the generate page.
  */
 export type PdfJob =
-  | { kind: 'scorecards';   filename: string; label: string; entries: ScorecardData[] }
+  | { kind: 'scorecards';   filename: string; label: string; entries: ScorecardData[]; mergedRounds?: true }
   | { kind: 'nametags';     filename: string; label: string; nametags: NametTagEntry[] }
   | { kind: 'schedule';     filename: string; label: string }
   | { kind: 'checking';     filename: string; label: string }
@@ -182,19 +182,24 @@ export function buildPdfJobs(parsed: ParsedWCIF, settings: CompetitionSettings):
   // The parser hands back the 4-up order; A6 unstacks it before any split, so each part is a
   // contiguous run of the sorted deck.
   const bucket = (list: ScorecardData[]) => (a6 ? unstackQuadrants(list) : list);
-  const rounds: [ScorecardData[], string, string][] = [
-    [parsed.firstRound, 'round1', 'Round 1'], [parsed.intermediate, 'round2', 'Round 2'],
-    [parsed.semis, 'semis', 'Semis'], [parsed.finals, 'finals', 'Finals'],
+  const rounds = [
+    { list: parsed.firstRound, slug: 'round1', label: 'Round 1' },
+    { list: parsed.intermediate, slug: 'round2', label: 'Round 2' },
+    { list: parsed.semis, slug: 'semis', label: 'Semis' },
+    { list: parsed.finals, slug: 'finals', label: 'Finals' },
   ];
-  const merge = mergesRounds(settings) && rounds.filter(([list]) => list.length > 0).length > 1;
-  // Joined in sorted 1-up order, then stacked once: per-round stacks would interleave rounds
-  // once the sheets are cut. No re-sort, so prefilled round 2 keeps its order.
-  const sorted = () => rounds.flatMap(([list]) => unstackQuadrants(list));
-  const groups: [ScorecardData[], string, string][] = merge
-    ? [[a6 ? sorted() : stackQuadrants(sorted()), 'scorecards', 'Scorecards']]
-    : rounds.map(([list, slug, label]) => [bucket(list), slug, label]);
-  for (const [entries, slug, label] of groups)
-    jobs.push(...scorecardJobs(entries, id, slug, label, stages, a6, splitLarge));
+  if (mergesRounds(settings) && rounds.filter(r => r.list.length > 0).length > 1) {
+    // Joined in sorted 1-up order, then stacked once: per-round stacks would interleave rounds
+    // once the sheets are cut. No re-sort, so prefilled round 2 keeps its order. Never split.
+    const oneUp = rounds.flatMap(r => unstackQuadrants(r.list));
+    jobs.push({
+      kind: 'scorecards', filename: `${id}_scorecards.pdf`, label: 'Scorecards',
+      entries: a6 ? oneUp : stackQuadrants(oneUp), mergedRounds: true,
+    });
+  } else {
+    for (const r of rounds)
+      jobs.push(...scorecardJobs(bucket(r.list), id, r.slug, r.label, stages, a6, splitLarge));
+  }
   // Never split: extras are not produced by finalizeEntries, so they must not go back through it.
   if (parsed.extras.length > 0)
     jobs.push({ kind: 'scorecards', filename: `${id}_extras.pdf`, entries: parsed.extras, label: 'Extras' });

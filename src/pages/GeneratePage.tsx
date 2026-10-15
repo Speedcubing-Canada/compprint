@@ -10,7 +10,7 @@ import { parseWCIF, emptyParsedWcif, type ParsedWCIF } from '../lib/wcif-parser'
 import { filterParsedByScope, hasUnassignedIntermediate, stageSplitSkipsRound2, type GenerationScope } from '../lib/generationScope';
 import { estimateTotalPages } from '../lib/pageEstimate';
 import { customEventCardCount } from '../lib/customScorecards';
-import { buildPdfJobs, downloadTarget, hasOversizedPdf, mergesRounds } from '../lib/pdfJobs';
+import { buildPdfJobs, downloadTarget, hasOversizedPdf } from '../lib/pdfJobs';
 import { MAX_PAGES_PER_SCORECARD_PDF } from '../pdf/layoutConstants';
 import * as analytics from '../lib/analytics';
 import { readPresetId } from '../presets';
@@ -235,8 +235,8 @@ export default function GeneratePage() {
               <WarningBanner>{t('warnings.stage_split_prefilled')}</WarningBanner>
             )}
 
-            {status === 'ready' && mergesRounds(settings)
-              && hasOversizedPdf(jobs.filter(j => j.filename.endsWith('_scorecards.pdf')), settings.scorecardsA6) && (
+            {status === 'ready'
+              && hasOversizedPdf(jobs.filter(j => j.kind === 'scorecards' && j.mergedRounds), settings.scorecardsA6) && (
               <WarningBanner>{t('warnings.merge_rounds_large')}</WarningBanner>
             )}
 

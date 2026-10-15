@@ -423,7 +423,6 @@ describe('per-stage PDF split', () => {
   });
 });
 
-// The stage split re-sorts every bucket, so it wins over the merge and the toggle says so.
 describe('one PDF for all rounds', () => {
   const box = () => screen.getByRole('checkbox', { name: /One PDF for all rounds/ }) as HTMLInputElement;
 
@@ -434,6 +433,27 @@ describe('one PDF for all rounds', () => {
     expect(box().checked).toBe(true);
     generate();
     expect(readSettings()?.mergeScorecardRounds).toBe(true);
+  });
+
+  it('takes the preset over a blob saved before the setting existed', async () => {
+    writePresetSettings({ mergeScorecardRounds: true });
+    const old = stored();
+    delete old.mergeScorecardRounds;
+    writeSettings(old);
+    await renderSettings();
+    fireEvent.click(advancedToggle());
+    expect(box().checked).toBe(true);
+  });
+
+  // The stage-split toggle is hidden there, so nothing could undo a restored `true`.
+  it('ignores a restored stage split on a single-stage competition', async () => {
+    writeSettings(stored({ splitPdfsByStage: true, mergeScorecardRounds: true }));
+    await renderSettings();
+    fireEvent.click(advancedToggle());
+    expect(box().disabled).toBe(false);
+    expect(box().checked).toBe(true);
+    generate();
+    expect(readSettings()?.splitPdfsByStage).toBe(false);
   });
 
   it('greys out and says why once scorecards are split per stage', async () => {

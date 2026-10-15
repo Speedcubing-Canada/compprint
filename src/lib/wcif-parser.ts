@@ -372,8 +372,7 @@ export function finalizeEntries(entries: ScorecardData[]): ScorecardData[] {
     const bn = b.kind === 'scorecard' ? b.name : '';
     return byName(an, bn);
   });
-  padToMultipleOfFour(entries);
-  return reorderQuadrants(entries);
+  return stackQuadrants(entries);
 }
 
 // Intermediate prefilled finalize: sort by timeslot → eventId → cover-before-scorecard → name.
@@ -388,8 +387,7 @@ function finalizeEntriesIntermediate(entries: ScorecardData[]): ScorecardData[] 
     const bn = b.kind === 'scorecard' ? b.name : '';
     return byName(an, bn);
   });
-  padToMultipleOfFour(entries);
-  return reorderQuadrants(entries);
+  return stackQuadrants(entries);
 }
 
 // Group words that precede a group number in a group activity name, across locales.

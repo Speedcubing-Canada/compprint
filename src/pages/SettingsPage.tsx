@@ -125,6 +125,8 @@ export default function SettingsPage() {
     scrambleDoubleCheckRegionScope: 'national',
     customEvents: [],
     ...restorableSettings(previous),
+    // Its only control is hidden on a single-stage competition, so a restored `true` would be stuck.
+    ...(multiStage ? {} : { splitPdfsByStage: false }),
     // A custom competition's events live in their own key, which /custom may have changed
     // since this blob was written. A WCA competition's live only in the blob.
     ...(isCustom ? { customEvents: readCustomEvents() } : {}),

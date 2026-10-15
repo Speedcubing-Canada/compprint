@@ -162,6 +162,9 @@ describe('GeneratePage', () => {
 
   const mergeWarning = () => screen.queryByText(/All rounds are merged/);
 
+  // Oversized means "handed any job", so only the jobs the page picks decide the warning.
+  const oversizedIfAny = () => vi.mocked(hasOversizedPdf).mockImplementation(jobs => jobs.length > 0);
+
   it('warns about one huge merged file only when it is past the cap', async () => {
     vi.mocked(hasOversizedPdf).mockReturnValue(false);
     writeSettings(testSettings({ competitionId: settings.competitionId, mergeScorecardRounds: true }));
@@ -170,8 +173,16 @@ describe('GeneratePage', () => {
     expect(mergeWarning()).toBeNull();
   });
 
+  it('keeps the merge warning off per-round files', async () => {
+    oversizedIfAny();
+    renderWithProviders(<GeneratePage />, { auth: signedInAuth });
+    await downloadButton();
+    expect(splitBox()).toBeTruthy();
+    expect(mergeWarning()).toBeNull();
+  });
+
   it('shows the merge warning for an oversized merged file, and drops it once split', async () => {
-    vi.mocked(hasOversizedPdf).mockReturnValue(true);
+    oversizedIfAny();
     writeSettings(testSettings({ competitionId: settings.competitionId, mergeScorecardRounds: true }));
     renderWithProviders(<GeneratePage />, { auth: signedInAuth });
     await downloadButton();

@@ -302,9 +302,10 @@ describe('merging every round into one scorecard PDF', () => {
   });
   const names = (jobs: PdfJob[]) => jobs.map(j => j.filename);
 
-  it('emits one PDF and leaves extras apart', () => {
-    expect(names(buildPdfJobs(rounds, mkSettings({ mergeScorecardRounds: true }))))
-      .toEqual(['Test2026_scorecards.pdf', 'Test2026_extras.pdf']);
+  it('emits one tagged PDF and leaves extras apart', () => {
+    const jobs = buildPdfJobs(rounds, mkSettings({ mergeScorecardRounds: true }));
+    expect(names(jobs)).toEqual(['Test2026_scorecards.pdf', 'Test2026_extras.pdf']);
+    expect(jobs.map(j => j.kind === 'scorecards' && j.mergedRounds === true)).toEqual([true, false]);
   });
 
   // The print guide: cut every sheet, then stack the top-left, top-right, bottom-left and

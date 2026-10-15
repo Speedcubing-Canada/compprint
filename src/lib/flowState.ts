@@ -152,7 +152,6 @@ export function readSettings(): CompetitionSettings | null {
   if (gsDocs.groupOverview === undefined) gsDocs.groupOverview = false;
   if (s.hideWcaLiveId === undefined) s.hideWcaLiveId = false;
   if (s.splitPdfsByStage === undefined) s.splitPdfsByStage = false;
-  if (s.mergeScorecardRounds === undefined) s.mergeScorecardRounds = false;
   if (s.otsBlanks === undefined) s.otsBlanks = false;
   if (s.finalStationNumbers === undefined) s.finalStationNumbers = true;
   if (s.stationsPerStage === undefined) s.stationsPerStage = null;
