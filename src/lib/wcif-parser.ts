@@ -335,6 +335,13 @@ export function unstackQuadrants(items: ScorecardData[]): ScorecardData[] {
   return realEntries(out);
 }
 
+/** Cut-and-stack order for an already sorted 1-up list, padded to whole sheets. */
+export function stackQuadrants(items: ScorecardData[]): ScorecardData[] {
+  const out = [...items];
+  padToMultipleOfFour(out);
+  return reorderQuadrants(out);
+}
+
 // Competitor names are the only sort key that needs collation; timeslots, event ids, stage
 // keys and group labels are ASCII and compare faster as plain strings. One shared Collator,
 // because `localeCompare` rebuilds one per call and these comparators run n log n times.
@@ -365,8 +372,7 @@ export function finalizeEntries(entries: ScorecardData[]): ScorecardData[] {
     const bn = b.kind === 'scorecard' ? b.name : '';
     return byName(an, bn);
   });
-  padToMultipleOfFour(entries);
-  return reorderQuadrants(entries);
+  return stackQuadrants(entries);
 }
 
 // Intermediate prefilled finalize: sort by timeslot → eventId → cover-before-scorecard → name.
@@ -381,8 +387,7 @@ function finalizeEntriesIntermediate(entries: ScorecardData[]): ScorecardData[] 
     const bn = b.kind === 'scorecard' ? b.name : '';
     return byName(an, bn);
   });
-  padToMultipleOfFour(entries);
-  return reorderQuadrants(entries);
+  return stackQuadrants(entries);
 }
 
 // Group words that precede a group number in a group activity name, across locales.

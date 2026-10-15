@@ -235,6 +235,11 @@ export default function GeneratePage() {
               <WarningBanner>{t('warnings.stage_split_prefilled')}</WarningBanner>
             )}
 
+            {status === 'ready'
+              && hasOversizedPdf(jobs.filter(j => j.kind === 'scorecards' && j.mergedRounds), settings.scorecardsA6) && (
+              <WarningBanner>{t('warnings.merge_rounds_large')}</WarningBanner>
+            )}
+
             {status === 'ready' && (splitLarge || hasOversizedPdf(jobs, settings.scorecardsA6)) && (
               <label className={`${ui.toggleCard} ${s.splitToggle} ${splitLarge ? ui.toggleCardActive : ''}`}>
                 <input

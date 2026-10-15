@@ -123,6 +123,17 @@ One exception: a round 2 set to "prefilled" is filled with the round 1 qualifier
 on a stage until round 1 is over, so it stays a single PDF. The settings and generate pages both
 say so when the combination is selected.
 
+### One PDF for all rounds
+
+"One PDF for all rounds" (Settings > Advanced, `mergeScorecardRounds`) puts round 1, round 2,
+semis and finals in a single `{id}_scorecards.pdf`, for organizers who print from one file. It is
+off by default and on in the Brasília preset. The rounds are joined in sorted order and stacked
+once, so the cut deck reads round 1, round 2, semis, finals; a sheet can hold the end of one round
+and the start of the next. A single round keeps its per-round filename. Extras stay in their own file.
+Stage splitting and "Split large files" both win over it, because re-sorting a mixed-round deck
+per stage or event would break the prefilled round 2 order. On a large competition the merged
+file passes the page cap, and /generate warns that it can be slow or fail (see below).
+
 ### Station numbers on finals
 
 A final run as one group on one stage prints "Station 01..N" on its blank scorecards instead of
@@ -265,6 +276,7 @@ npm run bench              # wc: ~1800 competitors, the upper bound we support
 npm run bench -- small     # small / medium / wc
 npm run bench -- wc --only=nametags
 npm run bench -- wc --a6     # scorecards one per A6 page
+npm run bench -- wc --merge  # every round in one scorecard PDF
 ```
 
 @react-pdf lays out a whole document in one pass and rebuilds the node tree at each stage, so

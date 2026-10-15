@@ -75,6 +75,7 @@ describe('parsePresetSettings', () => {
       useDefaultLogo: false, hideWcaLiveId: true, nametagLogoMode: 'hidden',
       nametagQrMode: 'both-sides', nametagLayout: 'horizontal',
       scorecardCheckMode: 'none', scrambleDoubleCheckRegionTop: 15, logo: 'abracm.png',
+      mergeScorecardRounds: true,
     };
     expect(parsePresetSettings(all)).toEqual(all);
   });
@@ -189,6 +190,7 @@ describe('shipped presets', () => {
     });
     expect(byId.brasilia.settings).toEqual({
       language: 'pt', paperFormat: 'A4', scrambleDoubleCheckRegionTop: 15, logo: 'abracm.png',
+      mergeScorecardRounds: true,
     });
     expect(presetLogoUrl(byId.brasilia.settings.logo)).toBeTruthy();
   });

@@ -16,6 +16,15 @@ export interface ChangelogEntry {
 /** Newest first. See "Contributing" in the README before adding an entry. */
 export const CHANGELOG: ChangelogEntry[] = [
   {
+    id: '2026-10-14',
+    items: {
+      en: ['Scorecards for every round can now come as a single PDF.'],
+      fr: ['Les feuilles de score de tous les tours peuvent maintenant sortir en un seul PDF.'],
+      es: ['Las hojas de puntuación de todas las rondas ahora pueden salir en un solo PDF.'],
+      pt: ['As súmulas de todas as rodadas agora podem sair em um único PDF.'],
+    },
+  },
+  {
     id: '2026-10-13',
     items: {
       en: [
