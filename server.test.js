@@ -1,5 +1,6 @@
 import { afterAll, afterEach, beforeAll, beforeEach, describe, expect, it, vi } from 'vitest';
 import { existsSync } from 'node:fs';
+import http from 'node:http';
 import path from 'node:path';
 
 // Set before the import: server.js reads the secret once, at module load.
@@ -190,5 +191,32 @@ describe('routing', () => {
     const res = await get('/scope');
     expect(res.status).toBe(500);
     expect(await res.text()).toContain('run npm run build first');
+  });
+});
+
+describe('legacy host', () => {
+  // fetch() won't set Host, so this goes through node:http.
+  const onHost = (host, p, method = 'GET') => new Promise((resolve, reject) => {
+    const req = http.request(`${base}${p}`, { method, headers: { Host: host } }, res => {
+      res.resume();
+      resolve(res);
+    });
+    req.on('error', reject).end();
+  });
+
+  it('301s scorecards.* to compprint.* keeping path and query', async () => {
+    const res = await onHost('scorecards.speedcubingcanada.org', '/generate?x=1');
+    expect(res.statusCode).toBe(301);
+    expect(res.headers.location).toBe('https://compprint.speedcubingcanada.org/generate?x=1');
+  });
+
+  it('lets a POST on the legacy host through', async () => {
+    const res = await onHost('scorecards.speedcubingcanada.org', '/api/event', 'POST');
+    expect(res.statusCode).toBe(204);
+  });
+
+  it('leaves other hosts alone', async () => {
+    const res = await onHost('compprint.speedcubingcanada.org', '/nope.png');
+    expect(res.statusCode).toBe(404);
   });
 });

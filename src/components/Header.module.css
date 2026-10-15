@@ -44,6 +44,9 @@
 }
 
 .title {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
   font-size: var(--fs-label);
   font-weight: var(--fw-bold);
   color: var(--text);
@@ -51,6 +54,12 @@
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
+}
+
+.titleIcon {
+  width: 22px;
+  height: 22px;
+  flex-shrink: 0;
 }
 
 .avatar {

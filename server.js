@@ -10,6 +10,8 @@ const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const DIST_DIR = path.join(__dirname, 'dist');
 const INDEX_PATH = path.join(DIST_DIR, 'index.html');
 const PORT = Number(process.env.PORT || 8080);
+const LEGACY_HOST = 'scorecards.speedcubingcanada.org';
+const CANONICAL_ORIGIN = 'https://compprint.speedcubingcanada.org';
 
 // Secret Manager on App Engine: versions don't preserve console-set env vars across
 // deploys, and the secret belongs in neither app.yaml nor CI. Locally, .env.
@@ -39,6 +41,15 @@ if (!WCA_CLIENT_SECRET) {
 
 const app = express();
 app.disable('x-powered-by');
+
+// GET/HEAD only: a POST (token exchange, analytics) from a tab opened before the rename must still land.
+app.use((req, res, next) => {
+  if (req.hostname === LEGACY_HOST && (req.method === 'GET' || req.method === 'HEAD')) {
+    res.redirect(301, CANONICAL_ORIGIN + req.originalUrl);
+    return;
+  }
+  next();
+});
 
 app.use(
   helmet({

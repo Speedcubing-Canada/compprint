@@ -1,3 +1,4 @@
+import { APP_NAME } from '../brand';
 import type { ReactNode } from 'react';
 import { Document, Page, View, Text, Image, StyleSheet, Svg, Path } from '@react-pdf/renderer';
 import type { CompetitionSettings, LiveResultsMode, NametTagLayout, NametTagLogoMode } from '../types/settings';
@@ -326,7 +327,7 @@ export function NametTagDocument({ nametags, settings }: Props) {
     const pages: NametTagEntry[][] = [];
     for (let i = 0; i < nametags.length; i += personsPerPage) pages.push(nametags.slice(i, i + personsPerPage));
     return (
-      <Document title={`${competitionName} - Name Tags`} author="WCA Scorecard Generator">
+      <Document title={`${competitionName} - Name Tags`} author={APP_NAME}>
         {pages.map((page, pi) => (
           <Page key={pi} size={settings.paperFormat} orientation="portrait" style={{ backgroundColor: '#ffffff' }}>
             {page.flatMap((entry, ei) => {
@@ -370,7 +371,7 @@ export function NametTagDocument({ nametags, settings }: Props) {
   for (let i = 0; i < nametags.length; i += personsPerPage) pages.push(nametags.slice(i, i + personsPerPage));
 
   return (
-    <Document title={`${competitionName} - Name Tags`} author="WCA Scorecard Generator">
+    <Document title={`${competitionName} - Name Tags`} author={APP_NAME}>
       {pages.map((page, pi) => (
         <Page key={pi} size={settings.paperFormat} orientation="landscape" style={{ backgroundColor: '#ffffff' }}>
           {page.flatMap((entry, ei) => {

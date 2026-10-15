@@ -2,7 +2,7 @@
   "common": {
     "back": "← Voltar",
     "sign_out": "Sair",
-    "app_title": "Gerador de Súmulas da WCA",
+    "by_scc": "por Speedcubing Canada",
     "remove": "Remover",
     "clear": "Limpar",
     "upload": "Enviar",
@@ -272,8 +272,8 @@
   },
   "about": {
     "trigger": "O que é isto?",
-    "title": "Sobre esta ferramenta",
-    "intro": "Esta ferramenta gera PDFs prontos para impressão de uma competição WCA: súmulas, crachás, acompanhamento do horário e fichas para estreantes (opcionais). Tudo é formatado para imprimir e recortar.",
+    "title": "Sobre o {{name}}",
+    "intro": "O {{name}} gera PDFs prontos para impressão de uma competição WCA: súmulas, crachás, acompanhamento do horário e fichas para estreantes (opcionais). Tudo é formatado para imprimir e recortar.",
     "wcif_title": "O que é o WCIF?",
     "wcif_body": "Os dados de cada competição WCA (eventos, horário e competidores inscritos) estão no site da WCA em um formato chamado WCIF. As atribuições de grupos são adicionadas antes, normalmente com uma ferramenta como o Groupifier.",
     "workflow_title": "Onde se encaixa",

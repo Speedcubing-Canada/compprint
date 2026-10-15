@@ -1,3 +1,4 @@
+import { APP_NAME } from '../brand';
 import { Document, Page, View, Text, Image, StyleSheet } from '@react-pdf/renderer';
 import type { CompetitionSettings } from '../types/settings';
 import type { ScorecardData } from '../lib/wcif-parser';
@@ -354,7 +355,7 @@ export function ScorecardDocument({ entries, settings }: Props) {
   for (let i = 0; i < entries.length; i += perPage) pages.push(entries.slice(i, i + perPage));
 
   return (
-    <Document title={`${settings.competitionName} - Scorecards`} author="WCA Scorecard Generator">
+    <Document title={`${settings.competitionName} - Scorecards`} author={APP_NAME}>
       {pages.map((page, pi) => (
         <Page key={pi} size={size} style={styles.page}>
           {page.map((entry, ei) => {

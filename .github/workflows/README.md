@@ -209,3 +209,17 @@ data source's freshness to 1 hour, down from the 12 hour default, for auto-refre
 The sink is **not retroactive**: anything logged before it exists stays in Cloud
 Logging only. Cloud Logging's free tier is 50 GiB/month of ingestion and BigQuery's
 is 10 GiB of storage plus 1 TiB of queries, so this costs nothing at our volume.
+
+## Custom domains
+
+`compprint.speedcubingcanada.org` is canonical. `server.js` 301-redirects GET/HEAD on
+`scorecards.speedcubingcanada.org` to it, so old links keep working.
+
+```bash
+gcloud app domain-mappings create compprint.speedcubingcanada.org --project=scorecards-v2-prod
+```
+
+Then add `CNAME compprint -> ghs.googlehosted.com.` in the speedcubingcanada.org DNS and wait
+for the managed certificate (`gcloud app domain-mappings describe ...`). The WCA OAuth app
+must list `https://compprint.speedcubingcanada.org/auth/callback` as a redirect URI; keep the
+`scorecards.*` one too. Do all of this before deploying the redirect, or sign-in breaks.

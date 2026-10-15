@@ -31,10 +31,28 @@
   margin-bottom: var(--space-8);
 }
 
+.icon {
+  display: block;
+  width: 64px;
+  height: 64px;
+  margin: 0 auto var(--space-5);
+}
+
+.byline {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--space-2);
+  margin-top: var(--space-8);
+  padding-top: var(--space-5);
+  border-top: 1px solid var(--border);
+  font-size: var(--fs-label);
+  color: var(--text-muted);
+}
+
 .logo {
-  height: 40px;
+  height: 28px;
   width: auto;
-  margin-bottom: var(--space-6);
 }
 
 .title {

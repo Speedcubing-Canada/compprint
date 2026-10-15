@@ -16,6 +16,8 @@ import i18n from '../i18n/index';
 import { anonymousAuth, renderWithProviders, useEnglish } from '../test/render';
 import type { AuthState } from '../auth/useAuth';
 import LoginPage from './LoginPage';
+import { APP_NAME } from '../brand';
+
 
 // Mount smoke test: the sign-in screen is the one page every organizer sees, and
 // it is the only one no other test touches. Assertions go through i18n keys, never
@@ -32,7 +34,7 @@ const signIn = () => screen.queryByRole('button', { name: i18n.t('login.sign_in_
 describe('LoginPage', () => {
   it('renders the sign-in screen', () => {
     renderWithProviders(<LoginPage />);
-    expect(screen.getByRole('heading', { name: i18n.t('common.app_title') })).toBeTruthy();
+    expect(screen.getByRole('heading', { name: APP_NAME })).toBeTruthy();
     expect(signIn()).toBeTruthy();
   });
 

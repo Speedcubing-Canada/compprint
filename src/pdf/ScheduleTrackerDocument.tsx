@@ -1,3 +1,4 @@
+import { APP_NAME } from '../brand';
 import { Document, Page, View, Text, StyleSheet } from '@react-pdf/renderer';
 import type { CompetitionSettings } from '../types/settings';
 import type { ScheduleDay } from '../lib/wcif-parser';
@@ -154,7 +155,7 @@ export function ScheduleTrackerDocument({ days, settings }: Props) {
   const strings = getScheduleStrings(settings.language);
 
   return (
-    <Document title={`${settings.competitionName} - Schedule Tracker`} author="WCA Scorecard Generator">
+    <Document title={`${settings.competitionName} - Schedule Tracker`} author={APP_NAME}>
       <Page size={settings.paperFormat} style={styles.page}>
         <Text style={styles.title}>{settings.competitionName} {strings.title}</Text>
 

@@ -16,6 +16,15 @@ export interface ChangelogEntry {
 /** Newest first. See "Contributing" in the README before adding an entry. */
 export const CHANGELOG: ChangelogEntry[] = [
   {
+    id: '2026-10-15',
+    items: {
+      en: ['This app now has a name: CompPrint, at compprint.speedcubingcanada.org.'],
+      fr: ['L\'application a maintenant un nom : CompPrint, sur compprint.speedcubingcanada.org.'],
+      es: ['La aplicación ahora tiene nombre: CompPrint, en compprint.speedcubingcanada.org.'],
+      pt: ['O app agora tem nome: CompPrint, em compprint.speedcubingcanada.org.'],
+    },
+  },
+  {
     id: '2026-10-14',
     items: {
       en: ['Scorecards for every round can now come as a single PDF.'],

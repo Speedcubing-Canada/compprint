@@ -1,3 +1,4 @@
+import { APP_NAME } from '../brand';
 // The UI calls this document the **Round Checklist**; the internals kept the older
 // "checking sheet" vocabulary (CheckingDay/CheckingRow/CHECKING_*).
 import { Document, Page, View, Text, StyleSheet, Svg, Polyline } from '@react-pdf/renderer';
@@ -188,7 +189,7 @@ export function CheckingSheetDocument({ days, settings }: Props) {
   const strings = getCheckingSheetStrings(settings.language);
 
   return (
-    <Document title={`${settings.competitionName} - Round Checklist`} author="WCA Scorecard Generator">
+    <Document title={`${settings.competitionName} - Round Checklist`} author={APP_NAME}>
       <Page size={settings.paperFormat} style={styles.page}>
         <Text style={styles.title}>{settings.competitionName} {strings.title}</Text>
 

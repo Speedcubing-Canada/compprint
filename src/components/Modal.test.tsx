@@ -6,6 +6,7 @@ import { markAllSeen } from '../changelog';
 import AboutDialog from './AboutDialog';
 import WhatsNewDialog from './WhatsNewDialog';
 import i18n from '../i18n/index';
+import { APP_NAME } from '../brand';
 
 /**
  * The dialogs used to be a plain <div> overlay: no focus trap, no focus restore, no
@@ -38,7 +39,7 @@ describe('AboutDialog', () => {
     expect(dialog().open).toBe(true);
     const labelledBy = dialog().getAttribute('aria-labelledby');
     expect(labelledBy).toBeTruthy();
-    expect(document.getElementById(labelledBy!)?.textContent).toBe(i18n.t('about.title'));
+    expect(document.getElementById(labelledBy!)?.textContent).toBe(i18n.t('about.title', { name: APP_NAME }));
   });
 
   // aria-modal must not be hand-set on a showModal() dialog: the browser owns it, and a

@@ -2,7 +2,7 @@
   "common": {
     "back": "← Volver",
     "sign_out": "Cerrar sesión",
-    "app_title": "Generador de Hojas de Puntuación WCA",
+    "by_scc": "por Speedcubing Canada",
     "remove": "Eliminar",
     "clear": "Limpiar",
     "upload": "Subir",
@@ -272,8 +272,8 @@
   },
   "about": {
     "trigger": "¿Qué es esto?",
-    "title": "Acerca de esta herramienta",
-    "intro": "Esta herramienta genera PDF listos para imprimir de una competición WCA: hojas de puntuación, acreditaciones, seguimiento del horario y hojas para debutantes (opcionales). Todo está maquetado para imprimir y recortar.",
+    "title": "Acerca de {{name}}",
+    "intro": "{{name}} genera PDF listos para imprimir de una competición WCA: hojas de puntuación, acreditaciones, seguimiento del horario y hojas para debutantes (opcionales). Todo está maquetado para imprimir y recortar.",
     "wcif_title": "¿Qué es el WCIF?",
     "wcif_body": "Los datos de cada competición WCA (eventos, horario y competidores inscritos) están en el sitio web de la WCA en un formato llamado WCIF. Las asignaciones de grupos se añaden antes, normalmente con una herramienta como Groupifier.",
     "workflow_title": "Dónde encaja",
