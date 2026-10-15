@@ -1,5 +1,6 @@
 import { afterAll, afterEach, beforeAll, beforeEach, describe, expect, it, vi } from 'vitest';
 import { existsSync } from 'node:fs';
+import http from 'node:http';
 import path from 'node:path';
 
 // Set before the import: server.js reads the secret once, at module load.
@@ -190,5 +191,42 @@ describe('routing', () => {
     const res = await get('/scope');
     expect(res.status).toBe(500);
     expect(await res.text()).toContain('run npm run build first');
+  });
+});
+
+describe('host routing', () => {
+  // fetch() won't set Host, so this goes through node:http.
+  const onHost = (host, p, method = 'GET') => new Promise((resolve, reject) => {
+    const req = http.request(`${base}${p}`, { method, headers: { Host: host } }, res => {
+      res.resume();
+      resolve(res);
+    });
+    req.on('error', reject).end();
+  });
+
+  it.each([
+    ['comprint.speedcubingcanada.org', 'GET'],
+    ['www.comprint.speedcubingcanada.org', 'HEAD'],
+    ['Comprint.speedcubingcanada.org.', 'GET'],
+  ])('301s typo host %s (%s) to compprint.* keeping path and query', async (host, method) => {
+    const res = await onHost(host, '/generate?x=1', method);
+    expect(res.statusCode).toBe(301);
+    expect(res.headers.location).toBe('https://compprint.speedcubingcanada.org/generate?x=1');
+  });
+
+  it.each(['GET', 'HEAD'])('302s scorecards.* (%s) to compprint.* keeping path and query', async (method) => {
+    const res = await onHost('scorecards.speedcubingcanada.org', '/generate?x=1', method);
+    expect(res.statusCode).toBe(302);
+    expect(res.headers.location).toBe('https://compprint.speedcubingcanada.org/generate?x=1');
+  });
+
+  it('lets a POST on scorecards.* through', async () => {
+    const res = await onHost('scorecards.speedcubingcanada.org', '/api/event', 'POST');
+    expect(res.statusCode).toBe(204);
+  });
+
+  it('serves compprint.* without redirecting', async () => {
+    const res = await onHost('compprint.speedcubingcanada.org', '/');
+    expect(res.headers.location).toBeUndefined();
   });
 });

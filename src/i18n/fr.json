@@ -2,7 +2,7 @@
   "common": {
     "back": "← Retour",
     "sign_out": "Se déconnecter",
-    "app_title": "Générateur de Feuilles de Score WCA",
+    "by_scc": "par Speedcubing Canada",
     "remove": "Supprimer",
     "clear": "Effacer",
     "upload": "Télécharger",
@@ -272,8 +272,8 @@
   },
   "about": {
     "trigger": "Qu'est-ce que c'est ?",
-    "title": "À propos de cet outil",
-    "intro": "Cet outil génère des PDF prêts à imprimer pour une compétition WCA : feuilles de score, badges, suivi d'horaire et fiches pour nouveaux participants (optionnelles). Tout est mis en page pour l'impression et la découpe.",
+    "title": "À propos de {{app}}",
+    "intro": "{{app}} génère des PDF prêts à imprimer pour une compétition WCA : feuilles de score, badges, suivi d'horaire et fiches pour nouveaux participants (optionnelles). Tout est mis en page pour l'impression et la découpe.",
     "wcif_title": "Qu'est-ce que le WCIF ?",
     "wcif_body": "Les données de chaque compétition WCA (épreuves, horaire et participants inscrits) se trouvent sur le site de la WCA dans un format appelé WCIF. Les assignations de groupes sont ajoutées en amont, généralement avec un outil comme Groupifier.",
     "workflow_title": "Où cela s'insère",

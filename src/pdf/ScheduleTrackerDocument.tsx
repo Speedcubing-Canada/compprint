@@ -1,4 +1,5 @@
 import { Document, Page, View, Text, StyleSheet } from '@react-pdf/renderer';
+import { docMeta } from './docMeta';
 import type { CompetitionSettings } from '../types/settings';
 import type { ScheduleDay } from '../lib/wcif-parser';
 import { getScheduleStrings, type ScheduleStrings } from '../lib/i18n';
@@ -154,7 +155,7 @@ export function ScheduleTrackerDocument({ days, settings }: Props) {
   const strings = getScheduleStrings(settings.language);
 
   return (
-    <Document title={`${settings.competitionName} - Schedule Tracker`} author="WCA Scorecard Generator">
+    <Document {...docMeta(settings.competitionName, 'Schedule Tracker')}>
       <Page size={settings.paperFormat} style={styles.page}>
         <Text style={styles.title}>{settings.competitionName} {strings.title}</Text>
 

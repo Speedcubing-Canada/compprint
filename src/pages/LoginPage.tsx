@@ -6,6 +6,7 @@ import LanguageSelect from '../components/LanguageSelect';
 import ThemeToggle from '../components/ThemeToggle';
 import Logo from '../components/Logo';
 import AboutDialog from '../components/AboutDialog';
+import { APP_ICON, APP_NAME } from '../brand';
 import ui from '../styles/ui.module.css';
 import s from './LoginPage.module.css';
 
@@ -26,9 +27,8 @@ export default function LoginPage() {
           <ThemeToggle />
         </div>
 
-        <Logo className={s.logo} />
-
-        <h1 className={s.title}>{t('common.app_title')}</h1>
+        <img src={APP_ICON} alt="" width={64} height={64} className={s.icon} />
+        <h1 className={s.title}>{APP_NAME}</h1>
         <p className={s.subtitle}>{t('login.subtitle')}</p>
 
         {failure && (
@@ -57,6 +57,11 @@ export default function LoginPage() {
 
         <div className={s.aboutRow}>
           <AboutDialog as="text" />
+        </div>
+
+        <div className={s.byline}>
+          <span>{t('common.by_scc')}</span>
+          <Logo className={s.logo} />
         </div>
       </div>
     </div>

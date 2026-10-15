@@ -1,6 +1,7 @@
 // The UI calls this document the **Round Checklist**; the internals kept the older
 // "checking sheet" vocabulary (CheckingDay/CheckingRow/CHECKING_*).
 import { Document, Page, View, Text, StyleSheet, Svg, Polyline } from '@react-pdf/renderer';
+import { docMeta } from './docMeta';
 import type { CompetitionSettings } from '../types/settings';
 import type { CheckingDay, CheckingRow } from '../lib/wcif-parser';
 import { getCheckingSheetStrings, type CheckingSheetStrings } from '../lib/i18n';
@@ -188,7 +189,7 @@ export function CheckingSheetDocument({ days, settings }: Props) {
   const strings = getCheckingSheetStrings(settings.language);
 
   return (
-    <Document title={`${settings.competitionName} - Round Checklist`} author="WCA Scorecard Generator">
+    <Document {...docMeta(settings.competitionName, 'Round Checklist')}>
       <Page size={settings.paperFormat} style={styles.page}>
         <Text style={styles.title}>{settings.competitionName} {strings.title}</Text>
 

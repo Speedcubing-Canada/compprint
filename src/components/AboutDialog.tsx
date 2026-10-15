@@ -9,7 +9,7 @@ import ui from '../styles/ui.module.css';
 import s from './AboutDialog.module.css';
 
 /**
- * "About this tool" explainer: a circular "i" button (or a text link when `as="text"`)
+ * About dialog: a circular "i" button (or a text link when `as="text"`)
  * opening a modal on what the tool is, what a WCIF is, and where both sit in the
  * competition workflow. Self-contained open state, so it drops onto any page.
  */

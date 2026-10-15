@@ -1,11 +1,14 @@
-<h1 align="center">WCA Scorecard Generator</h1>
+<p align="center"><img alt="" src="public/favicon.svg" width="72"></p>
+
+<h1 align="center">CompPrint</h1>
 
 <p align="center">
-  Print-ready scorecards, name tags and staff sheets for WCA competitions, generated in the browser.
+  Print-ready scorecards, name tags and staff sheets for WCA competitions, generated in the browser.<br>
+  By Speedcubing Canada.
 </p>
 
 <p align="center">
-  <a href="https://scorecards.speedcubingcanada.org/"><img alt="Live app" src="https://img.shields.io/badge/live-scorecards.speedcubingcanada.org-2563eb"></a>
+  <a href="https://compprint.speedcubingcanada.org/"><img alt="Live app" src="https://img.shields.io/badge/live-compprint.speedcubingcanada.org-2563eb"></a>
   <a href="https://github.com/Speedcubing-Canada/scorecards-v2/actions/workflows/deploy.yml"><img alt="CI" src="https://github.com/Speedcubing-Canada/scorecards-v2/actions/workflows/deploy.yml/badge.svg"></a>
   <a href="https://deepwiki.com/Speedcubing-Canada/scorecards-v2"><img alt="Ask DeepWiki" src="https://deepwiki.com/badge.svg"></a>
 </p>
@@ -401,6 +404,9 @@ Merging to `main` deploys automatically via
 request runs the same test job and stops there. One-time
 GCP setup lives in [`.github/workflows/README.md`](.github/workflows/README.md). For an emergency
 manual deploy: `VITE_WCA_CLIENT_ID=… npm run build && ./deploy.sh`.
+
+The app is served at `compprint.speedcubingcanada.org`. The old `scorecards.speedcubingcanada.org`
+302-redirects there and the `comprint.*` typo domains 301 there (see [Custom domains](.github/workflows/README.md#custom-domains)).
 
 ## Usage analytics
 

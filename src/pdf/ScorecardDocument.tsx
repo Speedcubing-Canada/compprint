@@ -1,4 +1,5 @@
 import { Document, Page, View, Text, Image, StyleSheet } from '@react-pdf/renderer';
+import { docMeta } from './docMeta';
 import type { CompetitionSettings } from '../types/settings';
 import type { ScorecardData } from '../lib/wcif-parser';
 import { getStrings, splitLabelTotal, type ScorecardStrings } from '../lib/i18n';
@@ -354,7 +355,7 @@ export function ScorecardDocument({ entries, settings }: Props) {
   for (let i = 0; i < entries.length; i += perPage) pages.push(entries.slice(i, i + perPage));
 
   return (
-    <Document title={`${settings.competitionName} - Scorecards`} author="WCA Scorecard Generator">
+    <Document {...docMeta(settings.competitionName, 'Scorecards')}>
       {pages.map((page, pi) => (
         <Page key={pi} size={size} style={styles.page}>
           {page.map((entry, ei) => {

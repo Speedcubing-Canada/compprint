@@ -1,4 +1,5 @@
 import { Document, Page, View, Text, StyleSheet } from '@react-pdf/renderer';
+import { docMeta } from './docMeta';
 import type { CompetitionSettings, LocaleCode } from '../types/settings';
 import type { FirstTimerEntry } from '../lib/wcif-parser';
 import { getFirstTimerSlipStrings, type FirstTimerSlipStrings } from '../lib/i18n';
@@ -113,7 +114,7 @@ export function FirstTimerSlipDocument({ entries, settings }: Props) {
   const pages = packSlipPages(entries, s, settings.language, settings.paperFormat);
 
   return (
-    <Document title={`${settings.competitionName} - First-Timer Slips`} author="WCA Scorecard Generator">
+    <Document {...docMeta(settings.competitionName, 'First-Timer Slips')}>
       {pages.map((page, pi) => (
         <Page key={pi} size={settings.paperFormat} style={styles.page}>
           {page.map((entry, i) => (

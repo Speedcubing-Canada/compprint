@@ -9,6 +9,7 @@ import ThemeToggle from './ThemeToggle';
 import WhatsNewDialog from './WhatsNewDialog';
 import ContactLinks from './ContactLinks';
 import Logo from './Logo';
+import { APP_ICON, APP_NAME } from '../brand';
 import ui from '../styles/ui.module.css';
 import s from './Header.module.css';
 
@@ -62,7 +63,10 @@ export default function Header({ showBack, onBack, showUser, showSignOut = true 
         {showBack ? (
           <button className={ui.btnSecondary} onClick={onBack}>{t('common.back')}</button>
         ) : (
-          <span className={s.title}>{t('common.app_title')}</span>
+          <span className={s.title}>
+            <img src={APP_ICON} alt="" width={22} height={22} className={s.titleIcon} />
+            {APP_NAME}
+          </span>
         )}
       </div>
 
