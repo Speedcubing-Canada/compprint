@@ -141,6 +141,10 @@
     },
     "advanced": {
       "toggle": "Avanzado",
+      "merge_rounds_title": "Archivos de hojas de puntuación",
+      "merge_rounds_label": "Un solo PDF para todas las rondas",
+      "merge_rounds_desc": "Reúne la ronda 1, la ronda 2, las semifinales y las finales en un solo PDF de hojas de puntuación. En competencias muy grandes, este archivo puede tardar en generarse y fallar en computadoras con poca memoria.",
+      "merge_rounds_stage_split": "No disponible mientras las hojas de puntuación se dividen por escenario.",
       "stage_split_title": "Separación por escenario",
       "stage_split_label": "Un PDF por escenario",
       "stage_split_desc": "Divide cada ronda en un PDF distinto por escenario, para poder imprimir cada escenario en un color de papel diferente. Solo se dividen las rondas que se reparten entre varios escenarios.",
@@ -259,6 +263,7 @@
   "warnings": {
     "no_groups": "Todavía no se han asignado grupos para esta competición, por lo que los recuentos de hojas muestran 0. Asigna primero los grupos (en Groupifier o en el sitio web de la WCA) y luego vuelve aquí. Mientras tanto, puedes generar el seguimiento del horario y las acreditaciones.",
     "stage_split_prefilled": "La ronda 2 se rellena con las personas de la ronda 1, que todavía no tienen escenario asignado, así que se queda en un solo PDF. Las demás rondas sí se dividen por escenario.",
+    "merge_rounds_large": "Todas las rondas se reúnen en un solo PDF de hojas de puntuación muy grande. Generarlo puede ser lento y fallar en esta computadora. Si pasa, activa la división abajo.",
     "ots_intro": "Esta competición acepta inscripciones en el lugar. Las personas inscritas el mismo día no están en el WCIF, así que hay algunas cosas que corregir a mano:",
     "ots_blanks": "Usa para ellas las acreditaciones, fichas de primera vez y hojas en blanco (una página de cada una).",
     "ots_ids": "Añade a cada una en el sitio web de la WCA (y en WCA Live) antes de ingresar resultados: sus hojas no tienen ID hasta entonces.",

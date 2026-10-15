@@ -286,6 +286,7 @@ async function main() {
     competitionId: 'BenchmarkComp2026',
     competitionName: 'Benchmark Competition 2026',
     scorecardsA6: args.includes('--a6'),
+    mergeScorecardRounds: args.includes('--merge'),
   });
 
   collect();

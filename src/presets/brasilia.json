@@ -11,6 +11,7 @@
     "language": "pt",
     "paperFormat": "A4",
     "scrambleDoubleCheckRegionTop": 15,
-    "logo": "abracm.png"
+    "logo": "abracm.png",
+    "mergeScorecardRounds": true
   }
 }

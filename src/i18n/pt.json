@@ -141,6 +141,10 @@
     },
     "advanced": {
       "toggle": "Avançado",
+      "merge_rounds_title": "Arquivos de súmulas",
+      "merge_rounds_label": "Um PDF para todas as rodadas",
+      "merge_rounds_desc": "Junta a rodada 1, a rodada 2, as semifinais e as finais em um único PDF de súmulas. Em competições muito grandes, esse arquivo pode demorar para ser gerado e falhar em computadores com pouca memória.",
+      "merge_rounds_stage_split": "Indisponível enquanto as súmulas são divididas por palco.",
       "stage_split_title": "Separação por palco",
       "stage_split_label": "Um PDF por palco",
       "stage_split_desc": "Divide cada rodada em um PDF separado por palco, para imprimir cada palco em uma cor de papel diferente. Apenas as rodadas que acontecem em vários palcos são divididas.",
@@ -259,6 +263,7 @@
   "warnings": {
     "no_groups": "Ainda não foram atribuídos grupos para esta competição, por isso as contagens de súmulas mostram 0. Atribua primeiro os grupos (no Groupifier ou no site da WCA) e depois volte aqui. Entretanto, pode gerar o acompanhamento do horário e os crachás.",
     "stage_split_prefilled": "A rodada 2 é preenchida com as pessoas da rodada 1, que ainda não têm palco definido, então ela continua em um único PDF. As outras rodadas continuam divididas por palco.",
+    "merge_rounds_large": "Todas as rodadas estão juntas em um único PDF de súmulas muito grande. A geração pode ser lenta e falhar neste computador. Se acontecer, ative a divisão abaixo.",
     "ots_intro": "Esta competição aceita inscrições no local. Quem se inscreve no dia não está no WCIF, então algumas coisas precisam ser corrigidas à mão:",
     "ots_blanks": "Use para essas pessoas os crachás, fichas de novato e súmulas em branco (uma página de cada).",
     "ots_ids": "Adicione cada uma no site da WCA (e no WCA Live) antes de lançar os resultados: as súmulas delas não têm ID até lá.",

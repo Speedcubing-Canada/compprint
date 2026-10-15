@@ -295,6 +295,35 @@ describe('an oversized bucket', () => {
   });
 });
 
+describe('merging every round into one scorecard PDF', () => {
+  const rounds = mkParsed({
+    firstRound: [sc(1, 'A'), cover(1)], intermediate: [sc(2, 'B')], semis: [sc(3, 'C')], finals: [sc(4, 'D')],
+    extras: [sc(1)],
+  });
+  const names = (jobs: PdfJob[]) => jobs.map(j => j.filename);
+
+  it('emits one PDF holding each round in order, extras still apart', () => {
+    const jobs = buildPdfJobs(rounds, mkSettings({ mergeScorecardRounds: true }));
+    expect(names(jobs)).toEqual(['Test2026_scorecards.pdf', 'Test2026_extras.pdf']);
+    expect((jobs[0] as Extract<PdfJob, { kind: 'scorecards' }>).entries).toEqual([
+      ...rounds.firstRound, ...rounds.intermediate, ...rounds.semis, ...rounds.finals,
+    ]);
+  });
+
+  it('gives way to the stage split and the large-file split', () => {
+    for (const over of [{ splitPdfsByStage: true }, { splitLargePdfs: true }])
+      expect(names(buildPdfJobs(rounds, mkSettings({ mergeScorecardRounds: true, ...over }))))
+        .toEqual(['Test2026_round1.pdf', 'Test2026_round2.pdf', 'Test2026_semis.pdf', 'Test2026_finals.pdf', 'Test2026_extras.pdf']);
+  });
+
+  it('flags the merged file once it passes the cap, though no round does alone', () => {
+    const half = Array.from({ length: MAX_PAGES_PER_SCORECARD_PDF * 2 + 2 }, (_, i) => sc(1, `N${i}`));
+    const parsed = mkParsed({ firstRound: half, finals: half.map(e => ({ ...e, roundNum: 4 })) });
+    expect(hasOversizedPdf(buildPdfJobs(parsed, mkSettings()), false)).toBe(false);
+    expect(hasOversizedPdf(buildPdfJobs(parsed, mkSettings({ mergeScorecardRounds: true })), false)).toBe(true);
+  });
+});
+
 // Opt-in from /generate, for a machine that cannot hold one merged file.
 describe('splitting large files on request', () => {
   const CAP = MAX_PAGES_PER_SCORECARD_PDF * 4;

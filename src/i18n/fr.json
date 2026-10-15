@@ -141,6 +141,10 @@
     },
     "advanced": {
       "toggle": "Avancé",
+      "merge_rounds_title": "Fichiers de feuilles de score",
+      "merge_rounds_label": "Un seul PDF pour tous les tours",
+      "merge_rounds_desc": "Regroupe le tour 1, le tour 2, les demi-finales et les finales dans un seul PDF de feuilles de score. Sur les très grandes compétitions, ce fichier peut être long à générer et échouer sur les ordinateurs qui ont peu de mémoire.",
+      "merge_rounds_stage_split": "Indisponible quand les feuilles de score sont divisées par scène.",
       "stage_split_title": "Séparation par scène",
       "stage_split_label": "Un PDF par scène",
       "stage_split_desc": "Divise chaque tour en un PDF distinct par scène, afin d'imprimer chaque scène sur une couleur de papier différente. Seuls les tours répartis sur plusieurs scènes sont divisés.",
@@ -259,6 +263,7 @@
   "warnings": {
     "no_groups": "Aucun groupe n'a encore été assigné pour cette compétition, donc le nombre de feuilles affiche 0. Assignez d'abord les groupes (dans Groupifier ou sur le site de la WCA), puis revenez ici. Vous pouvez tout de même générer le suivi d'horaire et les badges entre-temps.",
     "stage_split_prefilled": "Le tour 2 est prérempli avec les personnes du tour 1, qui ne sont pas encore affectées à une scène : il reste donc un seul PDF. Les autres tours sont tout de même divisés par scène.",
+    "merge_rounds_large": "Tous les tours sont regroupés dans un seul très gros PDF de feuilles de score. Sa génération peut être lente et échouer sur cet ordinateur. Si c'est le cas, activez la division ci-dessous.",
     "ots_intro": "Cette compétition accepte les inscriptions sur place. Les personnes inscrites le jour même ne sont pas dans le WCIF, donc quelques éléments sont à corriger à la main :",
     "ots_blanks": "Utilisez pour elles les badges, fiches pour les nouveaux participants et feuilles vierges (une page de chaque).",
     "ots_ids": "Ajoutez chacune d'elles sur le site de la WCA (et dans WCA Live) avant de saisir les résultats : leurs feuilles n'ont pas d'identifiant d'ici là.",

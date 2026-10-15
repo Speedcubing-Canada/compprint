@@ -18,7 +18,7 @@ const BASE: CompetitionSettings = {
   logoDataUrl: null, useDefaultLogo: false, scorecardCompNameWithLogo: false, liveResultsMode: 'wca-live',
   wcaLiveId: null, wcaLivePersonIds: null,
   hideWcaLiveId: false, nametagLogoMode: 'hidden', nametagQrMode: 'back-only', nametagLayout: 'vertical',
-  splitPdfsByStage: false, otsBlanks: false, scorecardsA6: false,
+  splitPdfsByStage: false, mergeScorecardRounds: false, otsBlanks: false, scorecardsA6: false,
   finalStationNumbers: true, stationsPerStage: null,
   customEvents: [], scorecardCheckMode: 'per-group-card',
   scrambleDoubleCheck: false, scrambleDoubleCheckRounds: ['finals'], scrambleDoubleCheckOverrides: {},

@@ -141,6 +141,10 @@
     },
     "advanced": {
       "toggle": "Advanced",
+      "merge_rounds_title": "Scorecard files",
+      "merge_rounds_label": "One PDF for all rounds",
+      "merge_rounds_desc": "Puts Round 1, Round 2, semifinals and finals in a single scorecard PDF. On very large competitions this file can be slow to generate and may fail on computers with little memory.",
+      "merge_rounds_stage_split": "Not available while scorecards are split per stage.",
       "stage_split_title": "Stage separation",
       "stage_split_label": "One PDF per stage",
       "stage_split_desc": "Splits each round into its own PDF per stage, so every stage can be printed on a different paper colour. Only rounds that actually run across several stages are split.",
@@ -259,6 +263,7 @@
   "warnings": {
     "no_groups": "No groups have been assigned for this competition yet, so scorecard counts show 0. Assign groups first (in Groupifier or on the WCA website), then come back here. You can still generate the schedule tracker and name tags in the meantime.",
     "stage_split_prefilled": "Round 2 is prefilled with the competitors from Round 1, who are not on a stage yet, so it stays one PDF. The other rounds are still split per stage.",
+    "merge_rounds_large": "All rounds are merged into one very large scorecard PDF. Generating it can be slow and may fail on this computer. If it does, turn on splitting below.",
     "ots_intro": "This competition accepts on-the-spot registrations. People registered on the day are not in the WCIF, so a few things need fixing by hand:",
     "ots_blanks": "Use the blank name tags, first-timer slips and scorecards (one page each) for them.",
     "ots_ids": "Add each of them on the WCA website (and in WCA Live) before entering results: their scorecards have no ID until then.",

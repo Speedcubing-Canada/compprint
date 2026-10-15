@@ -161,6 +161,11 @@ function uniqueSlugs(names: string[]): string[] {
 
 const titleCase = (s: string) => s.charAt(0).toUpperCase() + s.slice(1);
 
+/** Whether every round shares one scorecard PDF: either split setting wins over the merge. */
+export const mergesRounds = (settings: CompetitionSettings) =>
+  settings.mergeScorecardRounds === true
+  && settings.splitPdfsByStage !== true && settings.splitLargePdfs !== true;
+
 /**
  * The PDFs a parse produces, in render order. An emptied bucket produces no job, which is how
  * document selection is enforced; there is no per-document flag down here.
@@ -175,10 +180,16 @@ export function buildPdfJobs(parsed: ParsedWCIF, settings: CompetitionSettings):
   // The parser hands back the 4-up order; A6 unstacks it before any split, so each part is a
   // contiguous run of the sorted deck.
   const bucket = (list: ScorecardData[]) => (a6 ? unstackQuadrants(list) : list);
-  jobs.push(...scorecardJobs(bucket(parsed.firstRound),   id, 'round1', 'Round 1', stages, a6, splitLarge));
-  jobs.push(...scorecardJobs(bucket(parsed.intermediate), id, 'round2', 'Round 2', stages, a6, splitLarge));
-  jobs.push(...scorecardJobs(bucket(parsed.semis),        id, 'semis',  'Semis',  stages, a6, splitLarge));
-  jobs.push(...scorecardJobs(bucket(parsed.finals),       id, 'finals', 'Finals', stages, a6, splitLarge));
+  if (mergesRounds(settings)) {
+    // Each bucket is already padded to whole sheets, so concatenating never mixes rounds on one.
+    const all = [parsed.firstRound, parsed.intermediate, parsed.semis, parsed.finals].flatMap(bucket);
+    jobs.push(...scorecardJobs(all, id, 'scorecards', 'Scorecards', false, a6, false));
+  } else {
+    jobs.push(...scorecardJobs(bucket(parsed.firstRound),   id, 'round1', 'Round 1', stages, a6, splitLarge));
+    jobs.push(...scorecardJobs(bucket(parsed.intermediate), id, 'round2', 'Round 2', stages, a6, splitLarge));
+    jobs.push(...scorecardJobs(bucket(parsed.semis),        id, 'semis',  'Semis',  stages, a6, splitLarge));
+    jobs.push(...scorecardJobs(bucket(parsed.finals),       id, 'finals', 'Finals', stages, a6, splitLarge));
+  }
   // Never split: extras are not produced by finalizeEntries, so they must not go back through it.
   if (parsed.extras.length > 0)
     jobs.push({ kind: 'scorecards', filename: `${id}_extras.pdf`, entries: parsed.extras, label: 'Extras' });

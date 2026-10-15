@@ -124,6 +124,7 @@ export function buildGenerateEvent(args: {
       liveResultsMode: settings.liveResultsMode,
       hideWcaLiveId: settings.hideWcaLiveId,
       splitPdfsByStage: settings.splitPdfsByStage,
+      mergeScorecardRounds: settings.mergeScorecardRounds,
       otsBlanks: settings.otsBlanks,
       finalStationNumbers: settings.finalStationNumbers,
       stationsPerStage: settings.stationsPerStage,

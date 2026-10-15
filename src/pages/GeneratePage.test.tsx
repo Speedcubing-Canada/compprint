@@ -160,6 +160,26 @@ describe('GeneratePage', () => {
     expect((posted[0] as { settings: typeof settings }).settings.splitLargePdfs).toBe(true);
   });
 
+  const mergeWarning = () => screen.queryByText(/All rounds are merged/);
+
+  it('warns about one huge merged file only when it is past the cap', async () => {
+    vi.mocked(hasOversizedPdf).mockReturnValue(false);
+    writeSettings(testSettings({ competitionId: settings.competitionId, mergeScorecardRounds: true }));
+    renderWithProviders(<GeneratePage />, { auth: signedInAuth });
+    await downloadButton();
+    expect(mergeWarning()).toBeNull();
+  });
+
+  it('shows the merge warning for an oversized merged file, and drops it once split', async () => {
+    vi.mocked(hasOversizedPdf).mockReturnValue(true);
+    writeSettings(testSettings({ competitionId: settings.competitionId, mergeScorecardRounds: true }));
+    renderWithProviders(<GeneratePage />, { auth: signedInAuth });
+    await downloadButton();
+    expect(mergeWarning()).toBeTruthy();
+    fireEvent.click(splitBox()!);
+    expect(mergeWarning()).toBeNull();
+  });
+
   it('hands the worker the parsed competition when download is clicked', async () => {
     renderWithProviders(<GeneratePage />, { auth: signedInAuth });
 

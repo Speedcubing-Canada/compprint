@@ -108,6 +108,7 @@ export default function SettingsPage() {
     nametagLayout: preset.nametagLayout ?? 'vertical',
     scorecardCheckMode: preset.scorecardCheckMode ?? 'per-group-card',
     splitPdfsByStage: false,
+    mergeScorecardRounds: preset.mergeScorecardRounds ?? false,
     scorecardsA6: false,
     otsBlanks: false,
     finalStationNumbers: true,
@@ -134,7 +135,7 @@ export default function SettingsPage() {
     language, secondaryLanguage, paperFormat, secondRoundMode, logoDataUrl, useDefaultLogo,
     scorecardCompNameWithLogo,
     liveResultsMode, wcaLiveId, hideWcaLiveId, nametagLogoMode, nametagQrMode, nametagLayout,
-    scorecardCheckMode, customEvents, splitPdfsByStage, scrambleDoubleCheckRounds,
+    scorecardCheckMode, customEvents, splitPdfsByStage, mergeScorecardRounds, scrambleDoubleCheckRounds,
     scrambleDoubleCheckOverrides, scrambleDoubleCheckWorldTop, scrambleDoubleCheckRegionTop,
     scrambleDoubleCheckRegionScope, otsBlanks, finalStationNumbers, stationsPerStage, scorecardsA6,
   } = draft;
@@ -887,6 +888,29 @@ export default function SettingsPage() {
                   />
                 </div>
               </section>
+
+              {!isCustom && (
+                <section className={s.section}>
+                  <h3 className={ui.sectionHeading}>
+                    {t('settings.advanced.merge_rounds_title')}
+                  </h3>
+                  <label className={`${ui.toggleCard} ${mergeScorecardRounds && !splitPdfsByStage ? ui.toggleCardActive : ''}`}>
+                    <input
+                      type="checkbox"
+                      checked={mergeScorecardRounds && !splitPdfsByStage}
+                      disabled={splitPdfsByStage}
+                      onChange={e => patch({ mergeScorecardRounds: e.target.checked })}
+                      className={ui.radio}
+                    />
+                    <div>
+                      <div className={ui.optionLabel}>{t('settings.advanced.merge_rounds_label')}</div>
+                      <div className={ui.optionDesc}>
+                        {t(splitPdfsByStage ? 'settings.advanced.merge_rounds_stage_split' : 'settings.advanced.merge_rounds_desc')}
+                      </div>
+                    </div>
+                  </label>
+                </section>
+              )}
 
               {multiStage && (
                 <section className={s.section}>

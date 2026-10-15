@@ -19,7 +19,7 @@ export type PresetSettings = Partial<Pick<CompetitionSettings,
   | 'language' | 'secondaryLanguage' | 'paperFormat' | 'secondRoundMode'
   | 'useDefaultLogo' | 'hideWcaLiveId'
   | 'nametagLogoMode' | 'nametagQrMode' | 'nametagLayout'
-  | 'scorecardCheckMode' | 'scrambleDoubleCheckRegionTop'
+  | 'scorecardCheckMode' | 'scrambleDoubleCheckRegionTop' | 'mergeScorecardRounds'
 >> & {
   // A filename in ./logos, for an organization that prints the same logo at every competition.
   logo?: string;
@@ -54,6 +54,7 @@ const SETTING_VALUES: Record<keyof PresetSettings, readonly string[] | 'boolean'
   nametagLayout: ['vertical', 'horizontal'],
   scorecardCheckMode: ['per-group-card', 'per-round-card', 'none'],
   scrambleDoubleCheckRegionTop: 'count',
+  mergeScorecardRounds: 'boolean',
   logo: Object.keys(LOGOS),
 };
 

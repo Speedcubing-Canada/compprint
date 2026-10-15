@@ -217,6 +217,7 @@ describe('settings restore', () => {
       generationScope: { mode: 'everything', documents: DEFAULT_SCOPE.documents },
       hideWcaLiveId: false,
       splitPdfsByStage: false,
+      mergeScorecardRounds: false,
       finalStationNumbers: true,
       stationsPerStage: null,
       liveResultsMode: 'wca-live',
