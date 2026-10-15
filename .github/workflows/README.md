@@ -212,14 +212,19 @@ is 10 GiB of storage plus 1 TiB of queries, so this costs nothing at our volume.
 
 ## Custom domains
 
-`compprint.speedcubingcanada.org` is canonical. `server.js` 301-redirects GET/HEAD on
-`scorecards.speedcubingcanada.org` to it, so old links keep working.
+`compprint.speedcubingcanada.org` is canonical. `server.js` 302-redirects GET/HEAD on
+`scorecards.speedcubingcanada.org` to it (POSTs from tabs opened before the move still go
+through); switch it to 301 once `compprint.*` has run cleanly for a while. localStorage is per
+origin, so users arriving from `scorecards.*` start with default language, theme and analytics
+opt-in. The typo domains `comprint.*` and `www.comprint.*` 301 to `compprint.*` (`TYPO_HOSTS`).
 
 ```bash
-gcloud app domain-mappings create compprint.speedcubingcanada.org --project=scorecards-v2-prod
+for d in compprint comprint www.comprint; do
+  gcloud app domain-mappings create $d.speedcubingcanada.org --project=scorecards-v2-prod
+done
 ```
 
-Then add `CNAME compprint -> ghs.googlehosted.com.` in the speedcubingcanada.org DNS and wait
-for the managed certificate (`gcloud app domain-mappings describe ...`). The WCA OAuth app
-must list `https://compprint.speedcubingcanada.org/auth/callback` as a redirect URI; keep the
-`scorecards.*` one too. Do all of this before deploying the redirect, or sign-in breaks.
+Then add a `CNAME <subdomain> -> ghs.googlehosted.com.` for each in the speedcubingcanada.org DNS
+and wait for the managed certificates (`gcloud app domain-mappings describe ...`). The WCA OAuth
+app must list `https://compprint.speedcubingcanada.org/auth/callback` as a redirect URI; keep the
+`scorecards.*` one too. Do all of this before deploying, or sign-in breaks.

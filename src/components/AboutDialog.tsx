@@ -4,13 +4,12 @@ import { useTranslation } from 'react-i18next';
 import Modal from './Modal';
 import Tooltip from './Tooltip';
 import { REPO_URL, SUPPORT_EMAIL } from './ContactLinks';
-import { APP_NAME } from '../brand';
 import { isOptedOut, setOptedOut } from '../lib/analytics';
 import ui from '../styles/ui.module.css';
 import s from './AboutDialog.module.css';
 
 /**
- * "About this tool" explainer: a circular "i" button (or a text link when `as="text"`)
+ * About dialog: a circular "i" button (or a text link when `as="text"`)
  * opening a modal on what the tool is, what a WCIF is, and where both sit in the
  * competition workflow. Self-contained open state, so it drops onto any page.
  */
@@ -33,8 +32,8 @@ export default function AboutDialog({ as = 'icon' }: { as?: 'icon' | 'text' }) {
         </Tooltip>
       )}
 
-      <Modal open={open} onClose={() => setOpen(false)} title={t('about.title', { name: APP_NAME })}>
-        <p className={ui.dialogBody}>{t('about.intro', { name: APP_NAME })}</p>
+      <Modal open={open} onClose={() => setOpen(false)} title={t('about.title')}>
+        <p className={ui.dialogBody}>{t('about.intro')}</p>
 
         <h3 className={s.section}>{t('about.wcif_title')}</h3>
         <p className={ui.dialogBody}>{t('about.wcif_body')}</p>

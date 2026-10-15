@@ -1,5 +1,5 @@
-import { APP_NAME } from '../brand';
 import { Document, Page, View, Text, StyleSheet } from '@react-pdf/renderer';
+import { docMeta } from './docMeta';
 import type { CompetitionSettings } from '../types/settings';
 import type { GroupOverviewEntry } from '../lib/wcif-parser';
 import { getGroupOverviewStrings } from '../lib/i18n';
@@ -90,7 +90,7 @@ export function GroupOverviewDocument({ entries, settings }: Props) {
   const multiDay = new Set(entries.map((e) => e.dayLabel)).size > 1;
 
   return (
-    <Document title={`${settings.competitionName} - Group Overview`} author={APP_NAME}>
+    <Document {...docMeta(settings.competitionName, 'Group Overview')}>
       <Page size={settings.paperFormat} style={styles.page}>
         <Text style={styles.title}>{settings.competitionName} {strings.title}</Text>
 

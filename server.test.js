@@ -194,7 +194,7 @@ describe('routing', () => {
   });
 });
 
-describe('legacy host', () => {
+describe('host routing', () => {
   // fetch() won't set Host, so this goes through node:http.
   const onHost = (host, p, method = 'GET') => new Promise((resolve, reject) => {
     const req = http.request(`${base}${p}`, { method, headers: { Host: host } }, res => {
@@ -204,19 +204,29 @@ describe('legacy host', () => {
     req.on('error', reject).end();
   });
 
-  it('301s scorecards.* to compprint.* keeping path and query', async () => {
-    const res = await onHost('scorecards.speedcubingcanada.org', '/generate?x=1');
+  it.each([
+    ['comprint.speedcubingcanada.org', 'GET'],
+    ['www.comprint.speedcubingcanada.org', 'HEAD'],
+    ['Comprint.speedcubingcanada.org.', 'GET'],
+  ])('301s typo host %s (%s) to compprint.* keeping path and query', async (host, method) => {
+    const res = await onHost(host, '/generate?x=1', method);
     expect(res.statusCode).toBe(301);
     expect(res.headers.location).toBe('https://compprint.speedcubingcanada.org/generate?x=1');
   });
 
-  it('lets a POST on the legacy host through', async () => {
+  it.each(['GET', 'HEAD'])('302s scorecards.* (%s) to compprint.* keeping path and query', async (method) => {
+    const res = await onHost('scorecards.speedcubingcanada.org', '/generate?x=1', method);
+    expect(res.statusCode).toBe(302);
+    expect(res.headers.location).toBe('https://compprint.speedcubingcanada.org/generate?x=1');
+  });
+
+  it('lets a POST on scorecards.* through', async () => {
     const res = await onHost('scorecards.speedcubingcanada.org', '/api/event', 'POST');
     expect(res.statusCode).toBe(204);
   });
 
-  it('leaves other hosts alone', async () => {
-    const res = await onHost('compprint.speedcubingcanada.org', '/nope.png');
-    expect(res.statusCode).toBe(404);
+  it('serves compprint.* without redirecting', async () => {
+    const res = await onHost('compprint.speedcubingcanada.org', '/');
+    expect(res.headers.location).toBeUndefined();
   });
 });

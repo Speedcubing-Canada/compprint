@@ -1,4 +1,4 @@
-<p align="center"><img alt="" src="public/compprint-icon.svg" width="72"></p>
+<p align="center"><img alt="" src="public/favicon.svg" width="72"></p>
 
 <h1 align="center">CompPrint</h1>
 
@@ -405,8 +405,8 @@ request runs the same test job and stops there. One-time
 GCP setup lives in [`.github/workflows/README.md`](.github/workflows/README.md). For an emergency
 manual deploy: `VITE_WCA_CLIENT_ID=… npm run build && ./deploy.sh`.
 
-The app is served at `compprint.speedcubingcanada.org`; the old `scorecards.speedcubingcanada.org`
-301-redirects there (see [Custom domains](.github/workflows/README.md#custom-domains)).
+The app is served at `compprint.speedcubingcanada.org`. The old `scorecards.speedcubingcanada.org`
+302-redirects there and the `comprint.*` typo domains 301 there (see [Custom domains](.github/workflows/README.md#custom-domains)).
 
 ## Usage analytics
 

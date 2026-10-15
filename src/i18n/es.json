@@ -272,8 +272,8 @@
   },
   "about": {
     "trigger": "¿Qué es esto?",
-    "title": "Acerca de {{name}}",
-    "intro": "{{name}} genera PDF listos para imprimir de una competición WCA: hojas de puntuación, acreditaciones, seguimiento del horario y hojas para debutantes (opcionales). Todo está maquetado para imprimir y recortar.",
+    "title": "Acerca de {{app}}",
+    "intro": "{{app}} genera PDF listos para imprimir de una competición WCA: hojas de puntuación, acreditaciones, seguimiento del horario y hojas para debutantes (opcionales). Todo está maquetado para imprimir y recortar.",
     "wcif_title": "¿Qué es el WCIF?",
     "wcif_body": "Los datos de cada competición WCA (eventos, horario y competidores inscritos) están en el sitio web de la WCA en un formato llamado WCIF. Las asignaciones de grupos se añaden antes, normalmente con una herramienta como Groupifier.",
     "workflow_title": "Dónde encaja",

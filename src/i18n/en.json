@@ -272,8 +272,8 @@
   },
   "about": {
     "trigger": "What is this?",
-    "title": "About {{name}}",
-    "intro": "{{name}} generates print-ready PDFs for a WCA competition: scorecards, name tags, a schedule tracker, and optional first-timer slips. Everything is laid out for printing and cutting.",
+    "title": "About {{app}}",
+    "intro": "{{app}} generates print-ready PDFs for a WCA competition: scorecards, name tags, a schedule tracker, and optional first-timer slips. Everything is laid out for printing and cutting.",
     "wcif_title": "What is the WCIF?",
     "wcif_body": "Every WCA competition's data (events, schedule, and registered competitors) lives on the WCA website in a format called the WCIF. Group assignments are added upstream, usually with a tool like Groupifier.",
     "workflow_title": "Where this fits",

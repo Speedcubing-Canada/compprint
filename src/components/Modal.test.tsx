@@ -39,7 +39,7 @@ describe('AboutDialog', () => {
     expect(dialog().open).toBe(true);
     const labelledBy = dialog().getAttribute('aria-labelledby');
     expect(labelledBy).toBeTruthy();
-    expect(document.getElementById(labelledBy!)?.textContent).toBe(i18n.t('about.title', { name: APP_NAME }));
+    expect(document.getElementById(labelledBy!)?.textContent).toBe(`About ${APP_NAME}`);
   });
 
   // aria-modal must not be hand-set on a showModal() dialog: the browser owns it, and a

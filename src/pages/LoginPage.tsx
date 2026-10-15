@@ -6,7 +6,7 @@ import LanguageSelect from '../components/LanguageSelect';
 import ThemeToggle from '../components/ThemeToggle';
 import Logo from '../components/Logo';
 import AboutDialog from '../components/AboutDialog';
-import { APP_NAME } from '../brand';
+import { APP_ICON, APP_NAME } from '../brand';
 import ui from '../styles/ui.module.css';
 import s from './LoginPage.module.css';
 
@@ -27,7 +27,7 @@ export default function LoginPage() {
           <ThemeToggle />
         </div>
 
-        <img src="/compprint-icon.svg" alt="" width={64} height={64} className={s.icon} />
+        <img src={APP_ICON} alt="" width={64} height={64} className={s.icon} />
         <h1 className={s.title}>{APP_NAME}</h1>
         <p className={s.subtitle}>{t('login.subtitle')}</p>
 

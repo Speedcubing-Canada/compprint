@@ -18,7 +18,6 @@ import type { AuthState } from '../auth/useAuth';
 import LoginPage from './LoginPage';
 import { APP_NAME } from '../brand';
 
-
 // Mount smoke test: the sign-in screen is the one page every organizer sees, and
 // it is the only one no other test touches. Assertions go through i18n keys, never
 // literal copy, so rewording never reddens CI.
