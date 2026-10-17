@@ -8,7 +8,7 @@
 </p>
 
 <p align="center">
-  <a href="https://compprint.speedcubingcanada.org/"><img alt="Live app" src="https://img.shields.io/badge/live-compprint.speedcubingcanada.org-2563eb"></a>
+  <a href="https://compprint.net/"><img alt="Live app" src="https://img.shields.io/badge/live-compprint.net-2563eb"></a>
   <a href="https://github.com/Speedcubing-Canada/scorecards-v2/actions/workflows/deploy.yml"><img alt="CI" src="https://github.com/Speedcubing-Canada/scorecards-v2/actions/workflows/deploy.yml/badge.svg"></a>
   <a href="https://deepwiki.com/Speedcubing-Canada/scorecards-v2"><img alt="Ask DeepWiki" src="https://deepwiki.com/badge.svg"></a>
 </p>
@@ -405,8 +405,9 @@ request runs the same test job and stops there. One-time
 GCP setup lives in [`.github/workflows/README.md`](.github/workflows/README.md). For an emergency
 manual deploy: `VITE_WCA_CLIENT_ID=… npm run build && ./deploy.sh`.
 
-The app is served at `compprint.speedcubingcanada.org`. The old `scorecards.speedcubingcanada.org`
-302-redirects there and the `comprint.*` typo domains 301 there (see [Custom domains](.github/workflows/README.md#custom-domains)).
+The app is served at `compprint.net`. The old `scorecards.speedcubingcanada.org` and
+`compprint.speedcubingcanada.org` 302-redirect there; `www.compprint.net` and the `comprint.*` typo
+domains 301 there (see [Custom domains](.github/workflows/README.md#custom-domains)).
 
 ## Usage analytics
 

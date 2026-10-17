@@ -205,28 +205,34 @@ describe('host routing', () => {
   });
 
   it.each([
+    ['www.compprint.net', 'GET'],
     ['comprint.speedcubingcanada.org', 'GET'],
     ['www.comprint.speedcubingcanada.org', 'HEAD'],
     ['Comprint.speedcubingcanada.org.', 'GET'],
-  ])('301s typo host %s (%s) to compprint.* keeping path and query', async (host, method) => {
+  ])('301s typo host %s (%s) to compprint.net keeping path and query', async (host, method) => {
     const res = await onHost(host, '/generate?x=1', method);
     expect(res.statusCode).toBe(301);
-    expect(res.headers.location).toBe('https://compprint.speedcubingcanada.org/generate?x=1');
+    expect(res.headers.location).toBe('https://compprint.net/generate?x=1');
   });
 
-  it.each(['GET', 'HEAD'])('302s scorecards.* (%s) to compprint.* keeping path and query', async (method) => {
-    const res = await onHost('scorecards.speedcubingcanada.org', '/generate?x=1', method);
+  it.each([
+    ['scorecards.speedcubingcanada.org', 'GET'],
+    ['scorecards.speedcubingcanada.org', 'HEAD'],
+    ['compprint.speedcubingcanada.org', 'GET'],
+    ['compprint.speedcubingcanada.org', 'HEAD'],
+  ])('302s legacy host %s (%s) to compprint.net keeping path and query', async (host, method) => {
+    const res = await onHost(host, '/generate?x=1', method);
     expect(res.statusCode).toBe(302);
-    expect(res.headers.location).toBe('https://compprint.speedcubingcanada.org/generate?x=1');
+    expect(res.headers.location).toBe('https://compprint.net/generate?x=1');
   });
 
-  it('lets a POST on scorecards.* through', async () => {
-    const res = await onHost('scorecards.speedcubingcanada.org', '/api/event', 'POST');
+  it.each(['scorecards.speedcubingcanada.org', 'compprint.speedcubingcanada.org'])('lets a POST on %s through', async (host) => {
+    const res = await onHost(host, '/api/event', 'POST');
     expect(res.statusCode).toBe(204);
   });
 
-  it('serves compprint.* without redirecting', async () => {
-    const res = await onHost('compprint.speedcubingcanada.org', '/');
+  it('serves compprint.net without redirecting', async () => {
+    const res = await onHost('compprint.net', '/');
     expect(res.headers.location).toBeUndefined();
   });
 });

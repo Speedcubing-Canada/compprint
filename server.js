@@ -10,10 +10,12 @@ const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const DIST_DIR = path.join(__dirname, 'dist');
 const INDEX_PATH = path.join(DIST_DIR, 'index.html');
 const PORT = Number(process.env.PORT || 8080);
-const CANONICAL_ORIGIN = 'https://compprint.speedcubingcanada.org';
-const TYPO_HOSTS = new Set(['comprint.speedcubingcanada.org', 'www.comprint.speedcubingcanada.org']);
-// 302 until compprint.* has proven itself: browsers cache a 301 past any revert.
-const LEGACY_HOST = 'scorecards.speedcubingcanada.org';
+const CANONICAL_ORIGIN = 'https://compprint.net';
+const TYPO_HOSTS = new Set([
+  'www.compprint.net', 'comprint.speedcubingcanada.org', 'www.comprint.speedcubingcanada.org',
+]);
+// 302 until compprint.net has proven itself: browsers cache a 301 past any revert.
+const LEGACY_HOSTS = new Set(['scorecards.speedcubingcanada.org', 'compprint.speedcubingcanada.org']);
 
 // Secret Manager on App Engine: versions don't preserve console-set env vars across
 // deploys, and the secret belongs in neither app.yaml nor CI. Locally, .env.
@@ -78,7 +80,7 @@ app.use((req, res, next) => {
     return;
   }
   // GET/HEAD only: a POST (token refresh, analytics) from a tab opened before the move must still land.
-  if (host === LEGACY_HOST && (req.method === 'GET' || req.method === 'HEAD')) {
+  if (LEGACY_HOSTS.has(host) && (req.method === 'GET' || req.method === 'HEAD')) {
     res.redirect(302, CANONICAL_ORIGIN + req.originalUrl);
     return;
   }
