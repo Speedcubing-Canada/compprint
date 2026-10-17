@@ -4,7 +4,7 @@ import Tooltip from './Tooltip';
 import ui from '../styles/ui.module.css';
 
 /** Where bug reports and feedback go. Imported, never re-typed - see contact-links.test.ts. */
-export const REPO_URL = 'https://github.com/Speedcubing-Canada/scorecards-v2';
+export const REPO_URL = 'https://github.com/Speedcubing-Canada/compprint';
 export const SUPPORT_EMAIL = 'software@speedcubingcanada.org';
 
 /**

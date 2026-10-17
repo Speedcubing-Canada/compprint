@@ -9,7 +9,7 @@
 
 <p align="center">
   <a href="https://compprint.net/"><img alt="Live app" src="https://img.shields.io/badge/live-compprint.net-2563eb"></a>
-  <a href="https://github.com/Speedcubing-Canada/scorecards-v2/actions/workflows/deploy.yml"><img alt="CI" src="https://github.com/Speedcubing-Canada/scorecards-v2/actions/workflows/deploy.yml/badge.svg"></a>
+  <a href="https://github.com/Speedcubing-Canada/compprint/actions/workflows/deploy.yml"><img alt="CI" src="https://github.com/Speedcubing-Canada/compprint/actions/workflows/deploy.yml/badge.svg"></a>
   <a href="https://deepwiki.com/Speedcubing-Canada/scorecards-v2"><img alt="Ask DeepWiki" src="https://deepwiki.com/badge.svg"></a>
 </p>
 

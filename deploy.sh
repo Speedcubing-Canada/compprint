@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Deploy scorecards-v2 to Google App Engine.
+# Deploy CompPrint to Google App Engine.
 #
 # Usage: ./deploy.sh
 
