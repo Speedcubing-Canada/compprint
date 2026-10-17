@@ -81,14 +81,14 @@ gcloud iam workload-identity-pools providers create-oidc github-provider \
   --workload-identity-pool=github-pool \
   --issuer-uri="https://token.actions.githubusercontent.com" \
   --attribute-mapping="google.subject=assertion.sub,attribute.repository=assertion.repository" \
-  --attribute-condition="attribute.repository=='Speedcubing-Canada/scorecards-v2'" \
+  --attribute-condition="attribute.repository=='Speedcubing-Canada/compprint'" \
   --project=scorecards-v2-prod
 
 # Allow the GitHub repo to impersonate the service account
 gcloud iam service-accounts add-iam-policy-binding \
   github-deploy@scorecards-v2-prod.iam.gserviceaccount.com \
   --role=roles/iam.workloadIdentityUser \
-  --member="principalSet://iam.googleapis.com/projects/$(gcloud projects describe scorecards-v2-prod --format='value(projectNumber)')/locations/global/workloadIdentityPools/github-pool/attribute.repository/Speedcubing-Canada/scorecards-v2" \
+  --member="principalSet://iam.googleapis.com/projects/$(gcloud projects describe scorecards-v2-prod --format='value(projectNumber)')/locations/global/workloadIdentityPools/github-pool/attribute.repository/Speedcubing-Canada/compprint" \
   --project=scorecards-v2-prod
 ```
 

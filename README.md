@@ -9,8 +9,8 @@
 
 <p align="center">
   <a href="https://compprint.net/"><img alt="Live app" src="https://img.shields.io/badge/live-compprint.net-2563eb"></a>
-  <a href="https://github.com/Speedcubing-Canada/scorecards-v2/actions/workflows/deploy.yml"><img alt="CI" src="https://github.com/Speedcubing-Canada/scorecards-v2/actions/workflows/deploy.yml/badge.svg"></a>
-  <a href="https://deepwiki.com/Speedcubing-Canada/scorecards-v2"><img alt="Ask DeepWiki" src="https://deepwiki.com/badge.svg"></a>
+  <a href="https://github.com/Speedcubing-Canada/compprint/actions/workflows/deploy.yml"><img alt="CI" src="https://github.com/Speedcubing-Canada/compprint/actions/workflows/deploy.yml/badge.svg"></a>
+  <a href="https://deepwiki.com/Speedcubing-Canada/compprint"><img alt="Ask DeepWiki" src="https://deepwiki.com/badge.svg"></a>
 </p>
 
 Delegates and organizers sign in with their WCA account, pick a competition they manage, choose
@@ -452,5 +452,5 @@ One-time GCP setup for the sink and the dashboard is in
 | `scripts/` | Headless fixture rendering and pixel diffing |
 | `analytics.js` | Server-side sanitiser for the usage events, next to `server.js` |
 
-For anything deeper, [ask DeepWiki](https://deepwiki.com/Speedcubing-Canada/scorecards-v2) or read
+For anything deeper, [ask DeepWiki](https://deepwiki.com/Speedcubing-Canada/compprint) or read
 the file: both track the code, this README does not.

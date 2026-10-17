@@ -30,7 +30,7 @@ function componentSources(): { name: string; source: string }[] {
 
 describe('contact links', () => {
   it('points at the real repo and the software team', () => {
-    expect(REPO_URL).toBe('https://github.com/Speedcubing-Canada/scorecards-v2');
+    expect(REPO_URL).toBe('https://github.com/Speedcubing-Canada/compprint');
     expect(SUPPORT_EMAIL).toBe('software@speedcubingcanada.org');
   });
 
