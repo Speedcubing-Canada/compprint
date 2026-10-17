@@ -18,10 +18,10 @@ export const CHANGELOG: ChangelogEntry[] = [
   {
     id: '2026-10-15',
     items: {
-      en: ['This app now has a name: CompPrint, at compprint.speedcubingcanada.org.'],
-      fr: ['L\'application a maintenant un nom : CompPrint, sur compprint.speedcubingcanada.org.'],
-      es: ['La aplicación ahora tiene nombre: CompPrint, en compprint.speedcubingcanada.org.'],
-      pt: ['O app agora tem nome: CompPrint, em compprint.speedcubingcanada.org.'],
+      en: ['This app now has a name: CompPrint, at compprint.net.'],
+      fr: ['L\'application a maintenant un nom : CompPrint, sur compprint.net.'],
+      es: ['La aplicación ahora tiene nombre: CompPrint, en compprint.net.'],
+      pt: ['O app agora tem nome: CompPrint, em compprint.net.'],
     },
   },
   {
