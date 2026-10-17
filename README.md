@@ -202,6 +202,7 @@ they were on. Any 401 from an authed call triggers the same path, registered onc
 | `scripts/checkFixtures.sh` | Re-render the fixtures and pixel-diff them against `tests/pdf-baseline/` |
 | `scripts/updateFixtureBaseline.sh` | Refresh that baseline, after an intentional PDF change |
 | `npm run bench` | Time and heap for a whole generation, on a synthetic competition (`small`/`medium`/`wc`) |
+| `npm run record:walkthrough` | Re-record `docs/readme/walkthrough.gif` after a UI change (needs ffmpeg; `-- --shots` for one PNG per step) |
 
 Lint, typecheck and `test:coverage` run in CI **once per commit**: on every PR, and on pushes
 to `main`. There is no staging environment, so that job is the only thing between a branch and

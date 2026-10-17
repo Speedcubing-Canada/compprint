@@ -26,3 +26,4 @@ dist-ssr
 .env
 pdf-diff-out/
 coverage/
+walkthrough-shots/
