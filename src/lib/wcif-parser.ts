@@ -1272,6 +1272,13 @@ export function parseWCIF(wcif: WCIF, settings: CompetitionSettings): ParsedWCIF
       format: roundFormat[rid], isCumulative: roundCumulative[rid],
     });
   }
+  // Sample card for the competitor/judging tutorial; an FMC-only comp has no use for it.
+  if (extrasEntries.length > 0) extrasEntries.push({
+    kind: 'scorecard', timeslot: 'ZZZ', eventId: '333', eventName: getEventName('333', language),
+    roundLabel: strings.tutorial, roundNum: 0, group: simpleGroupLabel('1', 1),
+    name: '', wcaId: strings.newCompetitor, liveId: '0', gender: '',
+    cutoff: '', limit: '10:00', format: 'avg5', isCumulative: false,
+  });
   // A6 prints 1-up: no sheet to fill, and one blank is a page to print copies of.
   const a6 = settings.scorecardsA6 === true;
   const extrasRem = extrasEntries.length % 4;

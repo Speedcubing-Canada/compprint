@@ -152,6 +152,8 @@ function mkWCIF(events: Event[], rooms: Room[], persons: Person[] = []): WCIF {
 // Filter helpers (exclude empty padding covers)
 const scs = (entries: ScorecardData[]) =>
   entries.filter((e): e is ScorecardEntry => e.kind === 'scorecard');
+// Extras minus the tutorial sample card.
+const roundExtras = (entries: ScorecardData[]) => scs(entries).filter(e => e.roundNum > 0);
 const cvs = (entries: ScorecardData[]) =>
   entries.filter((e): e is CoverEntry => e.kind === 'cover' && !!e.eventId);
 
@@ -1070,7 +1072,7 @@ describe('extra scorecards', () => {
       act('222', 1, [ch(101, '222', 1, 1)]),
     ]);
     const result = parseWCIF(mkWCIF([e333, e222], [r]), cfg());
-    const extras = scs(result.extras);
+    const extras = roundExtras(result.extras);
     expect(extras.length).toBe(2);
     expect(extras.map(e => e.eventId).sort()).toEqual(['222', '333']);
   });
@@ -1082,7 +1084,7 @@ describe('extra scorecards', () => {
       act('333', 2, [ch(101, '333', 2, 1, '2024-01-01T12:00:00Z')]),
     ]);
     const result = parseWCIF(mkWCIF([e], [r]), cfg());
-    const extras = scs(result.extras);
+    const extras = roundExtras(result.extras);
     expect(extras.length).toBe(2);
     expect(extras[0]?.roundLabel).toBe('Round 1 of 2');
     expect(extras[1]?.roundLabel).toBe('Final Round');
@@ -1092,14 +1094,14 @@ describe('extra scorecards', () => {
     const e = evt('333', [rSpec('a')]);
     const r = room('Stage', [act('333', 1, [ch(100, '333', 1, 1)])]);
     const result = parseWCIF(mkWCIF([e], [r]), cfg());
-    expect(scs(result.extras)[0]?.group).toBe('Group 1 of 1');
+    expect(roundExtras(result.extras)[0]?.group).toBe('Group 1 of 1');
   });
 
   it('multi-group round: group label is "Group _ of N"', () => {
     const e = evt('333', [rSpec('a')]);
     const r = room('Stage', [act('333', 1, [ch(100, '333', 1, 1), ch(101, '333', 1, 2)])]);
     const result = parseWCIF(mkWCIF([e], [r]), cfg());
-    expect(scs(result.extras)[0]?.group).toBe('Group _ of 2');
+    expect(roundExtras(result.extras)[0]?.group).toBe('Group _ of 2');
   });
 
   it('French: single group → "Groupe 1 sur 1", multi-group → "Groupe _ sur N"', () => {
@@ -1109,7 +1111,7 @@ describe('extra scorecards', () => {
       act('333', 2, [ch(110, '333', 2, 1, '2024-01-01T12:00:00Z')]),
     ]);
     const result = parseWCIF(mkWCIF([e], [r]), cfg({ language: 'fr' }));
-    const extras = scs(result.extras);
+    const extras = roundExtras(result.extras);
     expect(extras.find(e => e.roundLabel === 'Tour 1 sur 2')?.group).toBe('Groupe _ sur 2');
     expect(extras.find(e => e.roundLabel === 'Tour Final')?.group).toBe('Groupe 1 sur 1');
   });
@@ -1121,7 +1123,7 @@ describe('extra scorecards', () => {
       act('333', 1, [ch(101, '333', 1, 1, '2024-01-01T11:00:00Z')]),
     ]);
     const result = parseWCIF(mkWCIF([e], [r]), cfg());
-    const extras = scs(result.extras);
+    const extras = roundExtras(result.extras);
     // Round 2 starts earlier, so it comes first
     expect(extras[0]?.roundLabel).toBe('Final Round');
     expect(extras[1]?.roundLabel).toBe('Round 1 of 2');
@@ -1137,7 +1139,18 @@ describe('extra scorecards', () => {
     ]);
     const result = parseWCIF(mkWCIF([e], [r]), cfg());
     expect(result.extras.length % 4).toBe(0);
-    expect(scs(result.extras).length).toBe(3);
+    expect(roundExtras(result.extras).length).toBe(3);
+  });
+
+  it('ends with one tutorial card: 3x3, avg5, 10:00 limit, new competitor, Live ID 0', () => {
+    const e = evt('222', [rSpec('a')]);
+    const r = room('Stage', [act('222', 1, [ch(100, '222', 1, 1)])]);
+    const tutorial = scs(parseWCIF(mkWCIF([e], [r]), cfg()).extras).filter(x => x.roundNum === 0);
+    expect(tutorial).toHaveLength(1);
+    expect(tutorial[0]).toMatchObject({
+      eventId: '333', roundLabel: 'Tutorial', group: 'Group 1 of 1', name: '',
+      wcaId: 'New Competitor', liveId: '0', format: 'avg5', cutoff: '', limit: '10:00',
+    });
   });
 
   it('333fm rounds are excluded from extras', () => {
@@ -2994,7 +3007,7 @@ describe('on-the-spot blanks', () => {
     const result = parseWCIF(mkWCIF([e, e2], [r], persons()), cfg({ otsBlanks: true, scorecardsA6: true }));
     const extras = result.extras as ScorecardEntry[];
     expect(extras.every(x => x.kind === 'scorecard')).toBe(true);
-    expect(extras.map(x => x.eventId)).toEqual(['333', '']);
+    expect(extras.map(x => x.eventId)).toEqual(['333', '333', '']);
   });
 });
 
