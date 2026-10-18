@@ -1563,7 +1563,12 @@ describe('non-competing staff name tags', () => {
   // Registration-less and no official role: not someone to print for.
   const stranger: Person = { ...per(3, []), registration: null };
   const competitor = per(4, [{ aid: 100 }]);
-  const people = [competitor, volunteer, stranger, delegate];
+  // Organization account listed as organizer; org accounts carry any gender ('f' here, as ABCubo does).
+  const org: Person = {
+    ...per(5, [], { wcaId: null, gender: 'f' }), name: 'Associação Brasileira de Cubo Mágico',
+    roles: ['organizer'], registration: null,
+  };
+  const people = [competitor, volunteer, stranger, delegate, org];
 
   it('tags registration-less Delegates and non-competing volunteers, sorted after officials', () => {
     const tags = parseWCIF(mkWCIF([e], [r], people), cfg()).nametags;

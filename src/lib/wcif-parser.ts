@@ -1151,7 +1151,12 @@ export function parseWCIF(wcif: WCIF, settings: CompetitionSettings): ParsedWCIF
   const nametags: NametTagEntry[] = [];
   const firstTimers: FirstTimerEntry[] = [];
   for (const person of wcif.persons) {
-    const isOfficial = person.roles.some(r => r === 'delegate' || r === 'trainee-delegate' || r === 'organizer');
+    // ponytail: the WCIF has no account-type flag, and org accounts' gender varies. Listed
+    // organizers with no registration and no WCA ID are nearly always organizations; the
+    // rare never-competed human organizer who didn't register loses their staff tag.
+    const isOrgAccount = !person.registration && !person.wcaId;
+    const isOfficial = !isOrgAccount
+      && person.roles.some(r => r === 'delegate' || r === 'trainee-delegate' || r === 'organizer');
     // A registration-less Delegate/organizer, or a WCA "non-competing staff" registration.
     const staff = person.registration ? person.registration.isCompeting === false : isOfficial;
     if (staff ? !settings.staffNametags : person.registration?.status !== 'accepted') continue;
