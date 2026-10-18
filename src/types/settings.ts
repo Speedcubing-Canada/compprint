@@ -98,6 +98,8 @@ export interface CompetitionSettings {
   // One page each of blank name tags, first-timer slips and scorecards for people registered
   // on the day. Seeded from the competition's `on_the_spot_registration` flag.
   otsBlanks: boolean;
+  // Name tags for non-competing Delegates, organizers and volunteers.
+  staffNametags: boolean;
   // Station numbers on a one-group final's blanks, only when its field fits the stations.
   finalStationNumbers: boolean;
   // Overrides the station count read from the WCIF. `null` = detected.

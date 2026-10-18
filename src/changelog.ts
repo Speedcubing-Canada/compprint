@@ -16,6 +16,15 @@ export interface ChangelogEntry {
 /** Newest first. See "Contributing" in the README before adding an entry. */
 export const CHANGELOG: ChangelogEntry[] = [
   {
+    id: '2026-10-17',
+    items: {
+      en: ['Non-competing Delegates, organizers and volunteers now get name tags too.'],
+      fr: ['Les délégués, organisateurs et bénévoles qui ne participent pas ont maintenant leur badge.'],
+      es: ['Los delegados, organizadores y voluntarios que no compiten ahora también tienen acreditación.'],
+      pt: ['Delegados, organizadores e voluntários que não competem agora também ganham crachá.'],
+    },
+  },
+  {
     id: '2026-10-15',
     items: {
       en: ['This app now has a name: CompPrint, at compprint.net.'],

@@ -30,6 +30,7 @@ export function testSettings(over: Partial<CompetitionSettings> = {}): Competiti
     splitPdfsByStage: false, mergeScorecardRounds: false,
     scorecardsA6: false,
     otsBlanks: false,
+    staffNametags: true,
     finalStationNumbers: true,
     stationsPerStage: null,
     scrambleDoubleCheck: false,

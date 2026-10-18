@@ -352,6 +352,20 @@ async function main() {
     }),
   );
 
+  // Non-competing staff: QR codes on both sides, no events, competition-level links.
+  const [d, v, ...rest] = nt.entries;
+  await write(
+    'nametag-staff-test.pdf',
+    e(NametTagDocument, {
+      nametags: [
+        { ...d!, role: 'delegate', staff: true, events: [] },
+        { ...v!, role: 'staff', staff: true, events: [], wcaId: '', titleFront: 'STAFF', titleBack: 'STAFF' },
+        ...rest.slice(0, 2),
+      ],
+      settings: ntSettings,
+    }),
+  );
+
   await write(
     'cover-layout-test.pdf',
     e(ScorecardDocument, { entries: COVERS, settings: settings({ language: 'fr' }) }),

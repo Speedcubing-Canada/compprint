@@ -85,6 +85,7 @@ export interface NametTagTitleStrings {
   organizer: (isFemale: boolean) => string;
   newCompetitor: (isFemale: boolean) => string;
   competitor: (isFemale: boolean) => string;
+  staff: (isFemale: boolean) => string;
 }
 
 export interface ScorecardStrings {
@@ -598,6 +599,7 @@ const NAMETAG_TITLE_EN: NametTagTitleStrings = {
   organizer:    () => 'ORGANIZER',
   newCompetitor: () => 'NEW COMPETITOR',
   competitor:   () => 'COMPETITOR',
+  staff:        () => 'STAFF',
 };
 
 const NAMETAG_TITLE_FR: NametTagTitleStrings = {
@@ -605,6 +607,7 @@ const NAMETAG_TITLE_FR: NametTagTitleStrings = {
   organizer:    (f) => f ? 'ORGANISATRICE' : 'ORGANISATEUR',
   newCompetitor: (f) => f ? 'NOUVELLE COMPÉTITRICE' : 'NOUVEAU COMPÉTITEUR',
   competitor:   (f) => f ? 'COMPÉTITRICE' : 'COMPÉTITEUR',
+  staff:        () => 'STAFF',
 };
 
 const NAMETAG_TITLE_ES: NametTagTitleStrings = {
@@ -612,6 +615,7 @@ const NAMETAG_TITLE_ES: NametTagTitleStrings = {
   organizer:    (f) => f ? 'ORGANIZADORA' : 'ORGANIZADOR',
   newCompetitor: (f) => f ? 'NUEVA COMPETIDORA' : 'NUEVO COMPETIDOR',
   competitor:   (f) => f ? 'COMPETIDORA' : 'COMPETIDOR',
+  staff:        () => 'STAFF',
 };
 
 const NAMETAG_TITLE_PT: NametTagTitleStrings = {
@@ -619,6 +623,7 @@ const NAMETAG_TITLE_PT: NametTagTitleStrings = {
   organizer:    (f) => f ? 'ORGANIZADORA' : 'ORGANIZADOR',
   newCompetitor: (f) => f ? 'NOVA COMPETIDORA' : 'NOVO COMPETIDOR',
   competitor:   (f) => f ? 'COMPETIDORA' : 'COMPETIDOR',
+  staff:        () => 'STAFF',
 };
 
 /** Front panel primary, back panel secondary when set: single-language means both match. */

@@ -11,7 +11,7 @@ export const WCA_EVENT_ORDER: EventId[] = [
   'clock','minx','pyram','skewb','sq1','fto','444bf','555bf','333mbf',
 ];
 
-export type NametTagRole = 'delegate' | 'organizer' | 'new-competitor' | 'competitor';
+export type NametTagRole = 'delegate' | 'organizer' | 'new-competitor' | 'competitor' | 'staff';
 
 export interface NametTagEntry {
   name: string;
@@ -35,6 +35,8 @@ export interface NametTagEntry {
   run: string[];
   // On-the-spot fill-in tag: QR codes point at the competition, not a person.
   blank?: boolean;
+  // Non-competing: QR codes on both sides, pointing at the competition.
+  staff?: boolean;
 }
 
 // One per accepted newcomer, for the confirmation slip the delegate attaches after the
@@ -1142,19 +1144,23 @@ export function parseWCIF(wcif: WCIF, settings: CompetitionSettings): ParsedWCIF
     if (role === 'delegate') return titles.delegate(isFemale);
     if (role === 'organizer') return titles.organizer(isFemale);
     if (role === 'new-competitor') return titles.newCompetitor(isFemale);
+    if (role === 'staff') return titles.staff(isFemale);
     return titles.competitor(isFemale);
   }
 
   const nametags: NametTagEntry[] = [];
   const firstTimers: FirstTimerEntry[] = [];
   for (const person of wcif.persons) {
-    if (!person.registration || person.registration.status !== 'accepted') continue;
+    const isOfficial = person.roles.some(r => r === 'delegate' || r === 'trainee-delegate' || r === 'organizer');
+    // A registration-less Delegate/organizer, or a WCA "non-competing staff" registration.
+    const staff = person.registration ? person.registration.isCompeting === false : isOfficial;
+    if (staff ? !settings.staffNametags : person.registration?.status !== 'accepted') continue;
 
     const name = printedName(person.name);
     const isFemale = person.gender === 'f';
 
     // Newcomers (no WCA ID) get a first-timer confirmation slip.
-    if (!person.wcaId) {
+    if (!person.wcaId && !staff && person.registration) {
       const registeredSet = new Set(person.registration.eventIds as string[]);
       firstTimers.push({
         name,
@@ -1170,13 +1176,15 @@ export function parseWCIF(wcif: WCIF, settings: CompetitionSettings): ParsedWCIF
       role = 'delegate';
     } else if (person.roles.includes('organizer')) {
       role = 'organizer';
+    } else if (staff) {
+      role = 'staff';
     } else if (!person.wcaId) {
       role = 'new-competitor';
     } else {
       role = 'competitor';
     }
 
-    const registeredSet = new Set(person.registration.eventIds as string[]);
+    const registeredSet = new Set(staff ? [] : person.registration?.eventIds as string[]);
     const events = WCA_EVENT_ORDER.filter(e => registeredSet.has(e));
     const dutyArgs = [shortNametTagNames, nametTagDutyStrings.dutyGroup] as const;
 
@@ -1185,7 +1193,7 @@ export function parseWCIF(wcif: WCIF, settings: CompetitionSettings): ParsedWCIF
       wcaId: person.wcaId ?? '',
       registrantId: person.registrantId,
       wcaUserId: person.wcaUserId,
-      registrationId: person.registration.wcaRegistrationId,
+      registrationId: person.registration?.wcaRegistrationId ?? 0,
       gender: person.gender,
       role,
       titleFront: resolveTitle(nametTagTitles.front, role, isFemale),
@@ -1195,12 +1203,13 @@ export function parseWCIF(wcif: WCIF, settings: CompetitionSettings): ParsedWCIF
       scramble: buildDuties(person.assignments, 'staff-scrambler', activityCode, ...dutyArgs),
       judge:    buildDuties(person.assignments, 'staff-judge',     activityCode, ...dutyArgs),
       run:      buildDuties(person.assignments, 'staff-runner',    activityCode, ...dutyArgs),
+      ...(staff ? { staff } : {}),
     });
   }
 
-  // Delegates → Organizers → Returning competitors → New competitors, each group alphabetically by name.
-  const rolePriority = (r: NametTagRole) =>
-    r === 'delegate' ? 0 : r === 'organizer' ? 1 : r === 'competitor' ? 2 : 3;
+  // Delegates → Organizers → Staff → Returning competitors → New competitors, each group alphabetically by name.
+  const ROLE_ORDER: NametTagRole[] = ['delegate', 'organizer', 'staff', 'competitor', 'new-competitor'];
+  const rolePriority = (r: NametTagRole) => ROLE_ORDER.indexOf(r);
   nametags.sort((a, b) => {
     const p = rolePriority(a.role) - rolePriority(b.role);
     return p !== 0 ? p : byName(a.name, b.name);

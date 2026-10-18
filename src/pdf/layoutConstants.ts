@@ -169,12 +169,13 @@ export function liveQrTarget(
     wcaLiveId: string | null;
     wcaLivePersonIds: Record<number, string> | null;
   },
-  entry: { registrantId: number; registrationId: number; blank?: boolean },
+  entry: { registrantId: number; registrationId: number; blank?: boolean; staff?: boolean },
 ): { url: string; label: string } {
+  const toComp = entry.blank || entry.staff;
   if (cfg.mode === 'ilr') {
     const live = `https://www.worldcubeassociation.org/competitions/${cfg.competitionId}/live`;
     return {
-      url: entry.blank ? live : `${live}/competitors/${entry.registrationId}`,
+      url: toComp ? live : `${live}/competitors/${entry.registrationId}`,
       label: 'worldcubeassociation.org',
     };
   }
@@ -183,7 +184,7 @@ export function liveQrTarget(
   const comp = `${home}/competitions/${cfg.wcaLiveId}`;
   return {
     url: !cfg.wcaLiveId ? home
-      : entry.blank ? comp
+      : toComp ? comp
       : personId ? `${comp}/competitors/${personId}`
       : home,
     label: 'live.worldcubeassociation.org',

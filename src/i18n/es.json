@@ -123,6 +123,8 @@
     },
     "nametag": {
       "title": "Diseño de etiquetas de nombre",
+      "staff_label": "Acreditaciones para el staff que no compite",
+      "staff_desc": "Los delegados, organizadores y voluntarios que no compiten reciben una acreditación con los códigos QR en ambos lados.",
       "logo_on_nametags": "Logo en etiquetas de nombre",
       "logo_hidden": "Oculto",
       "logo_hidden_desc": "Logo no mostrado en etiquetas de nombre",

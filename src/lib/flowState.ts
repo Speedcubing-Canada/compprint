@@ -153,6 +153,7 @@ export function readSettings(): CompetitionSettings | null {
   if (s.hideWcaLiveId === undefined) s.hideWcaLiveId = false;
   if (s.splitPdfsByStage === undefined) s.splitPdfsByStage = false;
   if (s.otsBlanks === undefined) s.otsBlanks = false;
+  if (s.staffNametags === undefined) s.staffNametags = true;
   if (s.finalStationNumbers === undefined) s.finalStationNumbers = true;
   if (s.stationsPerStage === undefined) s.stationsPerStage = null;
   if (s.liveResultsMode === undefined) s.liveResultsMode = 'wca-live';
