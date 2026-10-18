@@ -35,7 +35,7 @@ export interface NametTagEntry {
   run: string[];
   // On-the-spot fill-in tag: QR codes point at the competition, not a person.
   blank?: boolean;
-  // Non-competing: QR codes on both sides, pointing at the competition.
+  // Non-competing staff or official: no personal results to link.
   staff?: boolean;
 }
 
@@ -1151,10 +1151,15 @@ export function parseWCIF(wcif: WCIF, settings: CompetitionSettings): ParsedWCIF
   const nametags: NametTagEntry[] = [];
   const firstTimers: FirstTimerEntry[] = [];
   for (const person of wcif.persons) {
-    const isOfficial = person.roles.some(r => r === 'delegate' || r === 'trainee-delegate' || r === 'organizer');
-    // A registration-less Delegate/organizer, or a WCA "non-competing staff" registration.
-    const staff = person.registration ? person.registration.isCompeting === false : isOfficial;
-    if (staff ? !settings.staffNametags : person.registration?.status !== 'accepted') continue;
+    const isDelegate = person.roles.some(r => r === 'delegate' || r === 'trainee-delegate');
+    const isOrganizer = person.roles.includes('organizer');
+    const accepted = person.registration?.status === 'accepted';
+    // ponytail: no account-type flag in the WCIF. An unregistered official with no WCA ID is
+    // taken for an org account, so a never-competed human organizer gets no tag.
+    const looksHuman = !!person.registration || !!person.wcaId;
+    const staff = person.registration?.isCompeting === false
+      || ((isDelegate || isOrganizer) && !accepted && looksHuman);
+    if (staff ? !settings.staffNametags : !accepted) continue;
 
     const name = printedName(person.name);
     const isFemale = person.gender === 'f';
@@ -1172,9 +1177,9 @@ export function parseWCIF(wcif: WCIF, settings: CompetitionSettings): ParsedWCIF
     }
 
     let role: NametTagRole;
-    if (person.roles.some(r => r === 'delegate' || r === 'trainee-delegate')) {
+    if (isDelegate) {
       role = 'delegate';
-    } else if (person.roles.includes('organizer')) {
+    } else if (isOrganizer) {
       role = 'organizer';
     } else if (staff) {
       role = 'staff';
