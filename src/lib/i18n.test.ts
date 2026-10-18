@@ -160,7 +160,7 @@ describe('bilingual scorecard merge', () => {
     'resultPrefix', 'provisionalLine'] as const;
   const BILINGUAL_FN = ['dnfSuffix', 'cumulativeSuffix', 'shortDnfSuffix',
     'shortCumulativeSuffix', 'cutoffLine'] as const;
-  const PRIMARY_TEXT = ['mbfSuffix', 'newCompetitor', 'newCompetitorF', 'finalRound',
+  const PRIMARY_TEXT = ['mbfSuffix', 'newCompetitor', 'newCompetitorF', 'finalRound', 'tutorial',
     'ofConnector'] as const;
   const PRIMARY_FN = ['roundName', 'groupLabel', 'colorGroupLabel', 'blankGroupLabel',
     'stationLabel'] as const;

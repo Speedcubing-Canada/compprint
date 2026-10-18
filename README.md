@@ -33,7 +33,7 @@ we can see which competitions the tool is used on and which settings people pick
 | `{id}_round2.pdf` | Round 2 of events with 3+ rounds; named, prefilled or blank |
 | `{id}_semis.pdf` | Round 3 of events with 4 rounds |
 | `{id}_finals.pdf` | Final round of every multi-round event |
-| `{id}_extras.pdf` | One blank spare scorecard per round per event |
+| `{id}_extras.pdf` | One blank spare scorecard per round per event, plus a sample 3x3 card for the competitor/judging tutorial |
 | `{id}_checklist.pdf` | Round Checklist: one table per day tracking each round's data flow |
 | `{id}_schedule.pdf` | Schedule tracker: estimated times, blank columns for actuals |
 | `{id}_group_overview.pdf` | Group Overview: one table per group, listing everyone assigned to it |

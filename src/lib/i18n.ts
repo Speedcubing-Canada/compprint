@@ -107,6 +107,7 @@ export interface ScorecardStrings {
   newCompetitorF: string;
   roundName: (n: number, total: number) => string;
   finalRound: string;
+  tutorial: string;
   groupLabel: (gNum: string | number, total: number) => string;
   colorGroupLabel: (color: string, gNum: string | number, total: number) => string;
   blankGroupLabel: (total: number) => string;
@@ -137,6 +138,7 @@ const EN: ScorecardStrings = {
   newCompetitorF: 'New Competitor',
   roundName: (n, total) => `Round ${n} of ${total}`,
   finalRound: 'Final Round',
+  tutorial: 'Tutorial',
   groupLabel: (gNum, total) => `Group ${gNum} of ${total}`,
   colorGroupLabel: (color, gNum, total) => `${color} ${gNum} of ${total}`,
   blankGroupLabel: (total) => `Group _ of ${total}`,
@@ -179,6 +181,7 @@ const FR: ScorecardStrings = {
   newCompetitorF: 'Nouvelle Compétitrice',
   roundName: (n, total) => `Tour ${n} sur ${total}`,
   finalRound: 'Tour Final',
+  tutorial: 'Tutoriel',
   groupLabel: (gNum, total) => `Groupe ${gNum} sur ${total}`,
   colorGroupLabel: (color, gNum, total) => `${color} ${gNum} sur ${total}`,
   blankGroupLabel: (total) => `Groupe _ sur ${total}`,
@@ -221,6 +224,7 @@ const ES: ScorecardStrings = {
   newCompetitorF: 'Nueva Competidora',
   roundName: (n, total) => `Ronda ${n} de ${total}`,
   finalRound: 'Ronda Final',
+  tutorial: 'Tutorial',
   groupLabel: (gNum, total) => `Grupo ${gNum} de ${total}`,
   colorGroupLabel: (color, gNum, total) => `${color} ${gNum} de ${total}`,
   blankGroupLabel: (total) => `Grupo _ de ${total}`,
@@ -265,6 +269,7 @@ const PT: ScorecardStrings = {
   newCompetitorF: 'Nova Competidora',
   roundName: (n, total) => `Rodada ${n} de ${total}`,
   finalRound: 'Rodada Final',
+  tutorial: 'Tutorial',
   groupLabel: (gNum, total) => `Grupo ${gNum} de ${total}`,
   colorGroupLabel: (color, gNum, total) => `${color} ${gNum} de ${total}`,
   blankGroupLabel: (total) => `Grupo _ de ${total}`,
@@ -309,6 +314,7 @@ function mergeScorecardStrings(primary: ScorecardStrings, secondary: ScorecardSt
     newCompetitorF: primary.newCompetitorF,
     roundName: (n, total) => `${primary.roundName(n, total)}`,
     finalRound: primary.finalRound,
+    tutorial: primary.tutorial,
     groupLabel: (gNum, total) => primary.groupLabel(gNum, total),
     colorGroupLabel: (color, gNum, total) => primary.colorGroupLabel(color, gNum, total),
     blankGroupLabel: (total) => primary.blankGroupLabel(total),
