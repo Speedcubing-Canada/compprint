@@ -70,7 +70,7 @@ function competitionSize(parsed: ParsedWCIF, wcif: WCIF | null) {
     for (const row of day.rows) groups += row.groupCount;
 
   return {
-    competitors: parsed.nametags.length,
+    competitors: parsed.nametags.filter(t => !t.staff && !t.blank).length,
     events: wcif?.events.length ?? 0,
     rounds: wcif?.events.reduce((n, e) => n + e.rounds.length, 0) ?? 0,
     groups,

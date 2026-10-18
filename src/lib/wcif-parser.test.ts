@@ -1553,8 +1553,11 @@ describe('Spanish language', () => {
 describe('non-competing staff name tags', () => {
   const e = evt('333', [rSpec('a')]);
   const r = room('Stage', [act('333', 1, [ch(100, '333', 1, 1)])]);
-  // Registration-less Delegate, as the WCA lists a Delegate who didn't register.
+  // Registration-less officials, as the WCA lists those who didn't register.
   const delegate: Person = { ...per(1, []), name: 'Dee', roles: ['delegate'], registration: null };
+  const organizer: Person = { ...per(6, []), name: 'Ora', roles: ['organizer'], registration: null };
+  // Registered, then withdrew to delegate.
+  const withdrawn: Person = { ...per(7, [], { status: 'deleted' }), name: 'Dan', roles: ['delegate'] };
   // The WCA serializes a non-competing staff registration as accepted, isCompeting false.
   const volunteer: Person = {
     ...per(2, [], { wcaId: null }), name: 'Vol',
@@ -1563,19 +1566,25 @@ describe('non-competing staff name tags', () => {
   // Registration-less and no official role: not someone to print for.
   const stranger: Person = { ...per(3, []), registration: null };
   const competitor = per(4, [{ aid: 100 }]);
-  // Organization account listed as organizer; org accounts carry any gender ('f' here, as ABCubo does).
+  // Org account: listed organizer, no registration, no WCA ID. Gender varies, so not 'o'.
   const org: Person = {
     ...per(5, [], { wcaId: null, gender: 'f' }), name: 'Associação Brasileira de Cubo Mágico',
     roles: ['organizer'], registration: null,
   };
-  const people = [competitor, volunteer, stranger, delegate, org];
+  const people = [competitor, volunteer, stranger, delegate, org, organizer, withdrawn];
 
-  it('tags registration-less Delegates and non-competing volunteers, sorted after officials', () => {
+  it('tags unregistered or withdrawn officials and non-competing volunteers, sorted after officials', () => {
     const tags = parseWCIF(mkWCIF([e], [r], people), cfg()).nametags;
     expect(tags.map(t => [t.name, t.role, !!t.staff])).toEqual([
-      ['Dee', 'delegate', true], ['Vol', 'staff', true], ['P4', 'competitor', false],
+      ['Dan', 'delegate', true], ['Dee', 'delegate', true], ['Ora', 'organizer', true],
+      ['Vol', 'staff', true], ['P4', 'competitor', false],
     ]);
-    expect(tags[1]).toMatchObject({ titleFront: 'STAFF', events: [], registrationId: 2 });
+    expect(tags[3]).toMatchObject({ titleFront: 'STAFF', events: [], registrationId: 2 });
+  });
+
+  it('skips organization accounts', () => {
+    const names = parseWCIF(mkWCIF([e], [r], people), cfg()).nametags.map(t => t.name);
+    expect(names).not.toContain(org.name);
   });
 
   it('drops them when the setting is off', () => {
