@@ -63,6 +63,7 @@ check first_timers      GrosJouetsaMontreal2026_first_timers.pdf first_timers.pd
 check scorecards        scorecard-layout-test.pdf                scorecards.pdf
 check long_names        scorecard-long-names-test.pdf            long_names.pdf
 check long_nametags     nametag-long-names-test.pdf              long_nametags.pdf
+check staff_nametags    nametag-staff-test.pdf                   staff_nametags.pdf
 check covers            cover-layout-test.pdf                    covers.pdf
 check schedule          schedule-layout-test.pdf                 schedule.pdf
 check checklist         checklist-layout-test.pdf                checklist.pdf

@@ -37,7 +37,7 @@ we can see which competitions the tool is used on and which settings people pick
 | `{id}_checklist.pdf` | Round Checklist: one table per day tracking each round's data flow |
 | `{id}_schedule.pdf` | Schedule tracker: estimated times, blank columns for actuals |
 | `{id}_group_overview.pdf` | Group Overview: one table per group, listing everyone assigned to it |
-| `{id}_nametags.pdf` | Competitor name tags with duty assignments and QR codes |
+| `{id}_nametags.pdf` | Competitor name tags with duty assignments and QR codes, plus non-competing Delegates, organizers and volunteers (badge "Staff", QR codes on both sides, toggle in name tag settings) |
 | `{id}_first_timers.pdf` | Confirmation slips for competitors with no WCA ID |
 | `{id}_custom_{name}.pdf` | One file per custom/bonus event |
 

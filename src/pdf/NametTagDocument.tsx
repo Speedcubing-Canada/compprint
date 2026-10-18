@@ -61,7 +61,7 @@ function QrSvg({ url, size }: { url: string; size: number }) {
 const NBSP = ' ';
 
 function badgeColors(role: NametTagRole) {
-  if (role === 'delegate' || role === 'organizer')
+  if (role === 'delegate' || role === 'organizer' || role === 'staff')
     return { bg: '#343434', fg: 'white' };
   if (role === 'new-competitor')
     return { bg: '#A9A9A9', fg: 'black' };
@@ -154,7 +154,7 @@ function QrSection({ entry, qr, qrSize, compact = false }: {
   entry: NametTagEntry; qr: QrConfig; qrSize: number; compact?: boolean;
 }) {
   const cgComp = `https://www.competitiongroups.com/competitions/${qr.competitionId}`;
-  const cgUrl = entry.blank ? cgComp : `${cgComp}/persons/${entry.registrantId}`;
+  const cgUrl = entry.blank || entry.staff ? cgComp : `${cgComp}/persons/${entry.registrantId}`;
   const live = liveQrTarget(qr, entry);
 
   return (
@@ -218,7 +218,7 @@ function FrontPanel({ entry, panelW, panelH, slotW, slotH, rotate, pos, compName
     <PanelFrame pos={pos} slotW={slotW} slotH={slotH} panelW={panelW} panelH={panelH} rotate={rotate}>{children}</PanelFrame>
   );
 
-  if (qrBothSides) {
+  if (qrBothSides || entry.staff) {
     return frame(<>
       <PanelTop entry={entry} panelW={panelW} compName={compName} titleText={entry.titleFront} logoMode={logoMode} logoDataUrl={logoDataUrl} compact={compact} showWcaId={!compact} showEvents={eventIconsVisible({ isQrSide: true, compact })} />
       <QrSection entry={entry} qr={qr} qrSize={qrSize} compact={compact} />

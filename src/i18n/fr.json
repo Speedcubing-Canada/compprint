@@ -123,6 +123,8 @@
     },
     "nametag": {
       "title": "Mise en page des badges",
+      "staff_label": "Badges pour le staff non compétiteur",
+      "staff_desc": "Les délégués, organisateurs et bénévoles qui ne participent pas à la compétition reçoivent un badge avec les codes QR des deux côtés.",
       "logo_on_nametags": "Logo sur les badges",
       "logo_hidden": "Caché",
       "logo_hidden_desc": "Logo non affiché sur les badges",

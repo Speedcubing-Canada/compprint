@@ -112,6 +112,7 @@ export default function SettingsPage() {
     mergeScorecardRounds: preset.mergeScorecardRounds ?? false,
     scorecardsA6: false,
     otsBlanks: false,
+    staffNametags: true,
     finalStationNumbers: true,
     stationsPerStage: null,
     // Regulation 11i binds every competition, so there is no switch: "off" is both ranking
@@ -140,7 +141,7 @@ export default function SettingsPage() {
     liveResultsMode, wcaLiveId, hideWcaLiveId, nametagLogoMode, nametagQrMode, nametagLayout,
     scorecardCheckMode, customEvents, splitPdfsByStage, scrambleDoubleCheckRounds,
     scrambleDoubleCheckOverrides, scrambleDoubleCheckWorldTop, scrambleDoubleCheckRegionTop,
-    scrambleDoubleCheckRegionScope, otsBlanks, finalStationNumbers, stationsPerStage, scorecardsA6,
+    scrambleDoubleCheckRegionScope, otsBlanks, staffNametags, finalStationNumbers, stationsPerStage, scorecardsA6,
   } = draft;
   const merged = mergesRounds(draft);
 
@@ -699,6 +700,19 @@ export default function SettingsPage() {
               {t('settings.nametag.layout_horizontal')}
             </button>
           </div>
+
+          <label className={`${ui.toggleCard} ${s.checkboxCard} ${staffNametags ? ui.toggleCardActive : ''}`}>
+            <input
+              type="checkbox"
+              checked={staffNametags}
+              onChange={e => patch({ staffNametags: e.target.checked })}
+              className={ui.radio}
+            />
+            <div>
+              <div className={ui.optionLabel}>{t('settings.nametag.staff_label')}</div>
+              <div className={ui.optionDesc}>{t('settings.nametag.staff_desc')}</div>
+            </div>
+          </label>
         </section>
         )}
 

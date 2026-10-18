@@ -123,6 +123,8 @@
     },
     "nametag": {
       "title": "Name tag layout",
+      "staff_label": "Name tags for non-competing staff",
+      "staff_desc": "Delegates, organizers and volunteers who aren't competing get a tag with the QR codes on both sides.",
       "logo_on_nametags": "Logo on name tags",
       "logo_hidden": "Hidden",
       "logo_hidden_desc": "Logo not shown on name tags",

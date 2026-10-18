@@ -123,6 +123,8 @@
     },
     "nametag": {
       "title": "Layout dos crachás",
+      "staff_label": "Crachás para o staff que não compete",
+      "staff_desc": "Delegados, organizadores e voluntários que não competem recebem um crachá com os QR codes nos dois lados.",
       "logo_on_nametags": "Logo nos crachás",
       "logo_hidden": "Oculto",
       "logo_hidden_desc": "Logo não exibido nos crachás",
