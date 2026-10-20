@@ -33,7 +33,7 @@ we can see which competitions the tool is used on and which settings people pick
 | `{id}_round2.pdf` | Round 2 of events with 3+ rounds; named, prefilled or blank |
 | `{id}_semis.pdf` | Round 3 of events with 4 rounds |
 | `{id}_finals.pdf` | Final round of every multi-round event |
-| `{id}_extras.pdf` | One blank spare scorecard per round per event, plus a sample 3x3 card for the competitor/judging tutorial |
+| `{id}_extras.pdf` | One blank spare scorecard per round per event, a sample 3x3 card for the competitor/judging tutorial, and a last page of pure-blank cards (competition header only) to reprint as needed |
 | `{id}_checklist.pdf` | Round Checklist: one table per day tracking each round's data flow |
 | `{id}_schedule.pdf` | Schedule tracker: estimated times, blank columns for actuals |
 | `{id}_group_overview.pdf` | Group Overview: one table per group, listing everyone assigned to it |
@@ -109,7 +109,7 @@ dedicated A6 printers. Only scorecard PDFs change; every other document keeps th
 The card is the A4 card (249×373pt, same row heights) centred on the page, and the entries are
 the plain sorted order (`unstackQuadrants` undoes the cut-and-stack reorder and drops padding
 covers), so there is nothing to cut or restack. Nothing is padded to a sheet of 4 either: extras,
-custom events and on-the-spot blanks print one blank card where 4-up prints four. The page caps
+custom events and the pure-blank page print one blank card where 4-up prints four. The page caps
 below count pages, so an A6 file reaches them with a quarter of the cards.
 
 ### Splitting scorecards per stage
@@ -157,8 +157,6 @@ pages. The setting adds:
   competition on Competition Groups and on WCA Live / ILR rather than a person.
 - One page of blank first-timer slips: every value is a line to write on, every competition
   event is listed to tick, and parental consent is always offered.
-- 4 pure-blank scorecards at the end of the extras (competition header only, 5 attempt rows).
-  Extras only ship with the "everything" scope.
 
 Left to the organizer by hand: adding each person on the WCA site / WCA Live before entering
 results (no ID on their cards until then), their group (group sizes, cover cards, Group Overview

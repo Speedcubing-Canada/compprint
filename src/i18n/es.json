@@ -184,7 +184,7 @@
     "ots": {
       "title": "Inscripción en el lugar",
       "label": "Añadir hojas en blanco para inscripciones en el lugar",
-      "desc": "Una página de acreditaciones, fichas de primera vez y hojas en blanco, para rellenar a mano."
+      "desc": "Una página de acreditaciones y fichas de primera vez en blanco, para rellenar a mano."
     }
   },
   "generate": {
