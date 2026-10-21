@@ -1145,12 +1145,31 @@ describe('extra scorecards', () => {
   it('ends with one tutorial card: 3x3, avg5, 10:00 limit, new competitor, Live ID 0', () => {
     const e = evt('222', [rSpec('a')]);
     const r = room('Stage', [act('222', 1, [ch(100, '222', 1, 1)])]);
-    const tutorial = scs(parseWCIF(mkWCIF([e], [r]), cfg()).extras).filter(x => x.roundNum === 0);
+    const tutorial = scs(parseWCIF(mkWCIF([e], [r]), cfg()).extras).filter(x => x.roundNum === 0 && x.eventId !== '');
     expect(tutorial).toHaveLength(1);
     expect(tutorial[0]).toMatchObject({
       eventId: '333', roundLabel: 'Tutorial', group: 'Group 1 of 1', name: '',
       wcaId: 'New Competitor', liveId: '0', format: 'avg5', cutoff: '', limit: '10:00',
     });
+  });
+
+  // Organizers reprint this page for blanks with no event or round.
+  it('always ends with one page of pure-blank scorecards after the padded extras', () => {
+    const e = evt('333', [rSpec('a')]);
+    const r = room('Stage', [act('333', 1, [ch(100, '333', 1, 1)])]);
+    const result = parseWCIF(mkWCIF([e], [r]), cfg());
+    expect(result.extras.length % 4).toBe(0);
+    const tail = result.extras.slice(-4) as ScorecardEntry[];
+    expect(tail.every(x => x.kind === 'scorecard' && x.eventId === '' && x.eventName === '' && x.group === '')).toBe(true);
+  });
+
+  // 1-up: no sheet to fill, so no padding covers and a single pure blank.
+  it('on A6, skips the padding and adds one pure blank', () => {
+    const e = evt('333', [rSpec('a')]);
+    const r = room('Stage', [act('333', 1, [ch(100, '333', 1, 1)])]);
+    const extras = parseWCIF(mkWCIF([e], [r]), cfg({ scorecardsA6: true })).extras as ScorecardEntry[];
+    expect(extras.every(x => x.kind === 'scorecard')).toBe(true);
+    expect(extras.map(x => x.eventId)).toEqual(['333', '333', '']);
   });
 
   it('333fm rounds are excluded from extras', () => {
@@ -3024,7 +3043,6 @@ describe('on-the-spot blanks', () => {
     const result = parseWCIF(mkWCIF([e, e2], [r], persons()), cfg());
     expect(result.nametags.some(t => t.blank)).toBe(false);
     expect(result.firstTimers.some(f => f.blank)).toBe(false);
-    expect(result.extras.some(x => x.kind === 'scorecard' && x.eventId === '')).toBe(false);
   });
 
   it('appends 4 blank name tags after the sorted real ones', () => {
@@ -3042,21 +3060,6 @@ describe('on-the-spot blanks', () => {
     expect(blanks.length).toBeGreaterThan(0);
     expect(blanks.every(f => f.blank && f.name === '')).toBe(true);
     expect(blanks[0]?.eventIds).toEqual(['333', '222']);
-  });
-
-  it('appends one page of pure-blank scorecards after the padded extras', () => {
-    const result = parseWCIF(mkWCIF([e, e2], [r], persons()), cfg({ otsBlanks: true }));
-    expect(result.extras.length % 4).toBe(0);
-    const tail = result.extras.slice(-4) as ScorecardEntry[];
-    expect(tail.every(x => x.kind === 'scorecard' && x.eventId === '' && x.eventName === '' && x.group === '')).toBe(true);
-  });
-
-  // 1-up: no sheet to fill, so no padding covers and a single pure blank.
-  it('on A6, skips the padding and adds one pure blank', () => {
-    const result = parseWCIF(mkWCIF([e, e2], [r], persons()), cfg({ otsBlanks: true, scorecardsA6: true }));
-    const extras = result.extras as ScorecardEntry[];
-    expect(extras.every(x => x.kind === 'scorecard')).toBe(true);
-    expect(extras.map(x => x.eventId)).toEqual(['333', '333', '']);
   });
 });
 

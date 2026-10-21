@@ -1297,8 +1297,8 @@ export function parseWCIF(wcif: WCIF, settings: CompetitionSettings): ParsedWCIF
   const a6 = settings.scorecardsA6 === true;
   const extrasRem = extrasEntries.length % 4;
   if (!a6 && extrasRem !== 0) for (let i = 0; i < 4 - extrasRem; i++) extrasEntries.push(EMPTY_COVER);
-  if (settings.otsBlanks) {
-    // Only the competition header is printed; the rest is written by hand.
+  if (extrasEntries.length > 0) {
+    // Only the competition header is printed; reprint this page for more blanks.
     const pureBlank: ScorecardEntry = {
       kind: 'scorecard', timeslot: 'ZZZ', eventId: '', eventName: '', roundLabel: '', roundNum: 0,
       group: '', name: '', wcaId: '', liveId: '', gender: '',

@@ -184,7 +184,7 @@
     "ots": {
       "title": "On-the-spot registration",
       "label": "Add blanks for on-the-spot registrations",
-      "desc": "One page each of blank name tags, first-timer slips and scorecards, to fill in by hand."
+      "desc": "One page each of blank name tags and first-timer slips, to fill in by hand."
     }
   },
   "generate": {
