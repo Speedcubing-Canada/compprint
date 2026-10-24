@@ -1,59 +1,36 @@
-// @vitest-environment jsdom
-import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { describe, expect, it } from 'vitest';
 import { cleanup, fireEvent, screen, waitFor } from '@testing-library/react';
-
-vi.mock('../auth/wca', async (importOriginal) => ({
-  ...(await importOriginal<typeof import('../auth/wca')>()),
-  fetchManagedCompetitions: vi.fn(),
-  fetchWcif: vi.fn(),
-}));
-vi.mock('../lib/analytics', async (importOriginal) => ({
-  ...(await importOriginal<typeof import('../lib/analytics')>()),
-  send: vi.fn(),
-}));
-
-import { AppRoutes } from '../App';
-import { fetchManagedCompetitions, fetchWcif } from '../auth/wca';
 import i18n from '../i18n/index';
-import { markAllSeen } from '../changelog';
 import { readCompetition, readSettings, readStoredScope } from '../lib/flowState';
 import { buildPdfJobs, downloadTarget } from '../lib/pdfJobs';
 import { filterParsedByScope } from '../lib/generationScope';
 import { parseWCIF } from '../lib/wcif-parser';
 import { sampleWcif, testSettings } from '../test/fixtures';
-import { anonymousAuth, renderWithProviders, signedInAuth, useEnglish } from '../test/render';
+import { addCompetition, backend } from '../test/fakeWca';
+import { currentPath, renderApp } from '../test/renderApp';
+import { downloads } from '../test/routeSetup';
+import { workers } from '../test/fakeWorker';
 
 // flowState.test.ts covers the storage and each page test covers one page, so the joint -
 // four steps agreeing about the same competition - is what nothing else sees.
 //
-// Drives the real routes through the UI only, never writing flowState directly, and asserts
-// what crossed a page boundary rather than what any page rendered.
+// Drives the real routes and AuthProvider through the UI only, against the fake WCA in
+// src/test/fakeWca.ts, and asserts what crossed a page boundary rather than what any page
+// rendered.
 
-const mockList = vi.mocked(fetchManagedCompetitions);
-const mockWcif = vi.mocked(fetchWcif);
+const FAR_FUTURE = { start_date: '2999-05-16', end_date: '2999-05-16' };
 
-const comp = (over: Record<string, unknown> = {}) => ({
-  id: 'GrosJouetsaMontreal2026',
-  name: 'Gros Jouets à Montréal 2026',
-  city: 'Montréal', country_iso2: 'CA',
-  start_date: '2999-05-16', end_date: '2999-05-16',
-  announced_at: '2026-01-01', registration_open: '2026-01-01', registration_close: '2026-02-01',
-  competitor_limit: null, website: '',
-  ...over,
-});
-
-const other = comp({ id: 'AutreCompetition2026', name: 'Autre Compétition 2026' });
-
-// jsdom implements no Worker, and vitest cannot load a `new URL(..., import.meta.url)` one.
-// Rendering is covered headlessly by src/pdf/renderBundle.test.ts.
-class StubWorker {
-  onmessage: ((e: MessageEvent) => void) | null = null;
-  postMessage() {}
-  terminate() {}
+function seed() {
+  addCompetition(sampleWcif(), FAR_FUTURE);
+  addCompetition({ ...sampleWcif(), id: 'AutreCompetition2026', name: 'Autre Compétition 2026' }, FAR_FUTURE);
 }
 
-const enter = (route: string, auth = signedInAuth) =>
-  renderWithProviders(<AppRoutes />, { auth, route });
+const wcifFetches = () => backend.calls.filter(c => c.includes('/wcif/'));
+
+const enter = (route: string, signedIn = true) => {
+  seed();
+  return renderApp(route, signedIn ? {} : { user: null });
+};
 
 // Callers pass i18n.t(...) so the key stays typed at the call site.
 const click = async (name: string) =>
@@ -62,19 +39,6 @@ const click = async (name: string) =>
 /** A stat card renders its value above its label; read the value beside a known label. */
 const statValue = (label: string) =>
   screen.getByText(label).previousSibling?.textContent;
-
-beforeEach(async () => {
-  sessionStorage.clear();
-  localStorage.clear();
-  // Keeps the What's New dialog from opening over the wizard.
-  markAllSeen();
-  await useEnglish();
-  vi.clearAllMocks();
-  vi.stubGlobal('Worker', StubWorker);
-  mockList.mockResolvedValue([comp(), other]);
-  mockWcif.mockResolvedValue(sampleWcif());
-});
-afterEach(() => { cleanup(); vi.unstubAllGlobals(); });
 
 /** Picker → scope → settings, driving only the UI. Leaves the caller on /settings. */
 async function walkToSettings(name = 'Gros Jouets à Montréal 2026') {
@@ -105,11 +69,30 @@ describe('the wizard carries one competition through all four steps', () => {
     expect(statValue(i18n.t('generate.stats.pdfs'))).toBe(String(jobs.length));
   });
 
+  it('downloads the document the generate page promised', async () => {
+    enter('/competitions');
+    await walkToSettings();
+    await click(i18n.t('settings.generate_button'));
+    await click(i18n.t('generate.download_button'));
+
+    await waitFor(() => expect(downloads).toHaveLength(1));
+    const settings = readSettings()!;
+    const jobs = buildPdfJobs(filterParsedByScope(parseWCIF(sampleWcif(), settings), settings.generationScope), settings);
+    // The default scope is the scorecards alone, which ships as the PDF itself, not a zip.
+    expect(jobs).toHaveLength(1);
+    expect(downloads[0].filename).toBe(downloadTarget(jobs, settings.competitionId).filename);
+    expect(await downloads[0].blob.text()).toBe('%PDF-fake');
+    expect(workers.unhandled).toEqual([]);
+    expect(currentPath()).toBe('/generate');
+  });
+
   it('fetches the WCIF for the competition the picker wrote, not some other one', async () => {
     enter('/competitions');
     fireEvent.click(await screen.findByText('Autre Compétition 2026'));
 
-    await waitFor(() => expect(mockWcif).toHaveBeenCalledWith('AutreCompetition2026', 'test-token'));
+    await waitFor(() => expect(wcifFetches()).toEqual([
+      'GET https://www.worldcubeassociation.org/api/v0/competitions/AutreCompetition2026/wcif/version/2',
+    ]));
     expect(readCompetition().id).toBe('AutreCompetition2026');
   });
 
@@ -133,7 +116,7 @@ describe('switching competitions', () => {
     expect(readStoredScope()).not.toBeNull();
 
     cleanup();
-    enter('/competitions');
+    renderApp('/competitions');
     fireEvent.click(await screen.findByText('Autre Compétition 2026'));
 
     await waitFor(() => expect(readCompetition().id).toBe('AutreCompetition2026'));
@@ -148,7 +131,7 @@ describe('switching competitions', () => {
     await screen.findByRole('button', { name: i18n.t('generate.download_button') });
 
     cleanup();
-    enter('/competitions');
+    renderApp('/competitions');
     fireEvent.click(await screen.findByText('Gros Jouets à Montréal 2026'));
 
     // Same competition, so the organizer's earlier answers are theirs to come back to.
@@ -161,9 +144,9 @@ describe('ProtectedRoute', () => {
   it.each(['/competitions', '/scope', '/settings', '/generate', '/custom'])(
     'sends a signed-out visitor at %s back to the login page',
     async (route) => {
-      enter(route, anonymousAuth);
+      enter(route, false);
       expect(await screen.findByRole('button', { name: i18n.t('login.sign_in_button') })).toBeTruthy();
-      expect(mockWcif).not.toHaveBeenCalled();
+      expect(wcifFetches()).toEqual([]);
     },
   );
 
@@ -173,7 +156,7 @@ describe('ProtectedRoute', () => {
   });
 
   it('sends an unknown route back to the login page', async () => {
-    enter('/nope', anonymousAuth);
+    enter('/nope', false);
     expect(await screen.findByRole('button', { name: i18n.t('login.sign_in_button') })).toBeTruthy();
   });
 });
@@ -201,7 +184,7 @@ describe('the custom-competition branch', () => {
     const settings = readSettings()!;
     expect(settings.isCustomCompetition).toBe(true);
     // A custom competition has no WCIF; fetching one would 404 on a real run.
-    expect(mockWcif).not.toHaveBeenCalled();
+    expect(wcifFetches()).toEqual([]);
   });
 });
 

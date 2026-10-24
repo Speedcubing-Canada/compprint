@@ -1,7 +1,7 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { unzipSync } from 'fflate';
 
-// Stub renderer: real PDF bytes are covered by ./render.integration.test.ts. This file
+// Stub renderer: real PDF bytes are covered by ./render.pdf.test.ts. This file
 // covers the orchestration around it.
 const toBlob = vi.fn();
 vi.mock('@react-pdf/renderer', async (importOriginal) => ({

@@ -9,7 +9,7 @@ import {
 import type { CompetitionSettings } from '../types/settings';
 
 // The storage layer of the wizard handoff (the pages themselves are driven by
-// pages/wizard.integration.test.tsx). Two things break it: a value not surviving the round
+// pages/wizard.route.test.tsx). Two things break it: a value not surviving the round
 // trip, and a missing or corrupt blob throwing on a page that is mid-render.
 
 // vitest runs in the `node` environment here, so provide the storage the module expects.
