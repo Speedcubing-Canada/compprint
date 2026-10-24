@@ -6,7 +6,7 @@
 // The public endpoint serves v1 only, so it is converted to the v2 the app reads.
 
 import { writeFileSync } from 'node:fs';
-import { scrubWcif } from '../src/test/corpus';
+import { scrubWcif, wcifV1ToV2 } from '../src/test/corpus';
 
 type V1Round = Record<string, unknown> & {
   id: string;

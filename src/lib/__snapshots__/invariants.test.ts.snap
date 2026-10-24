@@ -1,0 +1,97 @@
+// Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
+
+exports[`what each real competition prints > BCChampionship2026 1`] = `
+[
+  "BCChampionship2026_round1.pdf: 1580 cards, 1485 named, 93 blank or cover; 93 groups: 444-r1 Blue 3 of 3 | pyram-r1 Orange 2 of 3 | 333-r1 Red 2 of 5 | minx-r1 Blue 1 of 2",
+  "BCChampionship2026_round2.pdf: 516 cards, 481 named, 33 blank or cover; 33 groups: 222-r2 Blue 2 of 2 | 333-r2 Orange 2 of 3 | pyram-r2 Red 1 of 2 | skewb-r2 Blue 1 of 2",
+  "BCChampionship2026_semis.pdf: 60 cards, 55 named, 3 blank or cover; 3 groups: 333-r3 Blue 1 | 333-r3 Orange 1 | 333-r3 Red 1",
+  "BCChampionship2026_finals.pdf: 176 cards, 164 named, 11 blank or cover; 11 groups: minx-r2 Group 1 of 1 | pyram-r3 Group 1 of 1 | 222-r3 Group 1 of 1 | clock-r2 Group 1 of 1",
+  "BCChampionship2026_extras.pdf: 36 cards, 0 named, 35 blank or cover; 32 groups: minx-r1 Group _ of 2 | 555-r1 Group _ of 2 | clock-r1 Group _ of 2 | 777-r1 Group _ of 2",
+  "BCChampionship2026_schedule.pdf",
+  "BCChampionship2026_checklist.pdf",
+  "BCChampionship2026_group_overview.pdf",
+  "BCChampionship2026_nametags.pdf",
+  "BCChampionship2026_first_timers.pdf",
+  "231 name tags, 1 first-timer slips",
+]
+`;
+
+exports[`what each real competition prints > CuberBrasilSumare2026 1`] = `
+[
+  "CuberBrasilSumare2026_round1.pdf: 540 cards, 507 named, 32 blank or cover; 32 groups: minx-r1 Group 2 of 2 | 444-r1 Group 2 of 2 | 222-r1 Group 1 of 5 | 333bf-r1 Group 1 of 2",
+  "CuberBrasilSumare2026_round2.pdf: 124 cards, 121 named, 1 blank or cover; 1 groups: 333-r2 Group _ of 1",
+  "CuberBrasilSumare2026_finals.pdf: 28 cards, 0 named, 27 blank or cover; 24 groups: 222-r2 Station 07 | 333oh-r2 Station 05 | 333-r3 Station 03 | 222-r2 Station 01",
+  "CuberBrasilSumare2026_extras.pdf: 24 cards, 0 named, 21 blank or cover; 18 groups: 333bf-r1 Group _ of 2 | 777-r1 Group _ of 2 | 666-r1 Group _ of 2 | skewb-r1 Group _ of 2",
+  "CuberBrasilSumare2026_schedule.pdf",
+  "CuberBrasilSumare2026_checklist.pdf",
+  "CuberBrasilSumare2026_group_overview.pdf",
+  "CuberBrasilSumare2026_nametags.pdf",
+  "CuberBrasilSumare2026_first_timers.pdf",
+  "139 name tags, 7 first-timer slips",
+]
+`;
+
+exports[`what each real competition prints > FMCaMontreal2026 1`] = `
+[
+  "FMCaMontreal2026_nametags.pdf",
+  "11 name tags, 0 first-timer slips",
+]
+`;
+
+exports[`what each real competition prints > GrosJouetsaMontreal2025 1`] = `
+[
+  "GrosJouetsaMontreal2025_round1.pdf: 188 cards, 170 named, 15 blank or cover; 15 groups: 777-r1 Group 1 of 2 | minx-r1 Group 2 of 2 | 444-r1 Group 3 of 3 | 666-r1 Group 1 of 2",
+  "GrosJouetsaMontreal2025_round2.pdf: 136 cards, 129 named, 6 blank or cover; 4 groups: 777-r2 Group _ of 1 | 444-r2 Group _ of 2 | 555-r2 Group _ of 2 | 666-r2 Group _ of 1",
+  "GrosJouetsaMontreal2025_finals.pdf: 52 cards, 0 named, 50 blank or cover; 45 groups: 777-r3 Station 04 | minx-r2 Station 09 | 666-r3 Station 01 | 777-r3 Station 05",
+  "GrosJouetsaMontreal2025_extras.pdf: 24 cards, 0 named, 21 blank or cover; 18 groups: 666-r1 Group _ of 2 | 444bf-r1 Group _ of 2 | 777-r1 Group _ of 2 | 666-r2 Group 1 of 1",
+  "GrosJouetsaMontreal2025_schedule.pdf",
+  "GrosJouetsaMontreal2025_checklist.pdf",
+  "GrosJouetsaMontreal2025_group_overview.pdf",
+  "GrosJouetsaMontreal2025_nametags.pdf",
+  "45 name tags, 0 first-timer slips",
+]
+`;
+
+exports[`what each real competition prints > HUNbelievableChallengeBSB2026 1`] = `
+[
+  "HUNbelievableChallengeBSB2026_round1.pdf: 172 cards, 162 named, 9 blank or cover; 9 groups: 333-r1 Group 3 of 4 | pyram-r1 Group 1 of 3 | pyram-r1 Group 3 of 3 | 333-r1 Group 1 of 4",
+  "HUNbelievableChallengeBSB2026_round2.pdf: 84 cards, 77 named, 4 blank or cover; 4 groups: 333-r2 Group 3 of 4 | 333-r2 Group 4 of 4 | 333-r2 Group 1 of 4 | 333-r2 Group 2 of 4",
+  "HUNbelievableChallengeBSB2026_finals.pdf: 12 cards, 0 named, 11 blank or cover; 10 groups: 333-r3 Station 03 | 333-r3 Station 06 | 333-r3 Station 09 | 333-r3 Station 01",
+  "HUNbelievableChallengeBSB2026_extras.pdf: 12 cards, 0 named, 10 blank or cover; 7 groups: 333-r1 Group _ of 4 | pyram-r1 Group _ of 3 | clock-r1 Group _ of 2 | 333-r2 Group _ of 4",
+  "HUNbelievableChallengeBSB2026_schedule.pdf",
+  "HUNbelievableChallengeBSB2026_checklist.pdf",
+  "HUNbelievableChallengeBSB2026_group_overview.pdf",
+  "HUNbelievableChallengeBSB2026_nametags.pdf",
+  "HUNbelievableChallengeBSB2026_first_timers.pdf",
+  "79 name tags, 6 first-timer slips",
+]
+`;
+
+exports[`what each real competition prints > PickeringBlindfolded2026 1`] = `
+[
+  "PickeringBlindfolded2026_round1.pdf: 40 cards, 33 named, 4 blank or cover; 4 groups: 333bf-r1 Group 2 of 2 | 444bf-r1 Group 1 of 1 | 555bf-r1 Group 1 of 1 | 333bf-r1 Group 1 of 2",
+  "PickeringBlindfolded2026_finals.pdf: 16 cards, 0 named, 14 blank or cover; 2 groups: 333bf-r2 Group 1 of 2 | 333bf-r2 Group 2 of 2",
+  "PickeringBlindfolded2026_extras.pdf: 12 cards, 0 named, 9 blank or cover; 6 groups: 333bf-r1 Group _ of 2 | 333bf-r2 Group _ of 2 | 444bf-r1 Group 1 of 1 | 555bf-r1 Group 1 of 1",
+  "PickeringBlindfolded2026_schedule.pdf",
+  "PickeringBlindfolded2026_checklist.pdf",
+  "PickeringBlindfolded2026_group_overview.pdf",
+  "PickeringBlindfolded2026_nametags.pdf",
+  "PickeringBlindfolded2026_first_timers.pdf",
+  "18 name tags, 1 first-timer slips",
+]
+`;
+
+exports[`what each real competition prints > WaterlooSpring2026 1`] = `
+[
+  "WaterlooSpring2026_round1.pdf: 432 cards, 404 named, 26 blank or cover; 26 groups: 333-r1 Blue 3 of 5 | sq1-r1 Red 1 of 2 | 333-r1 Red 3 of 5 | sq1-r1 Blue 1 of 2",
+  "WaterlooSpring2026_round2.pdf: 184 cards, 171 named, 12 blank or cover; 12 groups: 333-r2 Blue 1 of 4 | 333-r2 Blue 4 of 4 | 333-r2 Red 1 of 4 | 333-r2 Red 4 of 4",
+  "WaterlooSpring2026_finals.pdf: 60 cards, 49 named, 8 blank or cover; 24 groups: 333oh-r3 Station 01 | sq1-r2 Station 01 | 333oh-r3 Station 02 | sq1-r2 Station 02",
+  "WaterlooSpring2026_extras.pdf: 16 cards, 0 named, 15 blank or cover; 12 groups: sq1-r1 Group _ of 2 | minx-r1 Group _ of 2 | 333-r1 Group _ of 5 | 333oh-r1 Group _ of 4",
+  "WaterlooSpring2026_schedule.pdf",
+  "WaterlooSpring2026_checklist.pdf",
+  "WaterlooSpring2026_group_overview.pdf",
+  "WaterlooSpring2026_nametags.pdf",
+  "WaterlooSpring2026_first_timers.pdf",
+  "181 name tags, 4 first-timer slips",
+]
+`;
