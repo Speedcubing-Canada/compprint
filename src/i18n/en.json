@@ -185,7 +185,8 @@
       "title": "On-the-spot registration",
       "label": "Add blanks for on-the-spot registrations",
       "desc": "One page each of blank name tags and first-timer slips, to fill in by hand."
-    }
+    },
+    "storage_full": "These images are too large to keep. Use a smaller logo or event icon, then try again."
   },
   "generate": {
     "title": "Generate Scorecards",

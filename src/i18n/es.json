@@ -185,7 +185,8 @@
       "title": "Inscripción en el lugar",
       "label": "Añadir hojas en blanco para inscripciones en el lugar",
       "desc": "Una página de acreditaciones y fichas de primera vez en blanco, para rellenar a mano."
-    }
+    },
+    "storage_full": "Estas imágenes son demasiado grandes para guardarlas. Use un logo o un ícono de evento más pequeño e inténtelo de nuevo."
   },
   "generate": {
     "title": "Generar hojas de puntuación",

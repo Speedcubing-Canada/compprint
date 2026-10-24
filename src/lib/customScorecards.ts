@@ -1,5 +1,5 @@
 import type { CustomEvent, CustomEventFormat } from '../types/settings';
-import type { ScorecardData, ScorecardEntry, ScorecardFormat } from './wcif-parser';
+import { printedName, type ScorecardData, type ScorecardEntry, type ScorecardFormat } from './wcif-parser';
 
 import { scorecardsPerPage } from '../pdf/layoutConstants';
 
@@ -50,7 +50,7 @@ export function buildCustomEntries(custom: CustomEvent, a6 = false): ScorecardDa
 
   const entries: ScorecardData[] = (custom.competitors ?? []).map((c) => ({
     ...blank,
-    name: c.name,
+    name: printedName(c.name),
     wcaId: c.wcaId,
   }));
   while (entries.length === 0 || entries.length % scorecardsPerPage(a6) !== 0) entries.push(blank);

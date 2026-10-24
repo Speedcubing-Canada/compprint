@@ -1,4 +1,4 @@
-import { createContext, useCallback, useContext, useEffect, useState } from 'react';
+import { createContext, useCallback, useContext, useEffect, useRef, useState } from 'react';
 import type { ReactNode } from 'react';
 import { resolveInitialTheme, THEME_STORAGE_KEY, type Theme } from './theme';
 
@@ -29,16 +29,22 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
     document.documentElement.setAttribute('data-theme', theme);
   }, [theme]);
 
+  // A ref, not storage: storage throws in private mode, and the choice must still stick.
+  const chosen = useRef(getStored() !== null);
+
   // While the user has made no explicit choice, follow live OS changes.
   useEffect(() => {
-    if (getStored() !== null) return;
+    if (chosen.current) return;
     const mql = window.matchMedia(DARK_QUERY);
-    const onChange = (e: MediaQueryListEvent) => setTheme(e.matches ? 'dark' : 'light');
+    const onChange = (e: MediaQueryListEvent) => {
+      if (!chosen.current) setTheme(e.matches ? 'dark' : 'light');
+    };
     mql.addEventListener('change', onChange);
     return () => mql.removeEventListener('change', onChange);
   }, []);
 
   const toggleTheme = useCallback(() => {
+    chosen.current = true;
     setTheme(prev => {
       const next: Theme = prev === 'dark' ? 'light' : 'dark';
       try {

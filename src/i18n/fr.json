@@ -185,7 +185,8 @@
       "title": "Inscriptions sur place",
       "label": "Ajouter des fiches vierges pour les inscriptions sur place",
       "desc": "Une page de badges et de fiches pour les nouveaux participants vierges, à remplir à la main."
-    }
+    },
+    "storage_full": "Ces images sont trop lourdes pour être conservées. Utilisez un logo ou une icône d'épreuve plus petits, puis réessayez."
   },
   "generate": {
     "title": "Générer les feuilles de score",

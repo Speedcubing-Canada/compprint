@@ -54,7 +54,7 @@ export interface FirstTimerEntry {
 
 // Drops the "(local name)" suffix. NFC, since the PDF fonts have accented letters but no
 // standalone combining marks (a decomposed ư would lose its horn).
-function printedName(name: string): string {
+export function printedName(name: string): string {
   return name.replace(/ \(.*\)$/, '').normalize('NFC');
 }
 

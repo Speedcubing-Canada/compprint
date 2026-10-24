@@ -102,6 +102,17 @@ describe('buildCustomEntries', () => {
     }
   });
 
+  // CSV names come from the same WCA exports as WCIF names, so they print the same way: no
+  // "(local name)" suffix, and composed accents (the PDF fonts have no combining marks).
+  it('prints CSV names the way WCIF names print', () => {
+    const competitors = [
+      { name: 'Xiaoming Wang (王小明)', wcaId: '' },
+      { name: 'Nguye\u0302\u0303n Va\u0306n', wcaId: '' },
+    ];
+    const names = (buildCustomEntries(makeEvent({ competitors })) as ScorecardEntry[]).map(e => e.name);
+    expect(names.slice(0, 2)).toEqual(['Xiaoming Wang', 'Nguyễn Văn']);
+  });
+
   it.each([
     [1, 4],
     [4, 4],

@@ -10,6 +10,7 @@ import { addCompetition, backend } from '../test/fakeWca';
 import { currentPath, renderApp } from '../test/renderApp';
 import { downloads } from '../test/routeSetup';
 import { workers } from '../test/fakeWorker';
+import { click, walkToSettings as walk } from '../test/journeys';
 
 // flowState.test.ts covers the storage and each page test covers one page, so the joint -
 // four steps agreeing about the same competition - is what nothing else sees.
@@ -32,20 +33,11 @@ const enter = (route: string, signedIn = true) => {
   return renderApp(route, signedIn ? {} : { user: null });
 };
 
-// Callers pass i18n.t(...) so the key stays typed at the call site.
-const click = async (name: string) =>
-  fireEvent.click(await screen.findByRole('button', { name }));
-
 /** A stat card renders its value above its label; read the value beside a known label. */
 const statValue = (label: string) =>
   screen.getByText(label).previousSibling?.textContent;
 
-/** Picker → scope → settings, driving only the UI. Leaves the caller on /settings. */
-async function walkToSettings(name = 'Gros Jouets à Montréal 2026') {
-  fireEvent.click(await screen.findByText(name));
-  await click(i18n.t('scope.continue'));
-  await screen.findByRole('button', { name: i18n.t('settings.generate_button') });
-}
+const walkToSettings = (name = 'Gros Jouets à Montréal 2026') => walk(name);
 
 describe('the wizard carries one competition through all four steps', () => {
   it('reaches the download step with what the organizer actually picked', async () => {

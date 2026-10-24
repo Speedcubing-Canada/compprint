@@ -63,7 +63,7 @@ function scorecardJobs(
   const stages = splitStages ? byStage(entries) : null;
   if (stages) {
     const keys = [...stages.keys()].sort(cmp);
-    const slugs = uniqueSlugs(keys);
+    const slugs = uniqueSlugs(keys, 'stage');
     return keys.flatMap((stage, i) =>
       // finalizeEntries per stage: each file pads and quadrant-reorders on its own, so no
       // printed sheet ever straddles two stages.
@@ -146,15 +146,17 @@ function safeName(name: string): string {
 }
 
 /**
- * Sanitised names, deduplicated. Stage keys come from room names, so two of them can reduce to
- * the same slug; without this the zip would hold two entries under one name and lose a PDF.
+ * Sanitised names, deduplicated. Two names can reduce to the same slug (room names, custom
+ * events, anything non-Latin), and a zip holding two entries under one name loses a PDF.
+ * Compared case-blind: macOS and Windows unzip onto case-insensitive disks.
  */
-function uniqueSlugs(names: string[]): string[] {
+function uniqueSlugs(names: string[], fallback: string): string[] {
   const seen = new Map<string, number>();
   return names.map((name) => {
-    const base = safeName(name) || 'stage';
-    const n = (seen.get(base) ?? 0) + 1;
-    seen.set(base, n);
+    const slug = safeName(name);
+    const base = /[a-zA-Z0-9]/.test(slug) ? slug : fallback;
+    const n = (seen.get(base.toLowerCase()) ?? 0) + 1;
+    seen.set(base.toLowerCase(), n);
     return n === 1 ? base : `${base}_${n}`;
   });
 }
@@ -215,15 +217,14 @@ export function buildPdfJobs(parsed: ParsedWCIF, settings: CompetitionSettings):
   if (parsed.firstTimers.length > 0)
     jobs.push({ kind: 'first-timers', filename: `${id}_first_timers.pdf`, label: 'First-Timer Slips' });
 
-  for (const custom of settings.customEvents ?? []) {
-    if (!custom.name.trim()) continue;
-    jobs.push({
-      kind: 'custom',
-      filename: `${id}_custom_${safeName(custom.name)}.pdf`,
-      label: custom.name,
-      custom,
-    });
-  }
+  const customs = (settings.customEvents ?? []).filter((c) => c.name.trim());
+  const customSlugs = uniqueSlugs(customs.map((c) => c.name), 'event');
+  customs.forEach((custom, i) => jobs.push({
+    kind: 'custom',
+    filename: `${id}_custom_${customSlugs[i]}.pdf`,
+    label: custom.name,
+    custom,
+  }));
 
   return jobs;
 }

@@ -111,3 +111,30 @@ describe('round trip with the real client payload', () => {
     expect(sanitizeEvent(event)).toEqual(event);
   });
 });
+
+// Seeded random bodies: whatever arrives, the log line stays flat, finite and plain.
+describe('sanitizeEvent on random input', () => {
+  let s = 12345;
+  const rnd = () => ((s = (s * 1664525 + 1013904223) >>> 0) / 4294967296);
+  const pick = (xs) => xs[Math.floor(rnd() * xs.length)];
+  const keys = ['a', 'event', 'v', '__proto__', 'constructor', 'prototype', 'x'.repeat(300), 'toString'];
+  function value(depth) {
+    const r = rnd();
+    if (depth < 4 && r < 0.25) return Object.fromEntries(Array.from({ length: Math.floor(rnd() * 50) }, () => [pick(keys) + Math.floor(rnd() * 9), value(depth + 1)]));
+    if (depth < 4 && r < 0.4) return Array.from({ length: Math.floor(rnd() * 30) }, () => value(depth + 1));
+    return pick(['s'.repeat(Math.floor(rnd() * 400)), NaN, Infinity, 1e308, true, null, undefined, () => 1, Symbol('x'), 10n]);
+  }
+  const depthOf = (v) => (v && typeof v === 'object' && !Array.isArray(v) ? 1 + Math.max(0, ...Object.values(v).map(depthOf)) : 0);
+
+  it('stays flat, bounded and JSON-safe over 300 bodies', () => {
+   for (let i = 0; i < 300; i++) {
+    const body = { ...value(0), v: 1, event: pick(['generate', 'error', 'session']) };
+    const out = sanitizeEvent(body);
+    expect(Object.getPrototypeOf(out)).toBe(Object.prototype);
+    expect(depthOf(out)).toBeLessThanOrEqual(2);
+    expect(Object.keys(out).length).toBeLessThanOrEqual(40);
+    // Round-trips through JSON unchanged: nothing non-finite, no functions, no bigint.
+    expect(JSON.parse(JSON.stringify(out))).toEqual(out);
+   }
+  });
+});

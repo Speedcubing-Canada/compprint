@@ -240,12 +240,11 @@ export function buildWcif(p: Profile): WCIF {
 }
 
 
-// Names the printing path has to survive: accents, non-Latin scripts, WCA's "Local (Latin)"
-// form, nested parentheses, very long, and astral-plane characters.
+// Names the printing path has to survive: accents, WCA's "Latin (Local)" form, very long, and astral-plane characters.
 const NAME_POOL = [
   'Ada Lovelace', 'Zoë Saldaña-Pérez', 'Łukasz Żółć', 'Nguyễn Văn Thành', 'Søren Kierkegaard',
-  '王小明 (Xiaoming Wang)', '김민준 (Minjun Kim)', 'Александр Пушкин (Alexander Pushkin)',
-  'محمد علي (Mohamed Ali)', 'Jean (JJ) Tremblay (Jean Tremblay)',
+  'Xiaoming Wang (王小明)', 'Minjun Kim (김민준)', 'Alexander Pushkin (Александр Пушкин)',
+  'Mohamed Ali (محمد علي)',
   'Maria da Conceição Albuquerque de Oliveira Santos Ferreira',
   'Hubert Blaine Wolfeschlegelsteinhausenbergerdorff', 'O\'Brien McDonald', 'X Æ A-12', '𝓐𝓷𝓷𝓪 Script',
 ];

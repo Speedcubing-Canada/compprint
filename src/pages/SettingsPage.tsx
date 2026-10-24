@@ -158,6 +158,7 @@ export default function SettingsPage() {
     customEvents.length > 0 || Object.keys(scrambleDoubleCheckOverrides).length > 0,
   );
   const [dcOverridesName, setDcOverridesName] = useState<string | null>(() => readFileName('dcOverrides'));
+  const [storageFull, setStorageFull] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const dcFileInputRef = useRef<HTMLInputElement>(null);
 
@@ -299,25 +300,31 @@ export default function SettingsPage() {
   }
 
   function handleSubmit() {
-    writeFileName('logo', logoName);
-    writeFileName('dcOverrides', dcOverridesName);
-    // Write them back so /custom and the restore above see them.
-    if (isCustom) writeCustom(draft.customEvents.filter(e => e.name.trim()));
-    writeSettings({
-      ...draft,
-      competitionId,
-      competitionName,
-      generationScope,
-      isCustomCompetition: isCustom,
-      customEvents: draft.customEvents.filter(e => e.name.trim()),
-      // Unofficial: no live results, no double-checking, no "WCA Live:" line.
-      liveResultsMode: isCustom ? 'wca-live' : draft.liveResultsMode,
-      wcaLiveId: isCustom ? null : (draft.wcaLiveId?.trim() || null),
-      wcaLivePersonIds: isCustom ? null : draft.wcaLivePersonIds,
-      hideWcaLiveId: isCustom ? true : draft.hideWcaLiveId,
-      otsBlanks: !isCustom && draft.otsBlanks,
-      scrambleDoubleCheck: !isCustom,
-    });
+    // Images ride in sessionStorage as data URLs, and a big photo overflows its ~5 MB quota.
+    try {
+      writeFileName('logo', logoName);
+      writeFileName('dcOverrides', dcOverridesName);
+      // Write them back so /custom and the restore above see them.
+      if (isCustom) writeCustom(draft.customEvents.filter(e => e.name.trim()));
+      writeSettings({
+        ...draft,
+        competitionId,
+        competitionName,
+        generationScope,
+        isCustomCompetition: isCustom,
+        customEvents: draft.customEvents.filter(e => e.name.trim()),
+        // Unofficial: no live results, no double-checking, no "WCA Live:" line.
+        liveResultsMode: isCustom ? 'wca-live' : draft.liveResultsMode,
+        wcaLiveId: isCustom ? null : (draft.wcaLiveId?.trim() || null),
+        wcaLivePersonIds: isCustom ? null : draft.wcaLivePersonIds,
+        hideWcaLiveId: isCustom ? true : draft.hideWcaLiveId,
+        otsBlanks: !isCustom && draft.otsBlanks,
+        scrambleDoubleCheck: !isCustom,
+      });
+    } catch {
+      setStorageFull(true);
+      return;
+    }
     navigate('/generate');
   }
 
@@ -970,6 +977,7 @@ export default function SettingsPage() {
         )}
 
         <div className={ui.stickyFooter}>
+          {storageFull && <div role="alert"><WarningBanner>{t('settings.storage_full')}</WarningBanner></div>}
           <button className={ui.btnCta} onClick={handleSubmit}>
             {t('settings.generate_button')}
           </button>
