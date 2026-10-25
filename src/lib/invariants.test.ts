@@ -1,4 +1,4 @@
-import { afterAll, beforeAll, describe, expect, it } from 'vitest';
+import { describe, expect, it } from 'vitest';
 import type { CompetitionSettings } from '../types/settings';
 import type { WCIF } from '../types/wcif';
 import {
@@ -6,18 +6,17 @@ import {
   type ParsedWCIF, type ScorecardData, type ScorecardEntry,
 } from './wcif-parser';
 import { buildPdfJobs, type PdfJob } from './pdfJobs';
-import { filterParsedByScope } from './generationScope';
+import { SCORECARD_BUCKETS, filterParsedByScope } from './generationScope';
 import { scorecardsPerPage } from '../pdf/layoutConstants';
 import { testSettings } from '../test/fixtures';
 import { randomWcif } from '../test/wcifGen';
 import { corpus } from '../test/corpus';
 
-// Properties that hold for any competition, checked over seeded random ones and every real
-// fixture. Fish deeper in batches: `SEED_START=1000 SEEDS=400`. One worker holds about 500. Each example-based test pins one shape; these catch the shape nobody
-// thought to write down.
+// Properties that hold for any competition, over seeded random ones and every real fixture.
+// Example tests pin one shape; these catch the shape nobody wrote down.
+// More seeds: `SEEDS=2000 npx vitest run src/lib/invariants.test.ts`.
 
 const SEEDS = Number(process.env.SEEDS ?? 200);
-const SEED_START = Number(process.env.SEED_START ?? 1);
 
 /** Settings vary with the seed too, so every combination gets exercised somewhere. */
 function settingsFor(wcif: WCIF, seed: number): CompetitionSettings {
@@ -34,18 +33,16 @@ function settingsFor(wcif: WCIF, seed: number): CompetitionSettings {
   });
 }
 
-// Built lazily, inside each case: thousands of seeds must not all sit in memory.
 const cases: [string, () => WCIF, number][] = [
   ...Array.from({ length: SEEDS }, (_, i): [string, () => WCIF, number] => {
-    const seed = SEED_START + i;
+    const seed = i + 1;
     return [`seed ${seed}`, () => randomWcif(seed), seed];
   }),
   ...corpus().flatMap(([id, w]): [string, () => WCIF, number][] =>
     [0, 3, 6, 21].map((s) => [`${id} #${s}`, () => structuredClone(w), s])),
 ];
 
-const BUCKETS = ['firstRound', 'intermediate', 'semis', 'finals'] as const;
-const cards = (p: ParsedWCIF) => BUCKETS.flatMap((b) => p[b]).filter((e): e is ScorecardEntry => e.kind === 'scorecard');
+const cards = (p: ParsedWCIF) => SCORECARD_BUCKETS.flatMap((b) => p[b]).filter((e): e is ScorecardEntry => e.kind === 'scorecard');
 const SKIPPED_EVENTS = new Set(['333fm', '333mbf']);
 
 /** Competitor assignments as `event|round|name`, for the people the parser should print. */
@@ -71,22 +68,10 @@ function assignedCards(wcif: WCIF): Map<string, number> {
   return out;
 }
 
-describe.each(cases)('%s', (_label, build, seed) => {
-  let wcif: WCIF;
-  let settings: CompetitionSettings;
-  let parsed: ParsedWCIF;
-  let jobs: PdfJob[];
-  let perPage: number;
-  beforeAll(() => {
-    wcif = build();
-    settings = settingsFor(wcif, seed);
-    parsed = parseWCIF(structuredClone(wcif), settings);
-    jobs = buildPdfJobs(parsed, settings);
-    perPage = scorecardsPerPage(settings.scorecardsA6);
-  });
-  afterAll(() => { wcif = parsed = jobs = settings = undefined!; });
+interface Case { wcif: WCIF; settings: CompetitionSettings; parsed: ParsedWCIF; jobs: PdfJob[]; perPage: number }
 
-  it('prints one named card per competitor assignment, and none for anyone left out', () => {
+const PROPERTIES: Record<string, (c: Case) => void> = {
+  'prints one named card per competitor assignment, and none for anyone left out': ({ wcif, parsed }) => {
     const expected = assignedCards(wcif);
     const assignedRounds = new Set([...expected.keys()].map((k) => k.split('|').slice(0, 2).join('|')));
     const actual = new Map<string, number>();
@@ -96,9 +81,8 @@ describe.each(cases)('%s', (_label, build, seed) => {
       actual.set(key, (actual.get(key) ?? 0) + 1);
     }
     expect(Object.fromEntries(actual)).toEqual(Object.fromEntries(expected));
-  });
-
-  it('gives withdrawn, pending and organizer-account people nothing to print', () => {
+  },
+  'gives withdrawn, pending and organizer-account people nothing to print': ({ wcif, parsed }) => {
     const named = (ps: WCIF['persons']) => new Set(ps.map((p) => printedName(p.name)));
     // Withdrawn or pending registrants, and organizer accounts (no registration, no WCA ID).
     const nothing = named(wcif.persons.filter((p) =>
@@ -108,49 +92,56 @@ describe.each(cases)('%s', (_label, build, seed) => {
     const onCards = [...cards(parsed).map((c) => c.name), ...parsed.firstTimers.map((f) => f.name)];
     expect(onCards.filter((n) => nothing.has(n) || tagOnly.has(n))).toEqual([]);
     expect(parsed.nametags.map((t) => t.name).filter((n) => nothing.has(n))).toEqual([]);
-  });
-
-  it('never prints NaN, undefined or Infinity in a cutoff or limit', () => {
+  },
+  'never prints NaN, undefined or Infinity in a cutoff or limit': ({ parsed }) => {
     const bad = cards(parsed).concat(parsed.extras.filter((e): e is ScorecardEntry => e.kind === 'scorecard'))
       .flatMap((c) => [c.cutoff, c.limit])
       .filter((v) => /NaN|undefined|Infinity|null/.test(String(v)));
     expect(bad).toEqual([]);
-  });
-
-  it('cut-and-stack order round-trips and fills whole sheets', () => {
-    for (const b of BUCKETS) {
+  },
+  'cut-and-stack order round-trips and fills whole sheets': ({ parsed }) => {
+    for (const b of SCORECARD_BUCKETS) {
       const sorted = unstackQuadrants(parsed[b]);
       const stacked = stackQuadrants(sorted);
       expect(stacked.length % 4).toBe(0);
       expect(unstackQuadrants(stacked)).toEqual(sorted);
     }
-  });
-
-  it('finalizeEntries is idempotent', () => {
-    for (const b of BUCKETS) {
+  },
+  'finalizeEntries is idempotent': ({ parsed }) => {
+    for (const b of SCORECARD_BUCKETS) {
       const once = finalizeEntries(realEntries(unstackQuadrants(parsed[b])));
       expect(finalizeEntries(realEntries(unstackQuadrants(once)))).toEqual(once);
     }
-  });
-
-  it('splits jobs without losing, duplicating or half-filling a sheet', () => {
+  },
+  'splits jobs without losing, duplicating or half-filling a sheet': ({ parsed, jobs, perPage }) => {
     const scorecardJobs = jobs.filter((j): j is Extract<PdfJob, { kind: 'scorecards' }> => j.kind === 'scorecards');
     const fromJobs = scorecardJobs.flatMap((j) => realEntries(j.entries)).filter((e) => e.kind === 'scorecard');
-    const fromParse = [...BUCKETS.flatMap((b) => realEntries(parsed[b])), ...parsed.extras].filter((e) => e.kind === 'scorecard');
+    const fromParse = [...SCORECARD_BUCKETS.flatMap((b) => realEntries(parsed[b])), ...parsed.extras].filter((e) => e.kind === 'scorecard');
     const key = (e: ScorecardData) => JSON.stringify(e);
     expect(fromJobs.map(key).sort()).toEqual(fromParse.map(key).sort());
     for (const j of scorecardJobs) expect(j.entries.length % perPage).toBe(0);
-  });
-
-  it('names every file uniquely, case-blind', () => {
+  },
+  'names every file uniquely, case-blind': ({ jobs }) => {
     const names = jobs.map((j) => j.filename.toLowerCase());
     expect(new Set(names).size).toBe(names.length);
-  });
-
-  it('scopes to a subset, and to everything when the scope is everything', () => {
+  },
+  'an everything scope is the identity': ({ settings, parsed }) => {
     const everything = filterParsedByScope(parsed, { ...settings.generationScope!, mode: 'everything' });
-    for (const b of BUCKETS) expect(realEntries(everything[b])).toEqual(realEntries(parsed[b]));
-  });
+    for (const b of SCORECARD_BUCKETS) expect(realEntries(everything[b])).toEqual(realEntries(parsed[b]));
+  },
+};
+
+// One test per competition, every property inside it; a failure names each property that broke.
+it.each(cases)('%s holds every property', (_label, build, seed) => {
+  const wcif = build();
+  const settings = settingsFor(wcif, seed);
+  const parsed = parseWCIF(structuredClone(wcif), settings);
+  const c: Case = { wcif, settings, parsed, jobs: buildPdfJobs(parsed, settings), perPage: scorecardsPerPage(settings.scorecardsA6) };
+  const broken: string[] = [];
+  for (const [name, check] of Object.entries(PROPERTIES)) {
+    try { check(c); } catch (e) { broken.push(`${name}: ${(e as Error).message}`); }
+  }
+  expect(broken).toEqual([]);
 });
 
 // A compact print summary per real competition, so a parser change shows up in review as a

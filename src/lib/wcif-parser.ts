@@ -350,6 +350,9 @@ export function stackQuadrants(items: ScorecardData[]): ScorecardData[] {
 // keys and group labels are ASCII and compare faster as plain strings. One shared Collator,
 // because `localeCompare` rebuilds one per call and these comparators run n log n times.
 const nameCollator = new Intl.Collator(undefined, { sensitivity: 'base' });
+// `localeCompare`'s exact ordering, without building a collator per call.
+const defaultCollator = new Intl.Collator();
+const localeOrder = (a: string, b: string) => defaultCollator.compare(a, b);
 const byName = (a: string, b: string) => nameCollator.compare(a, b);
 
 // Padding covers (added to round a bucket up to a multiple of 4) carry an empty eventId.
@@ -528,15 +531,19 @@ export function parseWCIF(wcif: WCIF, settings: CompetitionSettings): ParsedWCIF
 
   const timezone = wcif.schedule.venues[0]?.timezone ?? 'UTC';
 
+  // Built once per parse: each Intl formatter holds ICU memory outside the JS heap, and these
+  // run for every activity. An unknown timezone throws here, leaving the UTC slice fallback.
+  const formatter = (options: Intl.DateTimeFormatOptions) => {
+    try { return new Intl.DateTimeFormat('en-CA', { ...options, timeZone: timezone }); } catch { return null; }
+  };
+  const timeFormat = formatter({ hour: '2-digit', minute: '2-digit', hour12: false });
+  const dateFormat = formatter({ year: 'numeric', month: '2-digit', day: '2-digit' });
+
   const formatLocalTime = (isoTime: string): string => {
     try {
-      return new Intl.DateTimeFormat('en-CA', {
-        hour: '2-digit', minute: '2-digit',
-        timeZone: timezone, hour12: false,
-      }).format(new Date(isoTime));
-    } catch {
-      return isoTime.slice(11, 16);
-    }
+      if (timeFormat) return timeFormat.format(new Date(isoTime));
+    } catch { /* an unparseable time falls back below */ }
+    return isoTime.slice(11, 16);
   };
 
   // Scheduled local times per `${roundKey}|${groupNum}|${stage}`, for the cover cards.
@@ -994,7 +1001,7 @@ export function parseWCIF(wcif: WCIF, settings: CompetitionSettings): ParsedWCIF
   // numbering has to stay deterministic across them.
   function sortGroups(groups: GroupInfo[]) {
     return [...groups].sort((a, b) => {
-      const s = a.stage.localeCompare(b.stage);
+      const s = localeOrder(a.stage, b.stage);
       return s !== 0 ? s : parseInt(a.gNum, 10) - parseInt(b.gNum, 10);
     });
   }
@@ -1268,7 +1275,7 @@ export function parseWCIF(wcif: WCIF, settings: CompetitionSettings): ParsedWCIF
       extrasRounds.push({ ts, eventId: eid, rid, roundNum: i });
     }
   }
-  extrasRounds.sort((a, b) => a.ts.localeCompare(b.ts) || a.eventId.localeCompare(b.eventId));
+  extrasRounds.sort((a, b) => localeOrder(a.ts, b.ts) || localeOrder(a.eventId, b.eventId));
 
   for (const { ts, eventId, rid, roundNum } of extrasRounds) {
     const totalGroups = numGroups[rid] ?? 1;
@@ -1314,9 +1321,8 @@ export function parseWCIF(wcif: WCIF, settings: CompetitionSettings): ParsedWCIF
   // Extract local date "YYYY-MM-DD" using formatToParts for timezone safety.
   const getLocalDate = (isoTime: string): string => {
     try {
-      const parts = new Intl.DateTimeFormat('en-CA', {
-        year: 'numeric', month: '2-digit', day: '2-digit', timeZone: timezone,
-      }).formatToParts(new Date(isoTime));
+      if (!dateFormat) return isoTime.slice(0, 10);
+      const parts = dateFormat.formatToParts(new Date(isoTime));
       const y = parts.find(p => p.type === 'year')?.value ?? '';
       const m = parts.find(p => p.type === 'month')?.value ?? '';
       const d = parts.find(p => p.type === 'day')?.value ?? '';
@@ -1340,13 +1346,12 @@ export function parseWCIF(wcif: WCIF, settings: CompetitionSettings): ParsedWCIF
   const dateToDay: Record<string, number> = {};
   sortedAllDates.forEach((d, i) => { dateToDay[d] = i + 1; });
 
+  const weekdayFormat = new Intl.DateTimeFormat(settings.language === 'pt' ? 'pt-BR' : settings.language, { weekday: 'long' });
   const formatDayLabel = (localDate: string): string => {
     const dayNum = dateToDay[localDate] ?? 1;
-    const locale = settings.language === 'pt' ? 'pt-BR' : settings.language;
     const prefix = getScheduleStrings(settings.language).dayPrefix;
     try {
-      const weekday = new Intl.DateTimeFormat(locale, { weekday: 'long' })
-        .format(new Date(`${localDate}T12:00:00Z`));
+      const weekday = weekdayFormat.format(new Date(`${localDate}T12:00:00Z`));
       const capitalized = weekday.charAt(0).toUpperCase() + weekday.slice(1);
       return `${prefix} ${dayNum} - ${capitalized}`;
     } catch {
@@ -1385,7 +1390,7 @@ export function parseWCIF(wcif: WCIF, settings: CompetitionSettings): ParsedWCIF
   // only rounds.
   const slotsOf = (activities: RoomActivity[]): RoundSlot[] => {
     const slots: RoundSlot[] = [];
-    const sorted = [...activities].sort((a, b) => a.startTime.localeCompare(b.startTime));
+    const sorted = [...activities].sort((a, b) => localeOrder(a.startTime, b.startTime));
     for (const activity of sorted) {
       const parts = activity.activityCode.split('-');
       const attempt = parts.length === 3 && /^a\d+$/.test(parts[2]) ? Number(parts[2].slice(1)) : undefined;
@@ -1450,7 +1455,7 @@ export function parseWCIF(wcif: WCIF, settings: CompetitionSettings): ParsedWCIF
   // Iterate days chronologically; within each day keep WCIF room order.
   const scheduleDays: ScheduleDay[] = [];
   const checkingDays: CheckingDay[] = [];
-  for (const [date, roomMap] of [...dayRoomMap].sort(([a], [b]) => a.localeCompare(b))) {
+  for (const [date, roomMap] of [...dayRoomMap].sort(([a], [b]) => localeOrder(a, b))) {
     const stages: ScheduleStage[] = [];
     // Concatenated in room order, so mergeSlots' stable sort leaves rounds starting at the
     // same minute in WCIF order.
