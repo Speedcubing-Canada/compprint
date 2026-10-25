@@ -8,12 +8,12 @@ import { getNametTagStrings, type NametTagStrings } from '../lib/i18n';
 import { resolveLogo } from '../lib/logo';
 import { qrPathData } from './qrPath';
 import {
-  NAMETAGS_PER_PAGE, NAMETAG_CONFIGS, eventIconsVisible, liveQrTarget, nametagNameH,
+  NAMETAGS_PER_PAGE, NAMETAG_CONFIGS, NAMETAG_PANEL_BORDER, NAMETAG_PANEL_PAD, eventIconsVisible, liveQrTarget, nametagNameH,
   nametagTopSectionH as topSectionH,
   PDF_FONT as FONT, PDF_FONT_BOLD as FONT_BOLD,
 } from './layoutConstants';
 import './fontSetup';
-import { nametagName, NAME_LINE_HEIGHT, NAMETAG_PANEL_BORDER, NAMETAG_PANEL_PAD } from './nameFit';
+import { nametagName, NAME_LINE_HEIGHT } from './nameFit';
 
 
 // Vertical layout: landscape page, 4 slots wide × 2 tall = 8 slots = 4 pairs.

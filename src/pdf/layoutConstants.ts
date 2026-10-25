@@ -95,6 +95,10 @@ export const NAMETAGS_PER_PAGE = 4;
 // Same cap, same choice.
 export const MAX_PAGES_PER_NAMETAG_PDF = 250;
 
+// Vertical name tag panel side padding and border.
+export const NAMETAG_PANEL_PAD = 7;
+export const NAMETAG_PANEL_BORDER = 1.5;
+
 // Vertical name tag panels.
 export const NAMETAG_CONFIGS = {
   LETTER: { panelW: 189, panelH: 292, margin: 12, gapH: 4, gapV: 4 },

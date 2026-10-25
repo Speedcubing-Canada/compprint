@@ -32,6 +32,19 @@ describe('a logo too big for sessionStorage', () => {
     expect(currentPath()).toBe('/settings');
     expect(readSettings()?.logoDataUrl ?? null).toBeNull();
   });
+
+  it('drops the warning once the organizer removes the logo', async () => {
+    await atSettings();
+    const input = document.querySelector<HTMLInputElement>('input[type="file"][accept="image/*"]')!;
+    upload(input, new File([new Uint8Array(4_500_000)], 'photo.jpg', { type: 'image/jpeg' }));
+    await waitFor(() => expect(screen.getByText('photo.jpg')).toBeTruthy());
+    await click(i18n.t('settings.generate_button'));
+    await screen.findByRole('alert');
+
+    await click(i18n.t('common.remove'));
+
+    expect(screen.queryByRole('alert')).toBeNull();
+  });
 });
 
 describe('storage that refuses the save for another reason', () => {

@@ -38,8 +38,6 @@ describe('ThemeProvider', () => {
     expect(theme()).toBe('dark');
   });
 
-  // The OS listener was attached at mount and never re-checked, so an OS switch (auto dark
-  // mode at sunset) overrode a theme the organizer had just picked.
   it('keeps an explicit choice when the OS changes afterwards', () => {
     const setOs = osTheme(false);
     mount();

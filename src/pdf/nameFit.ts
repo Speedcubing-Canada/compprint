@@ -1,5 +1,5 @@
 // Competitor-name sizing for scorecards and name tags. Pure, so the layout tests can import it.
-import { SCORECARD_HEADER as H } from './layoutConstants';
+import { NAMETAG_PANEL_BORDER, NAMETAG_PANEL_PAD, SCORECARD_HEADER as H } from './layoutConstants';
 
 // Advance widths (1/1000 em) of the embedded Scorecard Sans, which shares Helvetica's metrics
 // and also covers the letters Helvetica lacks (Ł, ł, Đ). The test checks each against the OTF.
@@ -117,9 +117,7 @@ export function nameLayout(
   return { text: best.text, fontSize: Math.max(NAME_MIN_FS, Math.floor(best.fontSize * 2) / 2) };
 }
 
-// Vertical name tags: the panel's side padding and border, plus 4pt clear for the name.
-export const NAMETAG_PANEL_PAD = 7;
-export const NAMETAG_PANEL_BORDER = 1.5;
+// Vertical name tags: the name's size cap and width, 4pt clear of the panel on each side.
 export const NAMETAG_NAME_MAX_FS = 20;
 export const nametagInnerW = (panelW: number) => panelW - 2 * (NAMETAG_PANEL_PAD + NAMETAG_PANEL_BORDER);
 export const nametagNameW = (panelW: number) => nametagInnerW(panelW) - 2 * 4;

@@ -133,7 +133,9 @@ export default function SettingsPage() {
     ...(isCustom ? { customEvents: readCustomEvents() } : {}),
   }));
 
-  const patch = (fields: Partial<SettingsDraft>) => setDraft(d => ({ ...d, ...fields }));
+  const [saveError, setSaveError] = useState<'settings.storage_full' | 'settings.save_failed' | null>(null);
+  // Any edit may be what makes the next save fit.
+  const patch = (fields: Partial<SettingsDraft>) => { setSaveError(null); setDraft(d => ({ ...d, ...fields })); };
 
   const {
     language, secondaryLanguage, paperFormat, secondRoundMode, logoDataUrl, useDefaultLogo,
@@ -158,7 +160,6 @@ export default function SettingsPage() {
     customEvents.length > 0 || Object.keys(scrambleDoubleCheckOverrides).length > 0,
   );
   const [dcOverridesName, setDcOverridesName] = useState<string | null>(() => readFileName('dcOverrides'));
-  const [saveError, setSaveError] = useState<'settings.storage_full' | 'settings.save_failed' | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const dcFileInputRef = useRef<HTMLInputElement>(null);
 

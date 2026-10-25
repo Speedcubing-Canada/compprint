@@ -6,7 +6,8 @@ import { writeCompetition } from '../lib/flowState';
 import { addCompetition } from './fakeWca';
 import { sampleWcif } from './fixtures';
 
-export const SAMPLE = { id: 'GrosJouetsaMontreal2026', name: 'Gros Jouets à Montréal 2026' };
+const { id, name } = sampleWcif();
+export const SAMPLE = { id, name };
 
 export const click = async (name: string | RegExp) =>
   fireEvent.click(await screen.findByRole('button', { name }));
