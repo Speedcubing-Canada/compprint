@@ -1,4 +1,4 @@
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it, vi } from 'vitest';
 import { fireEvent, screen, waitFor } from '@testing-library/react';
 import i18n from '../i18n/index';
 import { readSettings } from '../lib/flowState';
@@ -7,12 +7,10 @@ import { addCompetition } from '../test/fakeWca';
 import { click, walkToSettings } from '../test/journeys';
 import { currentPath, renderApp } from '../test/renderApp';
 
-const NAME = 'Gros Jouets à Montréal 2026';
-
 async function atSettings() {
-  addCompetition(sampleWcif(), { start_date: '2999-05-16', end_date: '2999-05-16' });
+  addCompetition(sampleWcif());
   renderApp('/competitions');
-  await walkToSettings(NAME);
+  await walkToSettings();
 }
 
 function upload(input: HTMLInputElement, file: File) {
@@ -34,5 +32,17 @@ describe('a logo too big for sessionStorage', () => {
     expect(await screen.findByRole('alert')).toBeTruthy();
     expect(currentPath()).toBe('/settings');
     expect(readSettings()?.logoDataUrl ?? null).toBeNull();
+  });
+});
+
+describe('storage that refuses the save for another reason', () => {
+  it('says so instead of doing nothing', async () => {
+    await atSettings();
+    vi.spyOn(Storage.prototype, 'setItem').mockImplementation(() => {
+      throw new DOMException('denied', 'SecurityError');
+    });
+    await click(i18n.t('settings.generate_button'));
+    expect((await screen.findByRole('alert')).textContent).toBe(i18n.t('settings.save_failed'));
+    expect(currentPath()).toBe('/settings');
   });
 });

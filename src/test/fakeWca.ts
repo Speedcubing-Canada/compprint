@@ -1,10 +1,14 @@
 // An in-memory WCA, WCA Live and same-origin backend behind a stubbed global `fetch`, so a test
 // runs the real src/auth/wca.ts (authFetch, the 401 hook, fetchErrorKey) instead of mocking it.
 // Unknown requests throw: a test that reaches the network should fail loudly, not hang.
+//
+// Tokens behave like Doorkeeper's: they expire on the clock, and a refresh spends the refresh
+// token it was given and rotates in a new one.
 
 import { vi } from 'vitest';
 import type { WCIF } from '../types/wcif';
-import type { WCAToken, WCAUser } from '../auth/wca';
+import type { WCAToken } from '../auth/wca';
+import { freshToken, organizer } from './fixtures';
 
 export interface ManagedCompetition {
   id: string;
@@ -13,39 +17,30 @@ export interface ManagedCompetition {
   country_iso2: string;
   start_date: string;
   end_date: string;
-  [key: string]: unknown;
 }
 
-type Handler = (req: { url: URL; init: RequestInit | undefined; body: string }) => Response | Promise<Response>;
-
-export const organizer: WCAUser = {
-  id: 1, name: 'Test Organizer', wca_id: '2010TEST01', email: '', avatar: { thumb_url: '' },
-};
-
-export function freshToken(over: Partial<WCAToken> = {}): WCAToken {
-  return {
-    access_token: 'test-token', refresh_token: 'test-refresh', token_type: 'Bearer', scope: 'public manage_competitions',
-    expires_in: 7200, created_at: Math.floor(Date.now() / 1000), ...over,
-  };
-}
+type Request = { url: URL; method: string; init: RequestInit | undefined; body: string };
+/** `next()` answers as the fake would have without the override. */
+type Handler = (req: Request, next: () => Promise<Response>) => Response | Promise<Response>;
 
 function emptyBackend() {
   return {
     me: organizer,
     competitions: [] as ManagedCompetition[],
     wcifs: new Map<string, WCIF>(),
-    /** Fields of the single-competition endpoint, by id. */
+    /** Fields of the single-competition endpoint, by id. Absent answers 404. */
     info: new Map<string, { scoretaking_software?: string; on_the_spot_registration?: boolean }>(),
     /** WCA Live: wcaId → live id, and live id → competitors. */
     liveIds: new Map<string, string>(),
     livePeople: new Map<string, { id: string; registrantId: number }[]>(),
-    /** Access tokens the API accepts; anything else is a 401. */
-    validTokens: new Set(['test-token']),
-    /** `METHOD pathname` → handler, checked before the defaults. */
+    /** Access tokens the API has issued; past `created_at + expires_in` they answer 401. */
+    issued: new Map<string, WCAToken>(),
+    /** The one refresh token that still works. */
+    refreshToken: 'test-refresh',
+    /** `METHOD host/pathname` → handler, checked before the defaults. */
     overrides: new Map<string, Handler>(),
     /** Every request, as `METHOD url`. */
     calls: [] as string[],
-    beacons: [] as unknown[],
   };
 }
 
@@ -55,22 +50,35 @@ export function resetBackend() {
   Object.assign(backend, emptyBackend());
 }
 
-/** Replace one endpoint, for error paths and held requests. */
-export function on(methodAndPath: string, handler: Handler) {
-  backend.overrides.set(methodAndPath, handler);
+/** Make the API accept `token` until it expires. renderApp does this for the session it seeds. */
+export function issue(token: WCAToken) {
+  backend.issued.set(token.access_token, token);
+  if (token.refresh_token) backend.refreshToken = token.refresh_token;
+}
+
+/** Replace one endpoint, keyed `METHOD host/pathname`, for error paths and held requests. */
+export function on(route: string, handler: Handler) {
+  backend.overrides.set(route, handler);
 }
 
 export const json = (body: unknown, status = 200) => Response.json(body, { status });
 
-function authed(init: RequestInit | undefined): boolean {
-  const header = new Headers(init?.headers).get('Authorization') ?? '';
-  return backend.validTokens.has(header.replace(/^Bearer /, ''));
+let rotation = 0;
+function mint(): WCAToken {
+  rotation += 1;
+  const token = freshToken({ access_token: `test-token-${rotation}`, refresh_token: `test-refresh-${rotation}` });
+  issue(token);
+  return token;
 }
 
-async function route(url: URL, init: RequestInit | undefined, body: string): Promise<Response> {
-  const method = (init?.method ?? 'GET').toUpperCase();
-  const override = backend.overrides.get(`${method} ${url.pathname}`);
-  if (override) return override({ url, init, body });
+function authed(init: RequestInit | undefined): boolean {
+  const bearer = (new Headers(init?.headers).get('Authorization') ?? '').replace(/^Bearer /, '');
+  const token = backend.issued.get(bearer);
+  return !!token && (token.created_at + token.expires_in) * 1000 > Date.now();
+}
+
+async function route(req: Request): Promise<Response> {
+  const { url, method, init, body } = req;
 
   if (url.host === 'www.worldcubeassociation.org' && url.pathname.startsWith('/api/v0/')) {
     const path = url.pathname.slice('/api/v0'.length);
@@ -107,15 +115,13 @@ async function route(url: URL, init: RequestInit | undefined, body: string): Pro
   if (url.origin === window.location.origin) {
     if (url.pathname === '/wca-token' && method === 'POST') {
       const form = new URLSearchParams(body);
-      const ok = form.get('grant_type') === 'authorization_code'
-        ? form.get('code') === 'good-code'
-        : form.get('refresh_token') === 'test-refresh';
-      return ok ? json(freshToken()) : json({ error: 'invalid_grant' }, 400);
+      if (form.get('grant_type') === 'authorization_code') {
+        return form.get('code') === 'good-code' ? json(mint()) : json({ error: 'invalid_grant' }, 400);
+      }
+      if (form.get('refresh_token') !== backend.refreshToken) return json({ error: 'invalid_grant' }, 400);
+      return json(mint());
     }
-    if (url.pathname === '/api/event' && method === 'POST') {
-      backend.beacons.push(JSON.parse(body));
-      return new Response(null, { status: 204 });
-    }
+    if (url.pathname === '/api/event' && method === 'POST') return new Response(null, { status: 204 });
   }
 
   throw new Error(`unexpected fetch ${method} ${url.href}`);
@@ -125,23 +131,23 @@ async function route(url: URL, init: RequestInit | undefined, body: string): Pro
 export function stubWcaFetch() {
   const fetch = vi.fn(async (input: RequestInfo | URL, init?: RequestInit) => {
     const url = new URL(typeof input === 'string' || input instanceof URL ? input : input.url, window.location.origin);
-    backend.calls.push(`${(init?.method ?? 'GET').toUpperCase()} ${url.href}`);
+    const method = (init?.method ?? 'GET').toUpperCase();
+    backend.calls.push(`${method} ${url.href}`);
     const body = typeof init?.body === 'string' ? init.body : init?.body instanceof URLSearchParams ? init.body.toString() : '';
-    return route(url, init, body);
+    const req = { url, method, init, body };
+    const override = backend.overrides.get(`${method} ${url.host}${url.pathname}`);
+    return override ? override(req, () => route(req)) : route(req);
   });
   vi.stubGlobal('fetch', fetch);
   return fetch;
 }
 
-/** A managed-competitions row for `wcif`, the shape the picker reads. */
-export function listingFor(wcif: WCIF, over: Partial<ManagedCompetition> = {}): ManagedCompetition {
-  const start = wcif.schedule.startDate;
-  const end = new Date(Date.parse(start) + (wcif.schedule.numberOfDays - 1) * 86_400_000).toISOString().slice(0, 10);
-  return { id: wcif.id, name: wcif.name, city: 'Montréal', country_iso2: 'CA', start_date: start, end_date: end, ...over };
-}
-
-/** Register a competition everywhere the app looks for it. */
+/** Register a competition everywhere the app looks for it. The listing is upcoming by default. */
 export function addCompetition(wcif: WCIF, over: Partial<ManagedCompetition> = {}) {
   backend.wcifs.set(wcif.id, wcif);
-  backend.competitions.push(listingFor(wcif, over));
+  backend.competitions.push({
+    id: wcif.id, name: wcif.name, city: 'Montréal', country_iso2: 'CA',
+    // The picker hides past competitions, and the fixtures' dates are long gone.
+    start_date: '2999-05-16', end_date: '2999-05-16', ...over,
+  });
 }

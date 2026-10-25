@@ -151,13 +151,14 @@ function safeName(name: string): string {
  * Compared case-blind: macOS and Windows unzip onto case-insensitive disks.
  */
 function uniqueSlugs(names: string[], fallback: string): string[] {
-  const seen = new Map<string, number>();
+  const taken = new Set<string>();
   return names.map((name) => {
     const slug = safeName(name);
     const base = /[a-zA-Z0-9]/.test(slug) ? slug : fallback;
-    const n = (seen.get(base.toLowerCase()) ?? 0) + 1;
-    seen.set(base.toLowerCase(), n);
-    return n === 1 ? base : `${base}_${n}`;
+    let out = base;
+    for (let n = 2; taken.has(out.toLowerCase()); n++) out = `${base}_${n}`;
+    taken.add(out.toLowerCase());
+    return out;
   });
 }
 

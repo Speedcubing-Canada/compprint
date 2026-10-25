@@ -158,7 +158,7 @@ export default function SettingsPage() {
     customEvents.length > 0 || Object.keys(scrambleDoubleCheckOverrides).length > 0,
   );
   const [dcOverridesName, setDcOverridesName] = useState<string | null>(() => readFileName('dcOverrides'));
-  const [storageFull, setStorageFull] = useState(false);
+  const [saveError, setSaveError] = useState<'settings.storage_full' | 'settings.save_failed' | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const dcFileInputRef = useRef<HTMLInputElement>(null);
 
@@ -300,11 +300,8 @@ export default function SettingsPage() {
   }
 
   function handleSubmit() {
-    // Images ride in sessionStorage as data URLs, and a big photo overflows its ~5 MB quota.
     try {
-      writeFileName('logo', logoName);
-      writeFileName('dcOverrides', dcOverridesName);
-      // Write them back so /custom and the restore above see them.
+      // Custom events first: their icons are the big part, so an overflow leaves the old save whole.
       if (isCustom) writeCustom(draft.customEvents.filter(e => e.name.trim()));
       writeSettings({
         ...draft,
@@ -321,8 +318,10 @@ export default function SettingsPage() {
         otsBlanks: !isCustom && draft.otsBlanks,
         scrambleDoubleCheck: !isCustom,
       });
-    } catch {
-      setStorageFull(true);
+      writeFileName('logo', logoName);
+      writeFileName('dcOverrides', dcOverridesName);
+    } catch (e) {
+      setSaveError(e instanceof DOMException && e.name === 'QuotaExceededError' ? 'settings.storage_full' : 'settings.save_failed');
       return;
     }
     navigate('/generate');
@@ -977,7 +976,7 @@ export default function SettingsPage() {
         )}
 
         <div className={ui.stickyFooter}>
-          {storageFull && <div role="alert"><WarningBanner>{t('settings.storage_full')}</WarningBanner></div>}
+          {saveError && <div role="alert"><WarningBanner>{t(saveError)}</WarningBanner></div>}
           <button className={ui.btnCta} onClick={handleSubmit}>
             {t('settings.generate_button')}
           </button>

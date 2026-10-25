@@ -25,8 +25,6 @@ export interface Profile {
   /** Events on the schedule. Defaults to ALL_EVENTS. */
   events?: EventId[];
   seed?: number;
-  /** A competitor's name; defaults to a plain numbered one. */
-  personName?: (i: number, rnd: () => number) => string;
   /** Number competitors' stations within each group. */
   stations?: boolean;
 }
@@ -63,13 +61,13 @@ export const PROFILES: Record<string, Profile> = {
 
 export function buildWcif(p: Profile): WCIF {
   const rnd = lcg(p.seed ?? 42);
-  const eventIds = p.events ?? ALL_EVENTS;
+  const scheduled = p.events ?? ALL_EVENTS;
   const dayIso = (d: number) => `2026-07-${String(9 + d).padStart(2, '0')}`;
   const at = (day: number, hhmm: string) => `${dayIso(day)}T${hhmm}:00Z`;
   const hhmm = (mins: number) =>
     `${String(Math.floor(mins / 60)).padStart(2, '0')}:${String(mins % 60).padStart(2, '0')}`;
 
-  const events: Event[] = eventIds.map((id) => {
+  const events: Event[] = scheduled.map((id) => {
     const n = ROUND_COUNT[id] ?? 1;
     const rounds: Round[] = [];
     for (let r = 1; r <= n; r++) {
@@ -94,7 +92,7 @@ export function buildWcif(p: Profile): WCIF {
   });
 
   // Registrations. Everyone takes the core events plus a deterministic tail.
-  const tail = eventIds.filter((e) => !p.coreEvents.includes(e));
+  const tail = scheduled.filter((e) => !p.coreEvents.includes(e));
   const persons: Person[] = [];
   for (let i = 1; i <= p.competitors; i++) {
     const eventIds: EventId[] = [...p.coreEvents];
@@ -103,7 +101,7 @@ export function buildWcif(p: Profile): WCIF {
     const newcomer = rnd() < 0.33;
     persons.push({
       registrantId: i,
-      name: p.personName ? p.personName(i, rnd) : `Competitor Number ${i} Surname`,
+      name: `Competitor Number ${i} Surname`,
       wcaUserId: 100000 + i,
       wcaId: newcomer ? null : `20${String(10 + (i % 15))}TEST${String(i % 100).padStart(2, '0')}`,
       countryIso2: 'CA',
@@ -136,7 +134,7 @@ export function buildWcif(p: Profile): WCIF {
     for (const event of events) {
       for (let r = 1; r <= event.rounds.length; r++) {
         // Stagger events across stages so not every stage runs every round.
-        if ((eventIds.indexOf(event.id) + stage) % Math.max(1, Math.floor(eventIds.length / 4)) !== 0 && r > 1) continue;
+        if ((scheduled.indexOf(event.id) + stage) % Math.max(1, Math.floor(scheduled.length / 4)) !== 0 && r > 1) continue;
         const dur = 60;
         if (cursor + dur > 19 * 60) { day = (day + 1) % p.days; cursor = 9 * 60; }
         const start = cursor;
@@ -271,9 +269,10 @@ export function randomWcif(seed: number): WCIF {
     days: int(1, 2),
     events,
     stations: rnd() < 0.5,
-    personName: (i, r) => (r() < 0.4 ? NAME_POOL[i % NAME_POOL.length] : `Competitor ${i}`),
   });
   wcif.id = `RandomComp${seed}`;
+  for (const [i, person] of wcif.persons.entries())
+    person.name = rnd() < 0.4 ? NAME_POOL[i % NAME_POOL.length] : `Competitor ${i + 1}`;
 
   // Formats and limits the bench profiles never use.
   for (const event of wcif.events) {
@@ -288,6 +287,24 @@ export function randomWcif(seed: number): WCIF {
         round.timeLimit = { centiseconds: int(1, 3) * 360000, cumulativeRoundIds: rnd() < 0.5 ? [round.id] : [] };
       }
     }
+  }
+
+  // FMC and MBLD are often scheduled per attempt ("333fm-r1-a1"), with no groups to assign.
+  for (const room of wcif.schedule.venues[0].rooms) {
+    room.activities = room.activities.flatMap((act) => {
+      const [eventId, round] = act.activityCode.split('-');
+      const attempts = eventId === '333fm' ? 3 : eventId === '333mbf' ? 2 : 0;
+      if (!attempts || rnd() < 0.5) return [act];
+      const gone = new Set(act.childActivities.map((c) => c.id));
+      for (const p of wcif.persons) p.assignments = p.assignments.filter((a) => !gone.has(a.activityId));
+      const start = Date.parse(act.startTime);
+      return Array.from({ length: attempts }, (_, n): Activity => ({
+        id: act.id * 10 + n, name: '', activityCode: `${eventId}-${round}-a${n + 1}`,
+        startTime: new Date(start + n * 3_600_000).toISOString().replace('.000', ''),
+        endTime: new Date(start + (n + 1) * 3_600_000).toISOString().replace('.000', ''),
+        childActivities: [], scrambleSets: [],
+      }));
+    });
   }
 
   // People who must not get a scorecard, each holding a real group assignment.

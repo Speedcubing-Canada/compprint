@@ -20,8 +20,9 @@ function getStored(): string | null {
 }
 
 export function ThemeProvider({ children }: { children: ReactNode }) {
+  const [stored] = useState(getStored);
   const [theme, setTheme] = useState<Theme>(() =>
-    resolveInitialTheme(getStored(), window.matchMedia(DARK_QUERY).matches)
+    resolveInitialTheme(stored, window.matchMedia(DARK_QUERY).matches)
   );
 
   // Apply the theme to the document root whenever it changes.
@@ -30,7 +31,7 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
   }, [theme]);
 
   // A ref, not storage: storage throws in private mode, and the choice must still stick.
-  const chosen = useRef(getStored() !== null);
+  const chosen = useRef(stored !== null);
 
   // While the user has made no explicit choice, follow live OS changes.
   useEffect(() => {

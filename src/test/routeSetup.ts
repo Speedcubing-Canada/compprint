@@ -5,7 +5,7 @@ import { Blob as NodeBlob } from 'node:buffer';
 import { afterEach, beforeEach, vi } from 'vitest';
 import { cleanup } from '@testing-library/react';
 import { resetBackend, stubWcaFetch } from './fakeWca';
-import { FakeWorker, resetWorkers } from './fakeWorker';
+import { FakeWorker, resetWorkers, workers } from './fakeWorker';
 import { stubMatchMedia, useEnglish } from './render';
 import { markAllSeen } from '../changelog';
 import { clearWcifCache } from '../lib/wcifCache';
@@ -16,6 +16,9 @@ vi.mock('@react-pdf/renderer', async (importOriginal) => ({
 }));
 
 export const downloads: { filename: string; blob: Blob }[] = [];
+// React and the router report mistakes (navigating during render, missing keys, act warnings)
+// through console.error and console.warn and carry on, so a route test fails on any of them.
+const consoleErrors: unknown[][] = [];
 const blobs = new Map<string, Blob>();
 
 beforeEach(async () => {
@@ -32,19 +35,27 @@ beforeEach(async () => {
     const blob = blobs.get(this.href);
     if (blob && this.download) downloads.push({ filename: this.download, blob });
   });
+  for (const level of ['error', 'warn'] as const)
+    vi.spyOn(console, level).mockImplementation((...args: unknown[]) => { consoleErrors.push([level, ...args]); });
   markAllSeen();
   await useEnglish();
 });
 
 afterEach(() => {
   cleanup();
+  const errors = consoleErrors.splice(0);
+  const escaped = [...workers.unhandled];
   sessionStorage.clear();
   localStorage.clear();
   resetBackend();
   resetWorkers();
   clearWcifCache();
+  // The auth callback reads window.location, so a test that sets it must not hand it on.
+  window.history.replaceState({}, '', '/');
   downloads.length = 0;
   blobs.clear();
   vi.unstubAllGlobals();
   vi.restoreAllMocks();
+  if (escaped.length > 0) throw new Error(`runJobs rejected instead of posting an error: ${escaped.map(String).join('; ')}`);
+  if (errors.length > 0) throw new Error(`console output during the test:\n${errors.map((a) => a.map(String).join(' ')).join('\n')}`);
 });

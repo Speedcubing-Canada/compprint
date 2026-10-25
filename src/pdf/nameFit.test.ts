@@ -2,7 +2,7 @@ import { describe, it, expect } from 'vitest';
 import { fileURLToPath } from 'node:url';
 import * as fontkit from 'fontkit';
 import {
-  textWidth, nameBox, nameLayout, nametagName, nametagNameW,
+  textWidth, nameBox, nameLayout, nametagName, nametagNameW, nametagInnerW,
   NAME_LINE_HEIGHT, NAME_MAX_FS, NAME_MIN_FS, NAMETAG_NAME_MAX_FS,
 } from './nameFit';
 import {
@@ -142,11 +142,11 @@ describe('every real name fits', () => {
   });
 
   it.each(Object.entries(NAMETAG_CONFIGS))('its %s name tag panel', (_paper, cfg) => {
-    // The panel's inner width: what is left after its 7pt padding and 1.5pt border a side.
-    const inner = cfg.panelW - 2 * (7 + 1.5);
+    const inner = nametagInnerW(cfg.panelW);
     const over = names.filter((n) => [false, true].some((compact) => {
       const r = nametagName(n, cfg.panelW, nametagNameH('with-name'), compact);
-      return widest(r.text, r.fontSize, false) > inner;
+      // At the floor a name too long for one line wraps, rather than print unreadably small.
+      return r.fontSize > NAME_MIN_FS && widest(r.text, r.fontSize, false) > inner;
     }));
     expect(over).toEqual([]);
   });

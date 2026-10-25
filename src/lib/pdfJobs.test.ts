@@ -127,6 +127,9 @@ describe('buildPdfJobs', () => {
     [['3x3 OH', '3x3-OH']],
     [['魔方', 'ルービック']],
     [['Mini Guildford', 'mini guildford']],
+    // A generated suffix must not land on a name someone actually typed.
+    [['Relay 2', 'Relay', 'Relay']],
+    [['Relay', 'Relay', 'Relay 2']],
     [['Relay', 'relay ', 'Relay!']],
   ])('gives custom events that sanitise alike distinct filenames: %j', (names) => {
     const jobs = buildPdfJobs(mkParsed(), mkSettings({ customEvents: names.map(customEvent) }));

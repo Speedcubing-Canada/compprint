@@ -5,8 +5,6 @@
 import { runJobs, type WorkerRequest, type WorkerResponse } from '../pdf/renderBundle';
 
 export const workers = {
-  /** Every request a page posted. */
-  requests: [] as WorkerRequest[],
   /** Rejections runJobs let escape. A real worker drops these, so the page never hears of them. */
   unhandled: [] as unknown[],
   /** Set to make the next worker fire `error` instead of running, like a failed module load. */
@@ -14,7 +12,6 @@ export const workers = {
 };
 
 export function resetWorkers() {
-  workers.requests.length = 0;
   workers.unhandled.length = 0;
   workers.failToLoad = null;
 }
@@ -27,7 +24,6 @@ export class FakeWorker {
   postMessage(req: WorkerRequest) {
     // Structured clone, as postMessage does: the page must not rely on sharing objects.
     const copy = structuredClone(req);
-    workers.requests.push(copy);
     const failure = workers.failToLoad;
     queueMicrotask(() => {
       if (failure) {
@@ -41,6 +37,4 @@ export class FakeWorker {
   }
 
   terminate() { this.terminated = true; }
-  addEventListener() {}
-  removeEventListener() {}
 }

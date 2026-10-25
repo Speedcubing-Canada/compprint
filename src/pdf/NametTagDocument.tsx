@@ -13,7 +13,7 @@ import {
   PDF_FONT as FONT, PDF_FONT_BOLD as FONT_BOLD,
 } from './layoutConstants';
 import './fontSetup';
-import { nametagName, NAME_LINE_HEIGHT } from './nameFit';
+import { nametagName, NAME_LINE_HEIGHT, NAMETAG_PANEL_BORDER, NAMETAG_PANEL_PAD } from './nameFit';
 
 
 // Vertical layout: landscape page, 4 slots wide × 2 tall = 8 slots = 4 pairs.
@@ -272,8 +272,8 @@ function BackPanel({ entry, panelW, panelH, slotW, slotH, rotate, pos, compName,
 
 const s = StyleSheet.create({
   panel: {
-    border: '1.5pt solid black', borderRadius: 6,
-    paddingHorizontal: 7, paddingTop: 7, paddingBottom: 6,
+    border: `${NAMETAG_PANEL_BORDER}pt solid black`, borderRadius: 6,
+    paddingHorizontal: NAMETAG_PANEL_PAD, paddingTop: 7, paddingBottom: 6,
     fontFamily: FONT, overflow: 'hidden', backgroundColor: '#ffffff',
     flexDirection: 'column',
   },

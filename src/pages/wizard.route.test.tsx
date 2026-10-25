@@ -10,7 +10,7 @@ import { addCompetition, backend } from '../test/fakeWca';
 import { currentPath, renderApp } from '../test/renderApp';
 import { downloads } from '../test/routeSetup';
 import { workers } from '../test/fakeWorker';
-import { click, walkToSettings as walk } from '../test/journeys';
+import { click, walkToSettings } from '../test/journeys';
 
 // flowState.test.ts covers the storage and each page test covers one page, so the joint -
 // four steps agreeing about the same competition - is what nothing else sees.
@@ -19,11 +19,9 @@ import { click, walkToSettings as walk } from '../test/journeys';
 // src/test/fakeWca.ts, and asserts what crossed a page boundary rather than what any page
 // rendered.
 
-const FAR_FUTURE = { start_date: '2999-05-16', end_date: '2999-05-16' };
-
 function seed() {
-  addCompetition(sampleWcif(), FAR_FUTURE);
-  addCompetition({ ...sampleWcif(), id: 'AutreCompetition2026', name: 'Autre Compétition 2026' }, FAR_FUTURE);
+  addCompetition(sampleWcif());
+  addCompetition({ ...sampleWcif(), id: 'AutreCompetition2026', name: 'Autre Compétition 2026' });
 }
 
 const wcifFetches = () => backend.calls.filter(c => c.includes('/wcif/'));
@@ -36,8 +34,6 @@ const enter = (route: string, signedIn = true) => {
 /** A stat card renders its value above its label; read the value beside a known label. */
 const statValue = (label: string) =>
   screen.getByText(label).previousSibling?.textContent;
-
-const walkToSettings = (name = 'Gros Jouets à Montréal 2026') => walk(name);
 
 describe('the wizard carries one competition through all four steps', () => {
   it('reaches the download step with what the organizer actually picked', async () => {

@@ -7,6 +7,7 @@ import {
   writeSettings,
 } from './flowState';
 import type { CompetitionSettings } from '../types/settings';
+import { testSettings } from '../test/fixtures';
 
 // The storage layer of the wizard handoff (the pages themselves are driven by
 // pages/wizard.route.test.tsx). Two things break it: a value not surviving the round
@@ -147,6 +148,14 @@ describe('custom competitions', () => {
     clearCustom();
     expect(readIsCustom()).toBe(false);
     expect(readCustomEvents()).toEqual([]);
+  });
+
+  it('keeps the events, icons included, out of the settings blob', () => {
+    const withIcon = [{ ...events[0], iconDataUrl: 'data:image/png;base64,AAAA' }];
+    writeCustom(withIcon);
+    writeSettings(testSettings({ isCustomCompetition: true, customEvents: withIcon }));
+    expect(sessionStorage.getItem('competition_settings')).not.toContain('data:image');
+    expect(readSettings()?.customEvents).toEqual(withIcon);
   });
 });
 

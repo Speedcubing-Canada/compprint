@@ -10,7 +10,8 @@ import { AppRoutes } from '../App';
 import { AuthProvider } from '../auth/AuthContext';
 import { ThemeProvider } from '../theme/ThemeContext';
 import type { WCAToken, WCAUser } from '../auth/wca';
-import { freshToken, organizer } from './fakeWca';
+import { issue } from './fakeWca';
+import { freshToken, organizer } from './fixtures';
 
 const probe = { path: '' };
 
@@ -32,6 +33,7 @@ export interface RenderAppOptions {
 
 export function renderApp(path: string, { user = organizer, token = freshToken() }: RenderAppOptions = {}) {
   if (user) {
+    issue(token);
     sessionStorage.setItem('wca_token', JSON.stringify(token));
     sessionStorage.setItem('wca_user', JSON.stringify(user));
   }
