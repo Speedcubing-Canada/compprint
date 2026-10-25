@@ -192,7 +192,6 @@
   "generate": {
     "title": "Générer les feuilles de score",
     "fetching": "Récupération du WCIF depuis WCA…",
-    "parsing": "Construction de la liste des feuilles…",
     "rendering": "Rendu du PDF…",
     "stats": {
       "scorecards": "Feuilles de score",

@@ -2,9 +2,10 @@ import { describe, expect, it, vi } from 'vitest';
 import { fireEvent, screen, waitFor } from '@testing-library/react';
 import i18n from '../i18n/index';
 import { writeSettings } from '../lib/flowState';
+import * as analytics from '../lib/analytics';
 import { freshToken, sampleWcif, testSettings } from '../test/fixtures';
 import { addCompetition, backend } from '../test/fakeWca';
-import { SAMPLE, seedCompetition as seed } from '../test/journeys';
+import { SAMPLE, seedCompetition } from '../test/journeys';
 import { currentPath, renderApp } from '../test/renderApp';
 
 // An organizer leaves the tab past the token's 2h life and reloads mid-wizard. The provider
@@ -15,14 +16,22 @@ const dead = freshToken({ access_token: 'dead-token', created_at: Math.floor(Dat
 
 describe('a token that expired while away', () => {
   it('recovers on /scope after the silent renewal', async () => {
-    seed();
+    seedCompetition();
     renderApp('/scope', { token: dead });
     expect(await screen.findByRole('button', { name: i18n.t('scope.continue') })).toBeTruthy();
     expect(screen.queryByText(i18n.t('errors.session_expired'))).toBeNull();
   });
 
+  it('reports no load error for the 401 that starts the renewal', async () => {
+    const send = vi.spyOn(analytics, 'send');
+    seedCompetition();
+    renderApp('/scope', { token: dead });
+    await screen.findByRole('button', { name: i18n.t('scope.continue') });
+    expect(send.mock.calls.filter(([e]) => e.event === 'error')).toEqual([]);
+  });
+
   it('recovers on /generate after the silent renewal', async () => {
-    seed();
+    seedCompetition();
     writeSettings(testSettings({ competitionId: SAMPLE.id }));
     renderApp('/generate', { token: dead });
     expect(await screen.findByRole('button', { name: i18n.t('generate.download_button') })).toBeTruthy();
@@ -30,7 +39,7 @@ describe('a token that expired while away', () => {
   });
 
   it('renews with the refresh token, and stores the rotated one', async () => {
-    seed();
+    seedCompetition();
     renderApp('/scope', { token: dead });
     await screen.findByRole('button', { name: i18n.t('scope.continue') });
     const stored = JSON.parse(sessionStorage.getItem('wca_token')!);

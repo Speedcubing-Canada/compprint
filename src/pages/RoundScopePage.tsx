@@ -35,8 +35,6 @@ export default function RoundScopePage() {
 
   const { id: competitionId, name: competitionName } = readCompetition();
 
-  const [isMidComp, setIsMidComp] = useState(false);
-
   // What this step wrote last time, seeding every choice below so going back discards
   // nothing. Read once: after mount the React state is the truth.
   const [restored] = useState(readStoredScope);
@@ -53,8 +51,9 @@ export default function RoundScopePage() {
 
   // Pre-competition defaults, overridden once the data says otherwise.
   const [docScorecards, setDocScorecards] = useState(restored?.documents.scorecards ?? true);
-  const [docSchedule, setDocSchedule]     = useState(restored?.documents.scheduleTracker ?? true);
-  const [docNametags, setDocNametags]     = useState(restored?.documents.nametags ?? true);
+  // `null` until chosen: the default depends on whether the competition has started.
+  const [scheduleChoice, setDocSchedule] = useState<boolean | null>(restored?.documents.scheduleTracker ?? null);
+  const [nametagsChoice, setDocNametags] = useState<boolean | null>(restored?.documents.nametags ?? null);
   // Opt-in either way: most delegates don't need it.
   const [docRoundChecklist, setDocRoundChecklist] = useState(restored?.documents.roundChecklist ?? false);
   const [docFirstTimers, setDocFirstTimers] = useState(restored?.documents.firstTimerSlips ?? false);
@@ -65,7 +64,7 @@ export default function RoundScopePage() {
   const [presetId, setPresetId] = useState<string | null>(restored ? readPresetId() : null);
 
   // The first fetch and parse of a competition happen here, so this is where they fail.
-  const { status, error, parsed } = useParsedCompetition(competitionId || null, (wcif) => {
+  const { error, parsed } = useParsedCompetition(competitionId || null, (wcif) => {
     const uiLang = (i18n.language?.slice(0, 2) ?? 'en') as LocaleCode;
     const detectionSettings: CompetitionSettings = {
       competitionId, competitionName,
@@ -84,22 +83,11 @@ export default function RoundScopePage() {
       generationScope: { mode: 'everything', documents: { scorecards: true, scheduleTracker: true, nametags: true, roundChecklist: false, firstTimerSlips: false, groupOverview: false } },
       isCustomCompetition: false,
     };
-    const result = parseWCIF(wcif, detectionSettings);
-
-    // So the Settings page can warn without re-fetching the WCIF.
-    writeHasGroups(result.hasGroups);
-
-    const midComp = result.laterRoundsWithAssignments.length > 0;
-    setIsMidComp(midComp);
-
-    // Defaults only: a restored selection outranks them.
-    if (midComp && !restored) {
-      // Mid-competition default: scorecards only
-      setDocSchedule(false);
-      setDocNametags(false);
-    }
-    return result;
+    return parseWCIF(wcif, detectionSettings);
   });
+  const isMidComp = (parsed?.laterRoundsWithAssignments.length ?? 0) > 0;
+  const docSchedule = scheduleChoice ?? baseDocuments(isMidComp).scheduleTracker;
+  const docNametags = nametagsChoice ?? baseDocuments(isMidComp).nametags;
 
   const roundOptions = useMemo(() => {
     if (!parsed) return [] as { key: string; label: string }[];
@@ -174,6 +162,8 @@ export default function RoundScopePage() {
       : { mode: 'everything', documents };
 
     const showSecondRoundMode = hasUnassignedIntermediate(filterParsedByScope(parsed, scope));
+    // So the Settings page can warn without re-fetching the WCIF.
+    writeHasGroups(parsed.hasGroups);
     writeScope(scope, {
       showSecondRoundMode, multiStage: parsed.stageCount > 1, detectedStations: parsed.stations?.count ?? null,
     });
@@ -214,7 +204,7 @@ export default function RoundScopePage() {
         <div className={ui.compBadge}>{competitionName}</div>
         <h1 className={`${ui.pageTitle} ${s.pageTitle}`}>{t('scope.heading')}</h1>
 
-        {(status === 'idle' || status === 'fetching' || status === 'parsing') && (
+        {!parsed && !error && (
           <div role="status" aria-label={t('scope.checking')}>
             <Skeleton width="55%" height={14} style={{ marginBottom: 20 }} />
             <div className={s.columns}>
@@ -231,14 +221,14 @@ export default function RoundScopePage() {
             </div>
           </div>
         )}
-        {status === 'error' && (
+        {error && (
           <div className={`${ui.statusBox} ${ui.statusError}`}>
             <XCircle size={28} strokeWidth={2} color="var(--danger)" />
             <span className={ui.errorText}>{error}</span>
           </div>
         )}
 
-        {status === 'ready' && (
+        {parsed && (
           <>
             <p className={s.intro}>{isMidComp ? t('scope.intro') : t('scope.intro_pre')}</p>
 

@@ -155,9 +155,7 @@ export default function GeneratePage() {
         <div className={ui.compBadge}>{settings.competitionName}</div>
         <h1 className={`${ui.pageTitle} ${s.pageTitle}`}>{t('generate.title')}</h1>
 
-        {(load.status === 'fetching' || load.status === 'parsing') && (
-          <StatsSkeleton label={load.status === 'fetching' ? t('generate.fetching') : t('generate.parsing')} />
-        )}
+        {!parsed && !error && <StatsSkeleton label={t('generate.fetching')} />}
         {error && (
           <StatusBox icon={<XCircle size={28} strokeWidth={2} color="var(--danger)" />} text={error} isError />
         )}
@@ -182,46 +180,47 @@ export default function GeneratePage() {
 
         {parsed && (
           <>
-            {!building && parsed.hasGroups === false && (
-              <WarningBanner>{t('warnings.no_groups')}</WarningBanner>
-            )}
-            {!building && settings.otsBlanks && <OtsNotice />}
-
-            {!building && effectiveParsed
-              && stageSplitSkipsRound2(settings, hasUnassignedIntermediate(effectiveParsed)) && (
-              <WarningBanner>{t('warnings.stage_split_prefilled')}</WarningBanner>
-            )}
-
-            {!building
-              && hasOversizedPdf(jobs.filter(j => j.kind === 'scorecards' && j.mergedRounds), settings.scorecardsA6) && (
-              <WarningBanner>{t('warnings.merge_rounds_large')}</WarningBanner>
-            )}
-
-            {!building && (splitLarge || hasOversizedPdf(jobs, settings.scorecardsA6)) && (
-              <label className={`${ui.toggleCard} ${s.splitToggle} ${splitLarge ? ui.toggleCardActive : ''}`}>
-                <input
-                  type="checkbox"
-                  checked={splitLarge}
-                  onChange={e => setSplitLarge(e.target.checked)}
-                  className={ui.radio}
-                />
-                <div>
-                  <div className={ui.optionLabel}>{t('generate.split_large.label')}</div>
-                  <div className={ui.optionDesc}>
-                    {t('generate.split_large.desc', { pages: MAX_PAGES_PER_SCORECARD_PDF })}
-                  </div>
-                </div>
-              </label>
-            )}
-
             {!building && (
-              <div className={s.stats}>
-                <Stat label={t('generate.stats.scorecards')} value={scorecardCount} />
-                <Stat label={t('generate.stats.cover_cards')} value={coverCount} />
-                <Stat label={t('generate.stats.pdfs')} value={pdfCount} />
-                <Stat label={t('generate.stats.total_pages')} value={totalPages} />
-                <Stat label={t('generate.stats.paper')} value={settings.scorecardsA6 ? `${settings.paperFormat} + A6` : settings.paperFormat} />
-              </div>
+              <>
+                {parsed.hasGroups === false && (
+                  <WarningBanner>{t('warnings.no_groups')}</WarningBanner>
+                )}
+                {settings.otsBlanks && <OtsNotice />}
+
+                {effectiveParsed
+                  && stageSplitSkipsRound2(settings, hasUnassignedIntermediate(effectiveParsed)) && (
+                  <WarningBanner>{t('warnings.stage_split_prefilled')}</WarningBanner>
+                )}
+
+                {hasOversizedPdf(jobs.filter(j => j.kind === 'scorecards' && j.mergedRounds), settings.scorecardsA6) && (
+                  <WarningBanner>{t('warnings.merge_rounds_large')}</WarningBanner>
+                )}
+
+                {(splitLarge || hasOversizedPdf(jobs, settings.scorecardsA6)) && (
+                  <label className={`${ui.toggleCard} ${s.splitToggle} ${splitLarge ? ui.toggleCardActive : ''}`}>
+                    <input
+                      type="checkbox"
+                      checked={splitLarge}
+                      onChange={e => setSplitLarge(e.target.checked)}
+                      className={ui.radio}
+                    />
+                    <div>
+                      <div className={ui.optionLabel}>{t('generate.split_large.label')}</div>
+                      <div className={ui.optionDesc}>
+                        {t('generate.split_large.desc', { pages: MAX_PAGES_PER_SCORECARD_PDF })}
+                      </div>
+                    </div>
+                  </label>
+                )}
+
+                <div className={s.stats}>
+                  <Stat label={t('generate.stats.scorecards')} value={scorecardCount} />
+                  <Stat label={t('generate.stats.cover_cards')} value={coverCount} />
+                  <Stat label={t('generate.stats.pdfs')} value={pdfCount} />
+                  <Stat label={t('generate.stats.total_pages')} value={totalPages} />
+                  <Stat label={t('generate.stats.paper')} value={settings.scorecardsA6 ? `${settings.paperFormat} + A6` : settings.paperFormat} />
+                </div>
+              </>
             )}
 
             {/* The filename sits under the button, not inside it: a long competition id used

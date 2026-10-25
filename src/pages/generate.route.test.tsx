@@ -17,8 +17,7 @@ function atGenerate() {
 }
 
 describe('a failed render', () => {
-  // The fetched competition is still good, so the organizer must be able to try again from
-  // here; the error used to replace the whole page, Download button included.
+  // The fetched competition is still good, so the organizer must be able to try again from here.
   it('when the worker fails to load, says so and offers Download again', async () => {
     atGenerate();
     workers.failToLoad = 'Failed to fetch dynamically imported module';

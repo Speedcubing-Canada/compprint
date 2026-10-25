@@ -192,7 +192,6 @@
   "generate": {
     "title": "Gerar súmulas",
     "fetching": "Buscando WCIF da WCA…",
-    "parsing": "Montando lista de súmulas…",
     "rendering": "Renderizando PDF…",
     "stats": {
       "scorecards": "Súmulas",

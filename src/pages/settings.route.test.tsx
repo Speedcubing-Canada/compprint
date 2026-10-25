@@ -1,5 +1,5 @@
 import { describe, expect, it, vi } from 'vitest';
-import { cleanup, fireEvent, screen, waitFor } from '@testing-library/react';
+import { act, cleanup, fireEvent, screen, waitFor } from '@testing-library/react';
 import i18n from '../i18n/index';
 import { readSettings } from '../lib/flowState';
 import { sampleWcif } from '../test/fixtures';
@@ -62,8 +62,7 @@ describe('a logo too big for sessionStorage', () => {
 });
 
 describe('starting a custom competition after a WCA one', () => {
-  // The custom card cleared only the preset, and /settings restores the last saved blob, so
-  // the WCA competition's logo landed on the custom competition's scorecards.
+  // /settings restores the last saved blob, so the custom card must clear it.
   it('starts from clean settings, not the WCA competition\'s', async () => {
     await atSettings();
     const input = document.querySelector<HTMLInputElement>('input[type="file"][accept="image/*"]')!;
@@ -98,8 +97,8 @@ function hold(route: string) {
 }
 
 describe('generating before the WCA Live lookup finishes', () => {
-  // The person-id map arrives a few requests after the page opens. Submitting before it did
-  // stored null, and every name tag QR fell back to the WCA Live home page.
+  // The person-id map arrives a few requests after the page opens; without it every name tag
+  // QR falls back to the WCA Live home page.
   it('waits for the whole lookup instead of saving without the ids', async () => {
     backend.liveIds.set(SAMPLE.id, '4242');
     backend.livePeople.set('4242', [{ id: '901', registrantId: 1 }]);
@@ -128,6 +127,47 @@ describe('generating before the WCA Live lookup finishes', () => {
 
     await waitFor(() => expect(currentPath()).toBe('/generate'));
     expect(readSettings()?.liveResultsMode).toBe('ilr');
+  });
+});
+
+describe('an edit made while the WCA Live lookup is still running', () => {
+  it('is saved as the organizer left it, with the ids the lookup adds after the click', async () => {
+    backend.info.set(SAMPLE.id, { on_the_spot_registration: true });
+    backend.liveIds.set(SAMPLE.id, '4242');
+    backend.livePeople.set('4242', [{ id: '901', registrantId: 1 }]);
+    let release!: () => void;
+    const held = new Promise<void>((r) => { release = r; });
+    // Only the person-id query, so the OTS default and the live id land before the click.
+    on('POST live.worldcubeassociation.org/api', async (req, next) => {
+      if ((JSON.parse(req.body) as { variables?: unknown }).variables) await held;
+      return next();
+    });
+
+    await atSettings();
+    const ots = screen.getByText(i18n.t('settings.ots.label')).closest('label')!.querySelector('input')!;
+    await waitFor(() => expect(ots.checked).toBe(true));
+    fireEvent.click(ots);
+    await click(i18n.t('settings.generate_button'));
+    release();
+
+    await waitFor(() => expect(currentPath()).toBe('/generate'));
+    expect(readSettings()).toMatchObject({ otsBlanks: false, wcaLiveId: '4242', wcaLivePersonIds: { 1: '901' } });
+  });
+});
+
+describe('a WCA Live that never answers', () => {
+  it('holds Generate for a few seconds, not forever', async () => {
+    backend.liveIds.set(SAMPLE.id, '4242');
+    hold('POST live.worldcubeassociation.org/api');
+
+    await atSettings();
+    vi.useFakeTimers({ toFake: ['setTimeout'] });
+    fireEvent.click(screen.getByRole('button', { name: i18n.t('settings.generate_button') }));
+    await act(() => vi.advanceTimersByTimeAsync(5000));
+    vi.useRealTimers();
+
+    await waitFor(() => expect(currentPath()).toBe('/generate'));
+    expect(readSettings()?.wcaLivePersonIds ?? null).toBeNull();
   });
 });
 

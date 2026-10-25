@@ -181,7 +181,6 @@ describe('settings defaults', () => {
 });
 
 describe('going back', () => {
-  // Regression for da18cb6: Back from /generate reset the settings page to its defaults.
   it('from /generate shows the settings the organizer chose, not the defaults', async () => {
     enter('/competitions');
     await walkToSettings();
@@ -217,7 +216,14 @@ describe('going back', () => {
 describe.each(['fr', 'es', 'pt'])('the wizard in %s', (lang) => {
   it('reaches the download step with no raw i18n key on any page', async () => {
     await i18n.changeLanguage(lang);
-    const rawKeys = () => (document.body.textContent ?? '').match(/\b[a-z_]+(\.[a-z_]+){1,}\b/g)?.filter((k) => i18n.exists(k, { lng: 'en' })) ?? [];
+    // Per text node, since textContent glues neighbours together. Anything under a real
+    // top-level section ("settings.nope") is a missing key rendering as itself.
+    const rawKeys = () => {
+      const walker = document.createTreeWalker(document.body, NodeFilter.SHOW_TEXT);
+      const keys: string[] = [];
+      while (walker.nextNode()) keys.push(...(walker.currentNode.textContent?.match(/\b[a-z_]+(\.[a-z_]+)+\b/g) ?? []));
+      return keys.filter((k) => i18n.exists(k.split('.')[0], { lng: 'en' }));
+    };
     enter('/competitions');
     await screen.findByText('Gros Jouets à Montréal 2026');
     expect(rawKeys()).toEqual([]);

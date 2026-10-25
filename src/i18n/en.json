@@ -192,7 +192,6 @@
   "generate": {
     "title": "Generate Scorecards",
     "fetching": "Fetching WCIF from WCA…",
-    "parsing": "Building scorecard list…",
     "rendering": "Rendering PDF…",
     "stats": {
       "scorecards": "Scorecards",

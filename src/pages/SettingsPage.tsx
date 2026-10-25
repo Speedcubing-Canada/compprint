@@ -27,6 +27,8 @@ import { useAuth } from '../auth/useAuth';
 import ui from '../styles/ui.module.css';
 import s from './SettingsPage.module.css';
 
+const LIVE_LOOKUP_WAIT_MS = 5000;
+
 // Where each ranking rule lands when it is ticked. 50 is the world top the regulation names;
 // 1 is the national/continental record holder, who a world-50 threshold misses in a small region.
 const DC_WORLD_TOP_DEFAULT = 50;
@@ -137,24 +139,30 @@ export default function SettingsPage() {
   );
   const [dcOverridesName, setDcOverridesName] = useState<string | null>(() => readFileName('dcOverrides'));
   const [submitting, setSubmitting] = useState(false);
-  // What the WCA Live lookup patched in, so a submit that beats it can wait and save that too.
-  const liveLookup = useRef<{ done: boolean; found: Promise<Partial<SettingsDraft>> } | null>(null);
+  // The WCA Live lookup, so a submit that beats it can wait for what it has not patched in yet.
+  const liveLookup = useRef<{ done: boolean; patched: Set<string>; found: Promise<Partial<SettingsDraft>> } | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const dcFileInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     // Custom competitions are unofficial - they run on neither live-results system.
     if (!competitionId || isCustom) return;
+    const patched = new Set<string>();
+    const out: Partial<SettingsDraft> = {};
+    const apply = (p: Partial<SettingsDraft>) => {
+      Object.assign(out, p);
+      for (const k of Object.keys(p)) patched.add(k);
+      patch(p);
+    };
     const found = (async (): Promise<Partial<SettingsDraft>> => {
       const { scoretakingSoftware: scoretaking, onTheSpot: ots } =
         await fetchCompetitionInfo(competitionId, token?.access_token);
       setOnTheSpot(ots);
-      const out: Partial<SettingsDraft> = {};
-      if (ots && !otsTouched) { out.otsBlanks = true; patch(out); }
+      if (ots && !otsTouched) apply({ otsBlanks: true });
       // ILR builds its URLs from ids already in hand; nothing to look up on WCA Live.
       if (scoretaking === 'internal' && !modeTouched) {
-        patch({ liveResultsMode: 'ilr' });
-        return { ...out, liveResultsMode: 'ilr' };
+        apply({ liveResultsMode: 'ilr' });
+        return out;
       }
       const id = await fetchWcaLiveId(competitionId);
       if (!id) {
@@ -163,14 +171,15 @@ export default function SettingsPage() {
       }
       // Only fill an empty field: a restored or hand-typed id is the organizer's.
       setDraft(d => (d.wcaLiveId ? d : { ...d, wcaLiveId: id }));
+      out.wcaLiveId = id;
+      patched.add('wcaLiveId');
       setWcaLiveFetchStatus('found');
-      const wcaLivePersonIds = await fetchWcaLivePersonIds(id);
-      patch({ wcaLivePersonIds });
-      return { ...out, wcaLiveId: id, wcaLivePersonIds };
-    })();
-    const lookup = { done: false, found };
+      apply({ wcaLivePersonIds: await fetchWcaLivePersonIds(id) });
+      return out;
+    })().catch(() => out);
+    const lookup = { done: false, patched, found };
     liveLookup.current = lookup;
-    void found.finally(() => { lookup.done = true; });
+    void found.then(() => { lookup.done = true; });
   // competitionId is stable (from sessionStorage), no deps needed beyond mount
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
@@ -285,13 +294,19 @@ export default function SettingsPage() {
 
   async function handleSubmit() {
     let submitted = draft;
-    // Without the lookup's ids every name tag QR falls back to the WCA Live home page. Once it
-    // settled the draft already holds them, and merging again would undo the organizer's edits.
+    // Without the lookup's ids every name tag QR falls back to the WCA Live home page. Only what
+    // it patches after this click is missing: anything earlier is in the draft, edits included.
     const lookup = liveLookup.current;
     if (lookup && !lookup.done) {
       setSubmitting(true);
-      const found = await lookup.found;
-      submitted = { ...draft, ...found, wcaLiveId: draft.wcaLiveId || found.wcaLiveId || '' };
+      const before = new Set(lookup.patched);
+      // A slow WCA Live must not hold Generate: past the wait, save what the draft has.
+      const found = await Promise.race([
+        lookup.found,
+        new Promise<Partial<SettingsDraft>>(r => setTimeout(() => r({}), LIVE_LOOKUP_WAIT_MS)),
+      ]);
+      const late: Partial<SettingsDraft> = Object.fromEntries(Object.entries(found).filter(([k]) => !before.has(k)));
+      submitted = { ...draft, ...late, wcaLiveId: draft.wcaLiveId || late.wcaLiveId || '' };
     }
     try {
       writeSettings(submittedSettings(submitted, {
