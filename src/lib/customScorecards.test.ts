@@ -1,7 +1,7 @@
 import { describe, it, expect } from 'vitest';
 import { resolveCustomFormat, buildCustomEntries, customEventCardCount } from './customScorecards';
 import type { CustomEvent } from '../types/settings';
-import type { ScorecardEntry } from './wcif-parser';
+import { unstackQuadrants, type ScorecardEntry } from './wcif-parser';
 
 function makeEvent(overrides: Partial<CustomEvent> = {}): CustomEvent {
   return {
@@ -91,7 +91,7 @@ describe('buildCustomEntries', () => {
       { name: 'Dan Lee', wcaId: '' },
       { name: 'Eve Chan', wcaId: '' },
     ];
-    const entries = buildCustomEntries(makeEvent({ competitors })) as ScorecardEntry[];
+    const entries = unstackQuadrants(buildCustomEntries(makeEvent({ competitors }))) as ScorecardEntry[];
     expect(entries).toHaveLength(8); // 5 named + 3 blank pads
     expect(entries.slice(0, 5).map(e => e.name)).toEqual(competitors.map(c => c.name));
     expect(entries[0].wcaId).toBe('2019MART01');
@@ -111,6 +111,16 @@ describe('buildCustomEntries', () => {
     ];
     const names = (buildCustomEntries(makeEvent({ competitors })) as ScorecardEntry[]).map(e => e.name);
     expect(names.slice(0, 2)).toEqual(['Xiaoming Wang', 'Nguyễn Văn']);
+  });
+
+  // Cutting a stack of 4-up sheets makes four piles, top-left first; laid in order they must
+  // read the CSV top to bottom, as ordinary scorecards do.
+  it('prints 4-up in cut-and-stack order, and A6 in plain order', () => {
+    const competitors = Array.from({ length: 8 }, (_, i) => ({ name: `P${i + 1}`, wcaId: '' }));
+    const names = (a6: boolean) => (buildCustomEntries(makeEvent({ competitors }), a6) as ScorecardEntry[]).map(e => e.name);
+    // Sheet 1 holds P1, P3, P5, P7; sheet 2 holds P2, P4, P6, P8.
+    expect(names(false)).toEqual(['P1', 'P3', 'P5', 'P7', 'P2', 'P4', 'P6', 'P8']);
+    expect(names(true)).toEqual(competitors.map(c => c.name));
   });
 
   it.each([

@@ -1,5 +1,5 @@
 import type { CustomEvent, CustomEventFormat } from '../types/settings';
-import { printedName, type ScorecardData, type ScorecardEntry, type ScorecardFormat } from './wcif-parser';
+import { printedName, stackQuadrants, type ScorecardData, type ScorecardEntry, type ScorecardFormat } from './wcif-parser';
 
 import { scorecardsPerPage } from '../pdf/layoutConstants';
 
@@ -22,7 +22,7 @@ export function resolveCustomFormat(format: CustomEventFormat, hasCutoff: boolea
 /**
  * Build the scorecards for one custom event: without competitors, a page of
  * identical blank cards; with competitors, one named card per row padded with
- * blank cards to fill the last page. liveId is always '' - custom
+ * blank cards to fill the last page, in cut-and-stack order on 4-up sheets. liveId is always '' - custom
  * competitions are unofficial and never reference WCA Live.
  */
 export function buildCustomEntries(custom: CustomEvent, a6 = false): ScorecardData[] {
@@ -54,7 +54,9 @@ export function buildCustomEntries(custom: CustomEvent, a6 = false): ScorecardDa
     wcaId: c.wcaId,
   }));
   while (entries.length === 0 || entries.length % scorecardsPerPage(a6) !== 0) entries.push(blank);
-  return entries;
+  // 4-up sheets print in cut-and-stack order, like every other scorecard, so the cut piles
+  // come out in list order. Already whole sheets, so nothing is padded.
+  return a6 ? entries : stackQuadrants(entries);
 }
 
 /** Cards `buildCustomEntries` returns, without building them. */
