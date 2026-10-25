@@ -27,7 +27,7 @@ import { useAuth } from '../auth/useAuth';
 import ui from '../styles/ui.module.css';
 import s from './SettingsPage.module.css';
 
-const LIVE_LOOKUP_WAIT_MS = 5000;
+export const LIVE_LOOKUP_WAIT_MS = 5000;
 
 // Where each ranking rule lands when it is ticked. 50 is the world top the regulation names;
 // 1 is the national/continental record holder, who a world-50 threshold misses in a small region.
@@ -112,8 +112,9 @@ export default function SettingsPage() {
   }));
 
   const [saveError, setSaveError] = useState<'settings.storage_full' | 'settings.save_failed' | null>(null);
-  // Any edit may be what makes the next save fit.
-  const patch = (fields: Partial<SettingsDraft>) => { setSaveError(null); setDraft(d => ({ ...d, ...fields })); };
+  // Any organizer edit may be what makes the next save fit.
+  const edit = (update: (d: SettingsDraft) => SettingsDraft) => { setSaveError(null); setDraft(update); };
+  const patch = (fields: Partial<SettingsDraft>) => edit(d => ({ ...d, ...fields }));
 
   const {
     language, secondaryLanguage, paperFormat, secondRoundMode, logoDataUrl, useDefaultLogo,
@@ -140,7 +141,9 @@ export default function SettingsPage() {
   // Generate waits for the WCA Live lookup: without its ids every name tag QR falls back to
   // the WCA Live home page.
   const [submitting, setSubmitting] = useState(false);
-  const [lookupDone, setLookupDone] = useState(!competitionId || isCustom);
+  const [waitOver, setWaitOver] = useState(!competitionId || isCustom);
+  // The WCA Live id and person ids that belong together, so retyping that id brings them back.
+  const knownLive = useRef(previous?.wcaLiveId ? { id: previous.wcaLiveId, personIds: previous.wcaLivePersonIds } : null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const dcFileInputRef = useRef<HTMLInputElement>(null);
 
@@ -167,10 +170,10 @@ export default function SettingsPage() {
       const { scoretakingSoftware: scoretaking, onTheSpot: ots } =
         await fetchCompetitionInfo(competitionId, token?.access_token);
       setOnTheSpot(ots);
-      if (ots && !touched.current.ots) patch({ otsBlanks: true });
+      if (ots && !touched.current.ots) setDraft(d => ({ ...d, otsBlanks: true }));
       // ILR builds its URLs from ids already in hand; nothing to look up on WCA Live.
       if (scoretaking === 'internal' && !touched.current.mode) {
-        patch({ liveResultsMode: 'ilr' });
+        setDraft(d => ({ ...d, liveResultsMode: 'ilr' }));
         return;
       }
       const id = await fetchWcaLiveId(competitionId);
@@ -182,25 +185,23 @@ export default function SettingsPage() {
       setDraft(d => (d.wcaLiveId ? d : { ...d, wcaLiveId: id }));
       setWcaLiveFetchStatus('found');
       const personIds = await fetchWcaLivePersonIds(id);
+      knownLive.current = { id, personIds };
       // Person ids are only valid for the competition they came from.
       setDraft(d => (d.wcaLiveId === id ? { ...d, wcaLivePersonIds: personIds } : d));
-    })().catch(() => {}).finally(() => setLookupDone(true));
+    })().catch(() => {}).finally(() => setWaitOver(true));
   // competitionId is stable (from sessionStorage), no deps needed beyond mount
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  // A slow WCA Live must not hold Generate for long.
   useEffect(() => {
-    if (!submitting || lookupDone) return;
-    const timer = setTimeout(() => setLookupDone(true), LIVE_LOOKUP_WAIT_MS);
-    return () => clearTimeout(timer);
-  }, [submitting, lookupDone]);
-
-  useEffect(() => {
+    if (!submitting) return;
     // Only a refused save sets state, and it stops the effect from re-running.
     // eslint-disable-next-line react-hooks/set-state-in-effect
-    if (submitting && lookupDone) save();
-  }, [submitting, lookupDone]);
+    if (waitOver) { save(); return; }
+    // A slow WCA Live must not hold Generate for long.
+    const timer = setTimeout(() => setWaitOver(true), LIVE_LOOKUP_WAIT_MS);
+    return () => clearTimeout(timer);
+  }, [submitting, waitOver]);
 
   // navigate() during render is a no-op.
   if (!competitionId) return <Navigate to="/competitions" replace />;
@@ -267,7 +268,7 @@ export default function SettingsPage() {
   }
 
   function toggleDoubleCheckRound(round: DoubleCheckRound) {
-    setDraft(d => ({
+    edit(d => ({
       ...d,
       scrambleDoubleCheckRounds: d.scrambleDoubleCheckRounds.includes(round)
         ? d.scrambleDoubleCheckRounds.filter(r => r !== round)
@@ -278,7 +279,7 @@ export default function SettingsPage() {
   // Off when the threshold is null. Ticking restores the default, not the last value.
   function toggleDcRankingRule(key: 'scrambleDoubleCheckWorldTop' | 'scrambleDoubleCheckRegionTop') {
     const fallback = key === 'scrambleDoubleCheckWorldTop' ? DC_WORLD_TOP_DEFAULT : DC_REGION_TOP_DEFAULT;
-    setDraft(d => ({ ...d, [key]: d[key] === null ? fallback : null }));
+    edit(d => ({ ...d, [key]: d[key] === null ? fallback : null }));
   }
 
   // Digits only. An emptied box holds 0 (matching nobody) while typing and snaps back to the
@@ -292,7 +293,7 @@ export default function SettingsPage() {
 
   function normalizeDcRankingTop(key: 'scrambleDoubleCheckWorldTop' | 'scrambleDoubleCheckRegionTop') {
     const fallback = key === 'scrambleDoubleCheckWorldTop' ? DC_WORLD_TOP_DEFAULT : DC_REGION_TOP_DEFAULT;
-    setDraft(d => (d[key] === 0 ? { ...d, [key]: fallback } : d));
+    edit(d => (d[key] === 0 ? { ...d, [key]: fallback } : d));
   }
 
   function handleDcOverridesChange(e: ChangeEvent<HTMLInputElement>) {
@@ -530,7 +531,10 @@ export default function SettingsPage() {
             autoComplete="off"
             spellCheck={false}
             value={wcaLiveId ?? ''}
-            onChange={e => patch({ wcaLiveId: e.target.value.replace(/\D/g, ''), wcaLivePersonIds: null })}
+            onChange={e => {
+              const id = e.target.value.replace(/\D/g, '');
+              patch({ wcaLiveId: id, wcaLivePersonIds: id === knownLive.current?.id ? knownLive.current.personIds : null });
+            }}
             placeholder={t('settings.wca_live.placeholder')}
             className={ui.textInput}
             aria-label={t('settings.wca_live.title')}

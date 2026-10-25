@@ -6,6 +6,7 @@ import { sampleWcif } from '../test/fixtures';
 import { addCompetition, backend, on } from '../test/fakeWca';
 import { SAMPLE, click, walkToSettings } from '../test/journeys';
 import { currentPath, renderApp } from '../test/renderApp';
+import { LIVE_LOOKUP_WAIT_MS } from './SettingsPage';
 
 async function atSettings() {
   addCompetition(sampleWcif());
@@ -13,8 +14,10 @@ async function atSettings() {
   await walkToSettings();
 }
 
-function upload(input: HTMLInputElement, file: File) {
-  fireEvent.change(input, { target: { files: [file] } });
+async function uploadLogo(name: string, bytes: Uint8Array<ArrayBuffer>) {
+  const input = document.querySelector<HTMLInputElement>('input[type="file"][accept="image/*"]')!;
+  fireEvent.change(input, { target: { files: [new File([bytes], name, { type: name.endsWith('.png') ? 'image/png' : 'image/jpeg' })] } });
+  await waitFor(() => expect(screen.getByText(name)).toBeTruthy());
 }
 
 describe('a logo too big for sessionStorage', () => {
@@ -22,9 +25,7 @@ describe('a logo too big for sessionStorage', () => {
   // sessionStorage quota.
   it('tells the organizer instead of silently staying put', async () => {
     await atSettings();
-    const input = document.querySelector<HTMLInputElement>('input[type="file"][accept="image/*"]')!;
-    upload(input, new File([new Uint8Array(4_500_000)], 'photo.jpg', { type: 'image/jpeg' }));
-    await waitFor(() => expect(screen.getByText('photo.jpg')).toBeTruthy());
+    await uploadLogo('photo.jpg', new Uint8Array(4_500_000));
 
     await click(i18n.t('settings.generate_button'));
 
@@ -35,9 +36,7 @@ describe('a logo too big for sessionStorage', () => {
 
   it('drops the warning once the organizer removes the logo', async () => {
     await atSettings();
-    const input = document.querySelector<HTMLInputElement>('input[type="file"][accept="image/*"]')!;
-    upload(input, new File([new Uint8Array(4_500_000)], 'photo.jpg', { type: 'image/jpeg' }));
-    await waitFor(() => expect(screen.getByText('photo.jpg')).toBeTruthy());
+    await uploadLogo('photo.jpg', new Uint8Array(4_500_000));
     await click(i18n.t('settings.generate_button'));
     await screen.findByRole('alert');
 
@@ -65,9 +64,7 @@ describe('starting a custom competition after a WCA one', () => {
   // /settings restores the last saved blob, so the custom card must clear it.
   it('starts from clean settings, not the WCA competition\'s', async () => {
     await atSettings();
-    const input = document.querySelector<HTMLInputElement>('input[type="file"][accept="image/*"]')!;
-    upload(input, new File([new Uint8Array([137, 80, 78, 71])], 'club-logo.png', { type: 'image/png' }));
-    await waitFor(() => expect(screen.getByText('club-logo.png')).toBeTruthy());
+    await uploadLogo('club-logo.png', new Uint8Array([137, 80, 78, 71]));
     await click(i18n.t('settings.generate_button'));
     await waitFor(() => expect(currentPath()).toBe('/generate'));
     expect(readSettings()?.logoDataUrl).toMatch(/^data:image\/png/);
@@ -88,7 +85,6 @@ describe('starting a custom competition after a WCA one', () => {
   });
 });
 
-/** Holds `route` until the returned function is called. */
 // The live-results controls only show when name tags print.
 async function atSettingsWithNametags() {
   addCompetition(sampleWcif());
@@ -100,10 +96,15 @@ async function atSettingsWithNametags() {
   await screen.findByRole('button', { name: i18n.t('settings.generate_button') });
 }
 
-function hold(route: string) {
+type Req = { body: string };
+// The person-id query is the only WCA Live call with variables.
+const isPersonQuery = (req: Req) => Boolean((JSON.parse(req.body) as { variables?: unknown }).variables);
+
+/** Holds `route`, or only its requests that match `when`, until the returned function is called. */
+function hold(route: string, when: (req: Req) => boolean = () => true) {
   let release!: () => void;
   const held = new Promise<void>((r) => { release = r; });
-  on(route, async (_req, next) => { await held; return next(); });
+  on(route, async (req, next) => { if (when(req)) await held; return next(); });
   return release;
 }
 
@@ -176,13 +177,8 @@ describe('an edit made while the WCA Live lookup is still running', () => {
     backend.info.set(SAMPLE.id, { on_the_spot_registration: true });
     backend.liveIds.set(SAMPLE.id, '4242');
     backend.livePeople.set('4242', [{ id: '901', registrantId: 1 }]);
-    let release!: () => void;
-    const held = new Promise<void>((r) => { release = r; });
     // Only the person-id query, so the OTS default and the live id land before the click.
-    on('POST live.worldcubeassociation.org/api', async (req, next) => {
-      if ((JSON.parse(req.body) as { variables?: unknown }).variables) await held;
-      return next();
-    });
+    const release = hold('POST live.worldcubeassociation.org/api', isPersonQuery);
 
     await atSettings();
     const ots = screen.getByText(i18n.t('settings.ots.label')).closest('label')!.querySelector('input')!;
@@ -204,7 +200,7 @@ describe('a WCA Live that never answers', () => {
     await atSettings();
     vi.useFakeTimers({ toFake: ['setTimeout'] });
     fireEvent.click(screen.getByRole('button', { name: i18n.t('settings.generate_button') }));
-    await act(() => vi.advanceTimersByTimeAsync(5000));
+    await act(() => vi.advanceTimersByTimeAsync(LIVE_LOOKUP_WAIT_MS));
     vi.useRealTimers();
 
     await waitFor(() => expect(currentPath()).toBe('/generate'));
@@ -215,9 +211,9 @@ describe('a WCA Live that never answers', () => {
     backend.liveIds.set(SAMPLE.id, '4242');
     let releaseId!: () => void;
     const idHeld = new Promise<void>((r) => { releaseId = r; });
-    // The id answers after the click; the person-id query, the only one with variables, never does.
+    // The id answers after the click; the person-id query never does.
     on('POST live.worldcubeassociation.org/api', async (req, next) => {
-      if ((JSON.parse(req.body) as { variables?: unknown }).variables) return new Promise(() => {});
+      if (isPersonQuery(req)) return new Promise(() => {});
       await idHeld;
       return next();
     });
@@ -226,7 +222,7 @@ describe('a WCA Live that never answers', () => {
     vi.useFakeTimers({ toFake: ['setTimeout'] });
     fireEvent.click(screen.getByRole('button', { name: i18n.t('settings.generate_button') }));
     releaseId();
-    await act(() => vi.advanceTimersByTimeAsync(5000));
+    await act(() => vi.advanceTimersByTimeAsync(LIVE_LOOKUP_WAIT_MS));
     vi.useRealTimers();
 
     await waitFor(() => expect(currentPath()).toBe('/generate'));
@@ -243,13 +239,28 @@ describe('a WCA Live id typed over the found one', () => {
     const field = document.querySelector<HTMLInputElement>('#wca-live-id')!;
     fireEvent.change(field, { target: { value: '7777' } });
     release();
-    await waitFor(() => expect(screen.getByRole('button', { name: i18n.t('settings.generate_button') })).toBeTruthy());
     await act(() => new Promise((r) => setTimeout(r, 50)));
 
     await click(i18n.t('settings.generate_button'));
 
     await waitFor(() => expect(currentPath()).toBe('/generate'));
     expect(readSettings()).toMatchObject({ wcaLiveId: '7777', wcaLivePersonIds: null });
+  });
+
+  it('gets the person ids back when the found id is typed again', async () => {
+    backend.liveIds.set(SAMPLE.id, '4242');
+    backend.livePeople.set('4242', [{ id: '901', registrantId: 1 }]);
+    await atSettingsWithNametags();
+    const field = document.querySelector<HTMLInputElement>('#wca-live-id')!;
+    await waitFor(() => expect(field.value).toBe('4242'));
+    await act(() => new Promise((r) => setTimeout(r, 50)));
+    fireEvent.change(field, { target: { value: '424' } });
+    fireEvent.change(field, { target: { value: '4242' } });
+
+    await click(i18n.t('settings.generate_button'));
+
+    await waitFor(() => expect(currentPath()).toBe('/generate'));
+    expect(readSettings()).toMatchObject({ wcaLiveId: '4242', wcaLivePersonIds: { 1: '901' } });
   });
 });
 

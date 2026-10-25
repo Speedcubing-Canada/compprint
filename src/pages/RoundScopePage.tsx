@@ -49,7 +49,6 @@ export default function RoundScopePage() {
       : null,
   );
 
-  // Pre-competition defaults, overridden once the data says otherwise.
   const [docScorecards, setDocScorecards] = useState(restored?.documents.scorecards ?? true);
   // `null` until chosen: the default depends on whether the competition has started.
   const [scheduleChoice, setDocSchedule] = useState<boolean | null>(restored?.documents.scheduleTracker ?? null);
@@ -120,7 +119,7 @@ export default function RoundScopePage() {
   // Re-seeded from the base defaults, so switching presets never accumulates the last one's.
   function applyPreset(preset: Preset | null) {
     setPresetId(preset?.id ?? null);
-    const docs = { ...baseDocuments(isMidComp), ...(preset?.documents ?? {}) };
+    const docs = { ...base, ...(preset?.documents ?? {}) };
     setDocScorecards(docs.scorecards);
     setDocSchedule(docs.scheduleTracker);
     setDocNametags(docs.nametags);
