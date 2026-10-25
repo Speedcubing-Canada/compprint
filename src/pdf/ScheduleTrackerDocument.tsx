@@ -1,7 +1,7 @@
 import { Document, Page, View, Text, StyleSheet } from '@react-pdf/renderer';
 import { docMeta } from './docMeta';
 import type { CompetitionSettings } from '../types/settings';
-import type { ScheduleDay } from '../lib/wcif-parser';
+import type { ScheduleDay } from '../lib/scheduleRows';
 import { getScheduleStrings, type ScheduleStrings } from '../lib/i18n';
 import {
   CHECKING_BREAK_RULE,

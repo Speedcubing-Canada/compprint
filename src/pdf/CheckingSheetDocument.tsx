@@ -3,7 +3,7 @@
 import { Document, Page, View, Text, StyleSheet, Svg, Polyline } from '@react-pdf/renderer';
 import { docMeta } from './docMeta';
 import type { CompetitionSettings } from '../types/settings';
-import type { CheckingDay, CheckingRow } from '../lib/wcif-parser';
+import type { CheckingDay, CheckingRow } from '../lib/scheduleRows';
 import { getCheckingSheetStrings, type CheckingSheetStrings } from '../lib/i18n';
 import {
   CHECKING_FLEX, CHECKING_CELL_PAD_V, CHECKING_BOX, CHECKING_BREAK_RULE,

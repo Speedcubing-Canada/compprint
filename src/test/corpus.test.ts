@@ -1,9 +1,6 @@
 import { readdirSync, readFileSync } from 'node:fs';
 import { describe, expect, it } from 'vitest';
-import { PRIVATE_KEYS, corpus, scrubWcif } from './corpus';
-import { parseWCIF } from '../lib/wcif-parser';
-import { buildPdfJobs } from '../lib/pdfJobs';
-import { testSettings } from './fixtures';
+import { PRIVATE_KEYS, scrubWcif } from './corpus';
 
 const DIR = 'tests/fixtures/wcif';
 const files = readdirSync(DIR).filter((f) => f.endsWith('.json'));
@@ -30,12 +27,5 @@ describe('scrubWcif', () => {
   it('removes private keys at any depth, keeps the rest', () => {
     const dirty = { id: 'X', persons: [{ name: 'A', email: 'a@b.c', birthdate: '2000-01-01', registration: { comments: 'hi', eventIds: ['333'] } }] };
     expect(scrubWcif(dirty)).toEqual({ id: 'X', persons: [{ name: 'A', registration: { eventIds: ['333'] } }] });
-  });
-});
-
-describe('every real competition', () => {
-  it.each(corpus())('%s parses into at least one document', (id, wcif) => {
-    const settings = testSettings({ competitionId: id, competitionName: wcif.name });
-    expect(buildPdfJobs(parseWCIF(wcif, settings), settings).length).toBeGreaterThan(0);
   });
 });

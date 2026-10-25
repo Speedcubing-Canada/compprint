@@ -2,6 +2,7 @@ import {
   finalizeEntries, realEntries, stackQuadrants, unstackQuadrants,
   type ScorecardData, type ParsedWCIF, type NametTagEntry,
 } from './wcif-parser';
+import { cmp } from './scheduleRows';
 import type { CompetitionSettings, CustomEvent } from '../types/settings';
 import {
   scorecardsPerPage, MAX_PAGES_PER_SCORECARD_PDF,
@@ -10,7 +11,6 @@ import {
 
 const cardsPerPdf = (a6: boolean) => MAX_PAGES_PER_SCORECARD_PDF * scorecardsPerPage(a6);
 const TAGS_PER_PDF = MAX_PAGES_PER_NAMETAG_PDF * NAMETAGS_PER_PAGE;
-const cmp = (a: string, b: string) => (a < b ? -1 : a > b ? 1 : 0);
 
 /**
  * One PDF to render. The worker builds the files and the UI counts and names them off this

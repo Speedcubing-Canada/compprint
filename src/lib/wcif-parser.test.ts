@@ -1225,7 +1225,7 @@ describe('schedule tracker', () => {
 
   // FMC and multi-attempt MBLD are scheduled per attempt ("333fm-r1-a1"), not per round. The
   // tracker dropped those codes, so an FMC-only competition had no tracker at all.
-  it('lists each FMC and MBLD attempt as its own row, and keeps them off the round checklist', () => {
+  it('lists each FMC and MBLD attempt as its own row, and one row per round on the checklist', () => {
     const attempt = (eventId: string, n: number, hh: string): Activity => ({
       id: uid(), name: '', activityCode: `${eventId}-r1-a${n}`,
       startTime: `2024-01-01T${hh}:00:00Z`, endTime: `2024-01-01T${hh}:59:00Z`,
@@ -1238,7 +1238,10 @@ describe('schedule tracker', () => {
       'FMC Final (Attempt 2)',
       '3x3x3 Multi-Blind Final (Attempt 1)',
     ]);
-    expect(result.checkingDays).toEqual([]);
+    expect(result.checkingDays[0]?.rows.map(row => [row.eventRound, row.startTime, row.endTime])).toEqual([
+      ['FMC Final', '10:00', '12:59'],
+      ['3x3x3 Multi-Blind Final', '14:00', '14:59'],
+    ]);
   });
 
   it('two rooms on the same day produce one day with two stages', () => {
@@ -2633,6 +2636,27 @@ describe('checking sheet: one table per day', () => {
     ]);
     const rows = parseWCIF(wcif, cfg()).checkingDays[0]?.rows ?? [];
     expect(rows.map(x => x.breakBefore)).toEqual([false, true]);
+  });
+
+  // An FMC attempt in a side room just after lunch used to count as the row before 2x2, so
+  // the checklist, which prints no attempt rows, lost its lunch line.
+  it('keeps the lunch line when an FMC attempt starts during lunch in another room', () => {
+    const fmc: Activity = {
+      id: 900, name: '', activityCode: '333fm-r1-a1', startTime: '2024-01-01T12:15:00Z',
+      endTime: '2024-01-01T13:15:00Z', childActivities: [], scrambleSets: [],
+    };
+    const wcif = mkWCIF([evt('333', [rSpec('a')]), evt('222', [rSpec('a')]), evt('333fm', [rSpec('m')])], [
+      room('Main', [
+        act('333', 1, [ch(100, '333', 1, 1, '2024-01-01T09:00:00Z')]),
+        otherAct('Lunch', '2024-01-01T12:00:00Z'),
+        act('222', 1, [ch(101, '222', 1, 1, '2024-01-01T13:30:00Z')]),
+      ]),
+      room('Side', [fmc]),
+    ]);
+    const rows = parseWCIF(wcif, cfg()).checkingDays[0]?.rows ?? [];
+    expect(rows.map(x => [x.eventRound, x.breakBefore])).toEqual([
+      ['3x3x3 Cube Final', false], ['FMC Final', true], ['2x2x2 Cube Final', false],
+    ]);
   });
 
   it('leaves the schedule tracker one table per room', () => {

@@ -1,7 +1,8 @@
 import { describe, it, expect } from 'vitest';
 import { estimateTotalPages } from './pageEstimate';
 import { buildPdfJobs } from './pdfJobs';
-import type { ParsedWCIF, ScorecardData, ScorecardEntry, FirstTimerEntry, NametTagEntry, ScheduleDay } from './wcif-parser';
+import type { ParsedWCIF, ScorecardData, ScorecardEntry, FirstTimerEntry, NametTagEntry } from './wcif-parser';
+import type { ScheduleDay } from './scheduleRows';
 import type { CompetitionSettings, CustomEvent } from '../types/settings';
 
 function sc(): ScorecardEntry {
