@@ -19,7 +19,7 @@ import { fetchWcif } from '../auth/wca';
 import * as analytics from '../lib/analytics';
 import i18n from '../i18n/index';
 import { markAllSeen } from '../changelog';
-import { writeCompetition, writeCustom, writeSettings } from '../lib/flowState';
+import { writeCompetition, writeSettings } from '../lib/flowState';
 import { buildPdfJobs, hasOversizedPdf } from '../lib/pdfJobs';
 import { parseWCIF } from '../lib/wcif-parser';
 import { sampleWcif, testSettings } from '../test/fixtures';
@@ -103,7 +103,6 @@ describe('GeneratePage', () => {
 
   it('needs no WCIF for a custom competition', async () => {
     const customEvents = [{ name: 'Mystery', iconDataUrl: null, format: 'avg5' as const, cutoff: '', limit: '' }];
-    writeCustom(customEvents);
     writeSettings(testSettings({ isCustomCompetition: true, customEvents }));
     renderWithProviders(<GeneratePage />, { auth: signedInAuth });
 

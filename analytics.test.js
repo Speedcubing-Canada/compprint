@@ -127,14 +127,14 @@ describe('sanitizeEvent on random input', () => {
   const depthOf = (v) => (v && typeof v === 'object' && !Array.isArray(v) ? 1 + Math.max(0, ...Object.values(v).map(depthOf)) : 0);
 
   it('stays flat, bounded and JSON-safe over 300 bodies', () => {
-   for (let i = 0; i < 300; i++) {
-    const body = { ...value(0), v: 1, event: pick(['generate', 'error', 'session']) };
-    const out = sanitizeEvent(body);
-    expect(Object.getPrototypeOf(out)).toBe(Object.prototype);
-    expect(depthOf(out)).toBeLessThanOrEqual(2);
-    expect(Object.keys(out).length).toBeLessThanOrEqual(40);
-    // Round-trips through JSON unchanged: nothing non-finite, no functions, no bigint.
-    expect(JSON.parse(JSON.stringify(out))).toEqual(out);
-   }
+    for (let i = 0; i < 300; i++) {
+      const body = { ...value(0), v: 1, event: pick(['generate', 'error', 'session']) };
+      const out = sanitizeEvent(body);
+      expect(Object.getPrototypeOf(out)).toBe(Object.prototype);
+      expect(depthOf(out)).toBeLessThanOrEqual(2);
+      expect(Object.keys(out).length).toBeLessThanOrEqual(40);
+      // Round-trips through JSON unchanged: nothing non-finite, no functions, no bigint.
+      expect(JSON.parse(JSON.stringify(out))).toEqual(out);
+    }
   });
 });

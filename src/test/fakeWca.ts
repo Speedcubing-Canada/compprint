@@ -6,18 +6,11 @@
 // token it was given and rotates in a new one.
 
 import { vi } from 'vitest';
-import type { WCIF } from '../types/wcif';
+import type { WCACompetition, WCIF } from '../types/wcif';
 import type { WCAToken } from '../auth/wca';
 import { freshToken, organizer } from './fixtures';
 
-export interface ManagedCompetition {
-  id: string;
-  name: string;
-  city: string;
-  country_iso2: string;
-  start_date: string;
-  end_date: string;
-}
+export type ManagedCompetition = Pick<WCACompetition, 'id' | 'name' | 'city' | 'country_iso2' | 'start_date' | 'end_date'>;
 
 type Request = { url: URL; method: string; init: RequestInit | undefined; body: string };
 /** `next()` answers as the fake would have without the override. */
