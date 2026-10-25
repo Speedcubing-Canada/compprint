@@ -4,7 +4,7 @@ import { getStrings, getEventName, getFirstTimerSlipStrings, getNametTagTitleStr
 import { packSlipPages } from '../pdf/firstTimerSlipLines';
 import { buildScheduleDays, scheduleLabels, type CheckingDay, type ScheduleDay } from './scheduleRows';
 import { cmp } from './sort';
-import { parseActivityCode, roundIdOf } from './activityCode';
+import { parseActivityCode, roundIdOf, type ActivityCode } from './activityCode';
 
 export type ScorecardFormat = 'avg5' | 'bo2-avg5' | 'mo3' | 'bo1-mo3' | 'bo2' | 'bo1';
 
@@ -1230,7 +1230,7 @@ export function parseWCIF(wcif: WCIF, settings: CompetitionSettings): ParsedWCIF
     judges: string[];
   }
   const overviewBuckets = new Map<number, OverviewBucket>();
-  const overviewUnits: { unit: GroupUnit; roundNum: number; eventId: string; groupNum: number }[] = [];
+  const overviewUnits: { unit: GroupUnit; code: ActivityCode & { group: number } }[] = [];
 
   for (const room of allRooms) {
     for (const activity of room.activities) {
@@ -1238,7 +1238,7 @@ export function parseWCIF(wcif: WCIF, settings: CompetitionSettings): ParsedWCIF
         const parsed = parseActivityCode(unit.activityCode);
         if (parsed?.group === undefined) continue;
         overviewBuckets.set(unit.id, { competitors: [], scramblers: [], runners: [], judges: [] });
-        overviewUnits.push({ unit, roundNum: parsed.round, eventId: parsed.eventId, groupNum: parsed.group });
+        overviewUnits.push({ unit, code: { ...parsed, group: parsed.group } });
       }
     }
   }
@@ -1259,7 +1259,7 @@ export function parseWCIF(wcif: WCIF, settings: CompetitionSettings): ParsedWCIF
   overviewUnits.sort((a, b) =>
     Date.parse(a.unit.startTime) - Date.parse(b.unit.startTime)
     || (activityRoomIdx[a.unit.id] ?? 0) - (activityRoomIdx[b.unit.id] ?? 0)
-    || a.groupNum - b.groupNum);
+    || a.code.group - b.code.group);
 
   const capitalize = (v: string) => v.charAt(0).toUpperCase() + v.slice(1);
 
@@ -1269,9 +1269,10 @@ export function parseWCIF(wcif: WCIF, settings: CompetitionSettings): ParsedWCIF
 
   const groupOverview: GroupOverviewEntry[] = overviewUnits.filter(
     ({ unit }) => !isEmptyGroup(overviewBuckets.get(unit.id)!),
-  ).map(({ unit, roundNum, eventId, groupNum }) => {
+  ).map(({ unit, code }) => {
+    const { eventId, round: roundNum, group: groupNum } = code;
     const bucket = overviewBuckets.get(unit.id)!;
-    const rid = `${eventId}-r${roundNum}`;
+    const rid = roundIdOf(code);
     const roundLabel = labels.roundLabel(eventId, roundNum);
     // Two stages number their groups from 1 each, so the stage has to qualify the label.
     const stage = (roundStages[rid]?.size ?? 1) > 1 ? activityStage[unit.id] : '';

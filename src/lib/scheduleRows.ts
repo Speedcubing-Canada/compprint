@@ -1,7 +1,7 @@
 import type { Activity, WCIF } from '../types/wcif';
 import type { LocaleCode } from '../types/settings';
 import { getEventName, getScheduleStrings } from './i18n';
-import { parseActivityCode, type ActivityCode } from './activityCode';
+import { parseActivityCode, roundIdOf, type ActivityCode } from './activityCode';
 import { cmp } from './sort';
 
 export interface ScheduleRow {
@@ -77,7 +77,7 @@ interface RoundSlot {
 function mergeSlots(slots: RoundSlot[]): RoundSlot[] {
   const byRound = new Map<string, RoundSlot>();
   for (const slot of slots) {
-    const key = `${slot.code.eventId}-r${slot.code.round}`;
+    const key = roundIdOf(slot.code);
     const merged = byRound.get(key);
     if (!merged) {
       byRound.set(key, { ...slot, code: { eventId: slot.code.eventId, round: slot.code.round }, groupCodes: new Set(slot.groupCodes) });
