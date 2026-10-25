@@ -9,7 +9,7 @@ import { sampleWcif, testSettings } from '../test/fixtures';
 import { addCompetition, backend } from '../test/fakeWca';
 import { currentPath, renderApp } from '../test/renderApp';
 import { downloads } from '../test/routeSetup';
-import { click, walkToSettings } from '../test/journeys';
+import { SAMPLE, click, walkToSettings } from '../test/journeys';
 
 // flowState.test.ts covers the storage and each page test covers one page, so the joint -
 // four steps agreeing about the same competition - is what nothing else sees.
@@ -118,7 +118,7 @@ describe('switching competitions', () => {
 
     cleanup();
     renderApp('/competitions');
-    fireEvent.click(await screen.findByText('Gros Jouets à Montréal 2026'));
+    fireEvent.click(await screen.findByText(SAMPLE.name));
 
     // Same competition, so the organizer's earlier answers are theirs to come back to.
     await waitFor(() => expect(readStoredScope()).not.toBeNull());
@@ -138,7 +138,7 @@ describe('ProtectedRoute', () => {
 
   it('lets a signed-in organizer through', async () => {
     enter('/competitions');
-    expect(await screen.findByText('Gros Jouets à Montréal 2026')).toBeTruthy();
+    expect(await screen.findByText(SAMPLE.name)).toBeTruthy();
   });
 
   it('sends an unknown route back to the login page', async () => {

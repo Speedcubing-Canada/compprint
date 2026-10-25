@@ -45,6 +45,20 @@ describe('a logo too big for sessionStorage', () => {
 
     expect(screen.queryByRole('alert')).toBeNull();
   });
+
+  it('drops the warning on a double-check edit too', async () => {
+    await atSettings();
+    vi.spyOn(Storage.prototype, 'setItem').mockImplementation(() => {
+      throw new DOMException('full', 'QuotaExceededError');
+    });
+    await click(i18n.t('settings.generate_button'));
+    await screen.findByRole('alert');
+
+    await click(i18n.t('settings.advanced.toggle'));
+    fireEvent.click(screen.getByLabelText(i18n.t('settings.double_check.round_first')));
+
+    expect(screen.queryByRole('alert')).toBeNull();
+  });
 });
 
 describe('storage that refuses the save for another reason', () => {
