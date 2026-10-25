@@ -1,7 +1,8 @@
 import type { Activity, WCIF } from '../types/wcif';
 import type { LocaleCode } from '../types/settings';
 import { getEventName, getScheduleStrings } from './i18n';
-import { cmp, parseActivityCode, type ActivityCode } from './activityCode';
+import { parseActivityCode, type ActivityCode } from './activityCode';
+import { cmp } from './sort';
 
 export interface ScheduleRow {
   startTime: string;
@@ -46,7 +47,7 @@ export interface ScheduleDay {
 }
 
 /** Falls back to UTC for a timezone this runtime does not know. */
-export function zonedFormat(timeZone: string, options: Intl.DateTimeFormatOptions): Intl.DateTimeFormat {
+function zonedFormat(timeZone: string, options: Intl.DateTimeFormatOptions): Intl.DateTimeFormat {
   try { return new Intl.DateTimeFormat('en-CA', { ...options, timeZone }); }
   catch { return new Intl.DateTimeFormat('en-CA', { ...options, timeZone: 'UTC' }); }
 }

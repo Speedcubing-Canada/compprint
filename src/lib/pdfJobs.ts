@@ -2,7 +2,7 @@ import {
   finalizeEntries, realEntries, stackQuadrants, unstackQuadrants,
   type ScorecardData, type ParsedWCIF, type NametTagEntry,
 } from './wcif-parser';
-import { cmp } from './activityCode';
+import { cmp } from './sort';
 import type { CompetitionSettings, CustomEvent } from '../types/settings';
 import {
   scorecardsPerPage, MAX_PAGES_PER_SCORECARD_PDF,

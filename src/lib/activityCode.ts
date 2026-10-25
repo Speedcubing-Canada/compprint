@@ -6,9 +6,9 @@ export interface ActivityCode {
   attempt?: number;
 }
 
-/** `333-r1`, `333-r1-g2` or `333fm-r1-a1`; null for anything else (`other-lunch`, `333-r1-g1-a1`). */
+/** `333-r1`, `333-r1-g2`, `333fm-r1-a1` or `333fm-r1-g1-a1`; null for anything else (`other-lunch`). */
 export function parseActivityCode(code: string): ActivityCode | null {
-  const m = /^([^-]+)-r(\d+)(?:-g(\d+)|-a(\d+))?$/.exec(code);
+  const m = /^([^-]+)-r(\d+)(?:-g(\d+))?(?:-a(\d+))?$/.exec(code);
   if (!m) return null;
   return {
     eventId: m[1],
@@ -18,5 +18,5 @@ export function parseActivityCode(code: string): ActivityCode | null {
   };
 }
 
-/** Plain code-unit order, for ASCII keys that need no collation. */
-export const cmp = (a: string, b: string) => (a < b ? -1 : a > b ? 1 : 0);
+/** `333-r2`, the WCIF round id. */
+export const roundIdOf = (c: ActivityCode) => `${c.eventId}-r${c.round}`;
