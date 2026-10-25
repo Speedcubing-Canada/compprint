@@ -1,10 +1,10 @@
 import { describe, expect, it, vi } from 'vitest';
-import { fireEvent, screen, waitFor } from '@testing-library/react';
+import { cleanup, fireEvent, screen, waitFor } from '@testing-library/react';
 import i18n from '../i18n/index';
 import { readSettings } from '../lib/flowState';
 import { sampleWcif } from '../test/fixtures';
-import { addCompetition } from '../test/fakeWca';
-import { click, walkToSettings } from '../test/journeys';
+import { addCompetition, backend, on } from '../test/fakeWca';
+import { SAMPLE, click, walkToSettings } from '../test/journeys';
 import { currentPath, renderApp } from '../test/renderApp';
 
 async function atSettings() {
@@ -58,6 +58,76 @@ describe('a logo too big for sessionStorage', () => {
     fireEvent.click(screen.getByLabelText(i18n.t('settings.double_check.round_first')));
 
     expect(screen.queryByRole('alert')).toBeNull();
+  });
+});
+
+describe('starting a custom competition after a WCA one', () => {
+  // The custom card cleared only the preset, and /settings restores the last saved blob, so
+  // the WCA competition's logo landed on the custom competition's scorecards.
+  it('starts from clean settings, not the WCA competition\'s', async () => {
+    await atSettings();
+    const input = document.querySelector<HTMLInputElement>('input[type="file"][accept="image/*"]')!;
+    upload(input, new File([new Uint8Array([137, 80, 78, 71])], 'club-logo.png', { type: 'image/png' }));
+    await waitFor(() => expect(screen.getByText('club-logo.png')).toBeTruthy());
+    await click(i18n.t('settings.generate_button'));
+    await waitFor(() => expect(currentPath()).toBe('/generate'));
+    expect(readSettings()?.logoDataUrl).toMatch(/^data:image\/png/);
+
+    cleanup();
+    renderApp('/competitions');
+    await click(new RegExp(i18n.t('picker.create_custom_title')));
+    fireEvent.change(await screen.findByPlaceholderText(i18n.t('custom.name_placeholder')), { target: { value: 'Club Meetup' } });
+    await click(i18n.t('settings.advanced.add_custom_event'));
+    fireEvent.change(screen.getByPlaceholderText(i18n.t('settings.advanced.event_name_placeholder')), { target: { value: 'Relay' } });
+    await click(i18n.t('custom.continue'));
+    await screen.findByRole('button', { name: i18n.t('settings.generate_button') });
+
+    expect(screen.queryByText('club-logo.png')).toBeNull();
+    await click(i18n.t('settings.generate_button'));
+    await waitFor(() => expect(currentPath()).toBe('/generate'));
+    expect(readSettings()?.logoDataUrl).toBeNull();
+  });
+});
+
+/** Holds `route` until the returned function is called. */
+function hold(route: string) {
+  let release!: () => void;
+  const held = new Promise<void>((r) => { release = r; });
+  on(route, async (_req, next) => { await held; return next(); });
+  return release;
+}
+
+describe('generating before the WCA Live lookup finishes', () => {
+  // The person-id map arrives a few requests after the page opens. Submitting before it did
+  // stored null, and every name tag QR fell back to the WCA Live home page.
+  it('waits for the whole lookup instead of saving without the ids', async () => {
+    backend.liveIds.set(SAMPLE.id, '4242');
+    backend.livePeople.set('4242', [{ id: '901', registrantId: 1 }]);
+    // The first WCA Live call, so the submit lands before any of the chain resolved.
+    const release = hold('POST live.worldcubeassociation.org/api');
+
+    await atSettings();
+    const generate = screen.getByRole('button', { name: i18n.t('settings.generate_button') });
+    fireEvent.click(generate);
+    expect((generate as HTMLButtonElement).disabled).toBe(true);
+    fireEvent.click(generate);
+    release();
+
+    await waitFor(() => expect(currentPath()).toBe('/generate'));
+    // Without the id the QR goes to the home page whatever the map holds.
+    expect(readSettings()).toMatchObject({ wcaLiveId: '4242', wcaLivePersonIds: { 1: '901' } });
+  });
+
+  it('saves the switch to ILR the lookup makes', async () => {
+    backend.info.set(SAMPLE.id, { scoretaking_software: 'internal' });
+    const release = hold(`GET www.worldcubeassociation.org/api/v0/competitions/${SAMPLE.id}`);
+
+    await atSettings();
+    fireEvent.click(screen.getByRole('button', { name: i18n.t('settings.generate_button') }));
+    release();
+
+    await waitFor(() => expect(currentPath()).toBe('/generate'));
+    expect(readSettings()?.liveResultsMode).toBe('ilr');
   });
 });
 

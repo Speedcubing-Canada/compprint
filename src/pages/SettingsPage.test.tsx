@@ -1,6 +1,6 @@
 // @vitest-environment jsdom
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { cleanup, fireEvent, screen } from '@testing-library/react';
+import { cleanup, fireEvent, screen, waitFor } from '@testing-library/react';
 import type { CompetitionSettings, CustomEvent } from '../types/settings';
 import { markAllSeen } from '../changelog';
 import { renderWithProviders, useEnglish } from '../test/render';
@@ -303,8 +303,9 @@ describe('live results mode', () => {
     await renderSettings();
     generate();
 
+    // The submit waits on the person-id lookup it started, so the save lands a tick later.
+    await waitFor(() => expect(readSettings()?.wcaLiveId).toBe('9667'));
     expect(readSettings()?.liveResultsMode).toBe('wca-live');
-    expect(readSettings()?.wcaLiveId).toBe('9667');
   });
 
   // The organizer may know about a switch before the WCA record does.

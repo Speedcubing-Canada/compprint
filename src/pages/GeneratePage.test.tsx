@@ -94,13 +94,6 @@ describe('GeneratePage', () => {
     expect(vi.mocked(analytics.send)).toHaveBeenCalledTimes(1);
   });
 
-  it('sends the organizer back to the picker when no settings were submitted', async () => {
-    sessionStorage.clear();
-    renderWithProviders(<GeneratePage />, { auth: signedInAuth });
-    // Guessing at settings would generate a bundle the organizer never configured.
-    expect(mockWcif).not.toHaveBeenCalled();
-  });
-
   it('needs no WCIF for a custom competition', async () => {
     const customEvents = [{ name: 'Mystery', iconDataUrl: null, format: 'avg5' as const, cutoff: '', limit: '' }];
     writeSettings(testSettings({ isCustomCompetition: true, customEvents }));

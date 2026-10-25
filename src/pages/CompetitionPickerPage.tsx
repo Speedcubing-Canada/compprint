@@ -9,7 +9,7 @@ import Header from '../components/Header';
 import AboutDialog from '../components/AboutDialog';
 import Skeleton from '../components/Skeleton';
 import { formatCompetitionDate, visibleCompetitions } from '../lib/competitionList';
-import { clearCustom, clearDownstream, readCompetition, writeCompetition } from '../lib/flowState';
+import { clearCustom, clearDownstream, readCompetition, readIsCustom, writeCompetition } from '../lib/flowState';
 import { clearPresetSettings } from '../presets';
 import ui from '../styles/ui.module.css';
 import s from './CompetitionPickerPage.module.css';
@@ -50,6 +50,13 @@ export default function CompetitionPickerPage() {
 
     return () => { cancelled = true; };
   }, [token, attempt]);
+
+  function startCustom() {
+    clearPresetSettings();
+    // Coming from a WCA competition is a switch too; a custom one is kept for back-navigation.
+    if (!readIsCustom()) clearDownstream();
+    navigate('/custom');
+  }
 
   function selectCompetition(comp: WCACompetition) {
     // Drop any stale custom-competition state so it never leaks into a WCA flow.
@@ -120,7 +127,7 @@ export default function CompetitionPickerPage() {
         {/* Niche flow: keep it discoverable but secondary, below the WCA list. It skips
             /scope, where a preset is otherwise re-written, so clear the seed on the way in. */}
         {!isLoading && (
-          <button className={s.customCard} onClick={() => { clearPresetSettings(); navigate('/custom'); }}>
+          <button className={s.customCard} onClick={startCustom}>
             <span className={s.customCardTitle}>
               <Plus size={16} strokeWidth={2.5} aria-hidden="true" />
               {t('picker.create_custom_title')}

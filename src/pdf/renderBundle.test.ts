@@ -151,6 +151,15 @@ describe('progress', () => {
 });
 
 describe('a document that fails to render', () => {
+  // In a worker a rejected onmessage is dropped on the floor, so the page would wait on
+  // "building" forever. Every failure has to come back as an error message.
+  it('reports a failure before rendering starts too, instead of rejecting', async () => {
+    const { msgs, post } = collect();
+    await expect(runJobs({ parsed: null as unknown as typeof parsed, settings, uiLanguage: 'en' }, post)).resolves.toBeUndefined();
+    expect(error(msgs)).toBeTruthy();
+    expect(done(msgs)).toBeUndefined();
+  });
+
   it('reports the error and hands over no bundle', async () => {
     toBlob.mockRejectedValue(new Error('font missing'));
     const { msgs, post } = collect();

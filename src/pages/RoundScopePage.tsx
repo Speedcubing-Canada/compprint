@@ -1,12 +1,9 @@
-import { useState, useEffect, useMemo } from 'react';
+import { useState, useMemo } from 'react';
 import { Check, XCircle } from 'lucide-react';
-import { useNavigate } from 'react-router';
+import { Navigate, useNavigate } from 'react-router';
 import { useTranslation } from 'react-i18next';
-import { useAuth } from '../auth/useAuth';
-import { fetchErrorKey, fetchWcif } from '../auth/wca';
-import { getCachedWcif, setCachedWcif } from '../lib/wcifCache';
-import * as analytics from '../lib/analytics';
-import { parseWCIF, type ParsedWCIF } from '../lib/wcif-parser';
+import { parseWCIF } from '../lib/wcif-parser';
+import { useParsedCompetition } from '../lib/useParsedCompetition';
 import {
   availableRounds, latestAssignedRound, filterParsedByScope, hasUnassignedIntermediate,
   type GenerationScope, type DocumentSelection,
@@ -18,8 +15,6 @@ import Header from '../components/Header';
 import Skeleton from '../components/Skeleton';
 import ui from '../styles/ui.module.css';
 import s from './RoundScopePage.module.css';
-
-type Status = 'loading' | 'ready' | 'error';
 
 const keyOf = (eventId: string, roundNum: number) => `${eventId}|${roundNum}`;
 
@@ -36,14 +31,10 @@ const baseDocuments = (isMidComp: boolean): DocumentSelection => ({
 
 export default function RoundScopePage() {
   const { t, i18n } = useTranslation();
-  const { token } = useAuth();
   const navigate = useNavigate();
 
   const { id: competitionId, name: competitionName } = readCompetition();
 
-  const [status, setStatus] = useState<Status>('loading');
-  const [statusMsg, setStatusMsg] = useState('');
-  const [parsed, setParsed] = useState<ParsedWCIF | null>(null);
   const [isMidComp, setIsMidComp] = useState(false);
 
   // What this step wrote last time, seeding every choice below so going back discards
@@ -73,70 +64,42 @@ export default function RoundScopePage() {
   // is locked.
   const [presetId, setPresetId] = useState<string | null>(restored ? readPresetId() : null);
 
-  useEffect(() => {
-    if (!competitionId || !token) return;
-    let cancelled = false;
+  // The first fetch and parse of a competition happen here, so this is where they fail.
+  const { status, error, parsed } = useParsedCompetition(competitionId || null, (wcif) => {
+    const uiLang = (i18n.language?.slice(0, 2) ?? 'en') as LocaleCode;
+    const detectionSettings: CompetitionSettings = {
+      competitionId, competitionName,
+      language: uiLang, secondaryLanguage: null,
+      paperFormat: 'LETTER', secondRoundMode: 'blanks',
+      logoDataUrl: null, useDefaultLogo: true, scorecardCompNameWithLogo: false,
+      liveResultsMode: 'wca-live', wcaLiveId: null, wcaLivePersonIds: null, hideWcaLiveId: false,
+      nametagLogoMode: 'with-name', nametagQrMode: 'back-only', nametagLayout: 'vertical',
+      customEvents: [],
+      // Detection-only parse; the real mode is chosen later on /settings.
+      scorecardCheckMode: 'per-group-card', splitPdfsByStage: false, mergeScorecardRounds: false, otsBlanks: false, staffNametags: true, scorecardsA6: false,
+      finalStationNumbers: true, stationsPerStage: null,
+      scrambleDoubleCheck: false, scrambleDoubleCheckRounds: [], scrambleDoubleCheckOverrides: {},
+      scrambleDoubleCheckWorldTop: null, scrambleDoubleCheckRegionTop: null,
+      scrambleDoubleCheckRegionScope: 'national',
+      generationScope: { mode: 'everything', documents: { scorecards: true, scheduleTracker: true, nametags: true, roundChecklist: false, firstTimerSlips: false, groupOverview: false } },
+      isCustomCompetition: false,
+    };
+    const result = parseWCIF(wcif, detectionSettings);
 
-    async function run() {
-      // The first fetch and parse of a competition happen here, so this is where they fail.
-      let stage: analytics.ErrorStage = 'fetch';
-      try {
-        const wcif = getCachedWcif(competitionId) ?? await fetchWcif(competitionId, token!.access_token);
-        if (cancelled) return;
-        setCachedWcif(competitionId, wcif);
-        stage = 'parse';
+    // So the Settings page can warn without re-fetching the WCIF.
+    writeHasGroups(result.hasGroups);
 
-        const uiLang = (i18n.language?.slice(0, 2) ?? 'en') as LocaleCode;
-        const detectionSettings: CompetitionSettings = {
-          competitionId, competitionName,
-          language: uiLang, secondaryLanguage: null,
-          paperFormat: 'LETTER', secondRoundMode: 'blanks',
-          logoDataUrl: null, useDefaultLogo: true, scorecardCompNameWithLogo: false,
-          liveResultsMode: 'wca-live', wcaLiveId: null, wcaLivePersonIds: null, hideWcaLiveId: false,
-          nametagLogoMode: 'with-name', nametagQrMode: 'back-only', nametagLayout: 'vertical',
-          customEvents: [],
-          // Detection-only parse; the real mode is chosen later on /settings.
-          scorecardCheckMode: 'per-group-card', splitPdfsByStage: false, mergeScorecardRounds: false, otsBlanks: false, staffNametags: true, scorecardsA6: false,
-          finalStationNumbers: true, stationsPerStage: null,
-          scrambleDoubleCheck: false, scrambleDoubleCheckRounds: [], scrambleDoubleCheckOverrides: {},
-          scrambleDoubleCheckWorldTop: null, scrambleDoubleCheckRegionTop: null,
-          scrambleDoubleCheckRegionScope: 'national',
-          generationScope: { mode: 'everything', documents: { scorecards: true, scheduleTracker: true, nametags: true, roundChecklist: false, firstTimerSlips: false, groupOverview: false } },
-          isCustomCompetition: false,
-        };
-        const result = parseWCIF(wcif, detectionSettings);
-        if (cancelled) return;
+    const midComp = result.laterRoundsWithAssignments.length > 0;
+    setIsMidComp(midComp);
 
-        // So the Settings page can warn without re-fetching the WCIF.
-        writeHasGroups(result.hasGroups);
-
-        const midComp = result.laterRoundsWithAssignments.length > 0;
-        setIsMidComp(midComp);
-
-        // Defaults only: a restored selection outranks them.
-        if (midComp && !restored) {
-          // Mid-competition default: scorecards only
-          setDocSchedule(false);
-          setDocNametags(false);
-        }
-
-        setParsed(result);
-        setStatus('ready');
-      } catch (e) {
-        if (!cancelled) {
-          analytics.send(analytics.buildErrorEvent(competitionId, stage, e));
-          const key = fetchErrorKey(e);
-          setStatusMsg(key ? t(key) : String(e));
-          setStatus('error');
-        }
-      }
+    // Defaults only: a restored selection outranks them.
+    if (midComp && !restored) {
+      // Mid-competition default: scorecards only
+      setDocSchedule(false);
+      setDocNametags(false);
     }
-
-    run();
-    return () => { cancelled = true; };
-  // competitionId/token are stable for the lifetime of this page
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+    return result;
+  });
 
   const roundOptions = useMemo(() => {
     if (!parsed) return [] as { key: string; label: string }[];
@@ -222,6 +185,9 @@ export default function RoundScopePage() {
     navigate('/settings');
   }
 
+  // Opened from a bookmark or a fresh tab: there is nothing to scope yet.
+  if (!competitionId) return <Navigate to="/competitions" replace />;
+
   const noDocsSelected =
     !docScorecards && !docSchedule && !docNametags && !docRoundChecklist && !docFirstTimers
     && !docGroupOverview;
@@ -248,7 +214,7 @@ export default function RoundScopePage() {
         <div className={ui.compBadge}>{competitionName}</div>
         <h1 className={`${ui.pageTitle} ${s.pageTitle}`}>{t('scope.heading')}</h1>
 
-        {status === 'loading' && (
+        {(status === 'idle' || status === 'fetching' || status === 'parsing') && (
           <div role="status" aria-label={t('scope.checking')}>
             <Skeleton width="55%" height={14} style={{ marginBottom: 20 }} />
             <div className={s.columns}>
@@ -268,7 +234,7 @@ export default function RoundScopePage() {
         {status === 'error' && (
           <div className={`${ui.statusBox} ${ui.statusError}`}>
             <XCircle size={28} strokeWidth={2} color="var(--danger)" />
-            <span className={ui.errorText}>{statusMsg}</span>
+            <span className={ui.errorText}>{error}</span>
           </div>
         )}
 
