@@ -1,17 +1,15 @@
 import type { CompetitionSettings } from '../types/settings';
-import type { GenerationScope } from './generationScope';
+
+type FlowOwned = 'competitionId' | 'competitionName' | 'generationScope' | 'isCustomCompetition';
 
 /**
  * `CompetitionSettings` minus the four values the flow owns. Derived with Omit so a new
  * field is a type error here until it is given an initial value.
  */
-export type SettingsDraft = Omit<
-  CompetitionSettings,
-  'competitionId' | 'competitionName' | 'generationScope' | 'isCustomCompetition'
->;
+export type SettingsDraft = Omit<CompetitionSettings, FlowOwned>;
 
 /**
- * Seeds the form from a stored blob. `wcaLiveId` normalises back to `''`: `handleSubmit`
+ * Seeds the form from a stored blob. `wcaLiveId` normalises back to `''`: the submit
  * writes `null` for an empty one, and `null` would make the input uncontrolled.
  */
 export function restorableSettings(previous: CompetitionSettings | null): Partial<SettingsDraft> {
@@ -29,18 +27,12 @@ export function restorableSettings(previous: CompetitionSettings | null): Partia
 /** The draft as stored on submit. A custom competition is unofficial: no live results, no double-checking, no "WCA Live:" line. */
 export function submittedSettings(
   draft: SettingsDraft,
-  flow: {
-    competitionId: string; competitionName: string; generationScope: GenerationScope;
-    isCustom: boolean;
-  },
+  flow: Pick<CompetitionSettings, FlowOwned>,
 ): CompetitionSettings {
-  const { isCustom } = flow;
+  const isCustom = flow.isCustomCompetition;
   return {
     ...draft,
-    competitionId: flow.competitionId,
-    competitionName: flow.competitionName,
-    generationScope: flow.generationScope,
-    isCustomCompetition: isCustom,
+    ...flow,
     customEvents: draft.customEvents.filter(e => e.name.trim()),
     liveResultsMode: isCustom ? 'wca-live' : draft.liveResultsMode,
     wcaLiveId: isCustom ? null : (draft.wcaLiveId?.trim() || null),

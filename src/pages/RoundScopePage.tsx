@@ -86,8 +86,9 @@ export default function RoundScopePage() {
     return parseWCIF(wcif, detectionSettings);
   });
   const isMidComp = (parsed?.laterRoundsWithAssignments.length ?? 0) > 0;
-  const docSchedule = scheduleChoice ?? baseDocuments(isMidComp).scheduleTracker;
-  const docNametags = nametagsChoice ?? baseDocuments(isMidComp).nametags;
+  const base = baseDocuments(isMidComp);
+  const docSchedule = scheduleChoice ?? base.scheduleTracker;
+  const docNametags = nametagsChoice ?? base.nametags;
 
   const roundOptions = useMemo(() => {
     if (!parsed) return [] as { key: string; label: string }[];

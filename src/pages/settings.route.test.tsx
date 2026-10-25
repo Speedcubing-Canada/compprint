@@ -89,6 +89,17 @@ describe('starting a custom competition after a WCA one', () => {
 });
 
 /** Holds `route` until the returned function is called. */
+// The live-results controls only show when name tags print.
+async function atSettingsWithNametags() {
+  addCompetition(sampleWcif());
+  renderApp('/competitions');
+  fireEvent.click(await screen.findByText(SAMPLE.name));
+  const nametags = (await screen.findByText(i18n.t('scope.doc_nametags'))).closest('label')!.querySelector('input')!;
+  if (!nametags.checked) fireEvent.click(nametags);
+  await click(i18n.t('scope.continue'));
+  await screen.findByRole('button', { name: i18n.t('settings.generate_button') });
+}
+
 function hold(route: string) {
   let release!: () => void;
   const held = new Promise<void>((r) => { release = r; });
@@ -127,6 +138,36 @@ describe('generating before the WCA Live lookup finishes', () => {
 
     await waitFor(() => expect(currentPath()).toBe('/generate'));
     expect(readSettings()?.liveResultsMode).toBe('ilr');
+  });
+
+  it('keeps a live-results choice made before the lookup answered', async () => {
+    backend.info.set(SAMPLE.id, { scoretaking_software: 'internal' });
+    const release = hold(`GET www.worldcubeassociation.org/api/v0/competitions/${SAMPLE.id}`);
+    await atSettingsWithNametags();
+    const live = document.querySelector<HTMLInputElement>('input[name="liveResultsMode"][value="wca-live"]')!;
+    fireEvent.click(document.querySelector<HTMLInputElement>('input[name="liveResultsMode"][value="ilr"]')!);
+    fireEvent.click(live);
+
+    await click(i18n.t('settings.generate_button'));
+    release();
+
+    await waitFor(() => expect(currentPath()).toBe('/generate'));
+    expect(readSettings()?.liveResultsMode).toBe('wca-live');
+  });
+
+  it('stays put when the organizer goes back during the wait', async () => {
+    backend.liveIds.set(SAMPLE.id, '4242');
+    const release = hold('POST live.worldcubeassociation.org/api');
+    await atSettings();
+    fireEvent.click(screen.getByRole('button', { name: i18n.t('settings.generate_button') }));
+    await click(i18n.t('common.back'));
+    await waitFor(() => expect(currentPath()).toBe('/scope'));
+
+    release();
+    await act(() => new Promise((r) => setTimeout(r, 50)));
+
+    expect(currentPath()).toBe('/scope');
+    expect(readSettings()).toBeNull();
   });
 });
 
@@ -168,6 +209,47 @@ describe('a WCA Live that never answers', () => {
 
     await waitFor(() => expect(currentPath()).toBe('/generate'));
     expect(readSettings()?.wcaLivePersonIds ?? null).toBeNull();
+  });
+
+  it('still saves the live id found during the wait', async () => {
+    backend.liveIds.set(SAMPLE.id, '4242');
+    let releaseId!: () => void;
+    const idHeld = new Promise<void>((r) => { releaseId = r; });
+    // The id answers after the click; the person-id query, the only one with variables, never does.
+    on('POST live.worldcubeassociation.org/api', async (req, next) => {
+      if ((JSON.parse(req.body) as { variables?: unknown }).variables) return new Promise(() => {});
+      await idHeld;
+      return next();
+    });
+
+    await atSettings();
+    vi.useFakeTimers({ toFake: ['setTimeout'] });
+    fireEvent.click(screen.getByRole('button', { name: i18n.t('settings.generate_button') }));
+    releaseId();
+    await act(() => vi.advanceTimersByTimeAsync(5000));
+    vi.useRealTimers();
+
+    await waitFor(() => expect(currentPath()).toBe('/generate'));
+    expect(readSettings()).toMatchObject({ wcaLiveId: '4242', wcaLivePersonIds: null });
+  });
+});
+
+describe('a WCA Live id typed over the found one', () => {
+  it('is saved without the found competition\'s person ids', async () => {
+    backend.liveIds.set(SAMPLE.id, '4242');
+    backend.livePeople.set('4242', [{ id: '901', registrantId: 1 }]);
+    const release = hold('POST live.worldcubeassociation.org/api');
+    await atSettingsWithNametags();
+    const field = document.querySelector<HTMLInputElement>('#wca-live-id')!;
+    fireEvent.change(field, { target: { value: '7777' } });
+    release();
+    await waitFor(() => expect(screen.getByRole('button', { name: i18n.t('settings.generate_button') })).toBeTruthy());
+    await act(() => new Promise((r) => setTimeout(r, 50)));
+
+    await click(i18n.t('settings.generate_button'));
+
+    await waitFor(() => expect(currentPath()).toBe('/generate'));
+    expect(readSettings()).toMatchObject({ wcaLiveId: '7777', wcaLivePersonIds: null });
   });
 });
 

@@ -7,7 +7,7 @@ import * as analytics from './analytics';
 import type { WCIF } from '../types/wcif';
 import type { ParsedWCIF } from './wcif-parser';
 
-/** The competition's WCIF, cached or fetched, parsed once. A `null` id loads nothing; loading is neither set. */
+/** The competition's WCIF, cached or fetched, parsed once. A `null` id loads nothing and leaves both `error` and `parsed` null. */
 export function useParsedCompetition(competitionId: string | null, parse: (wcif: WCIF) => ParsedWCIF) {
   const { t } = useTranslation();
   const { token } = useAuth();

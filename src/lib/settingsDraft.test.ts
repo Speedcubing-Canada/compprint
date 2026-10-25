@@ -10,8 +10,8 @@ const draftOf = (): SettingsDraft => testSettings({
       { name: '  ', iconDataUrl: null, format: 'mo3', cutoff: '', limit: '' },
     ],
   });
-const flow = (isCustom: boolean) => ({
-  competitionId: 'C', competitionName: 'Comp', generationScope: scope, isCustom,
+const flow = (isCustomCompetition: boolean) => ({
+  competitionId: 'C', competitionName: 'Comp', generationScope: scope, isCustomCompetition,
 });
 
 describe('submittedSettings', () => {

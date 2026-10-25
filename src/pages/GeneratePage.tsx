@@ -71,7 +71,7 @@ export default function GeneratePage() {
     [effectiveParsed, jobs, settingsKey],
   );
 
-  // navigate() during render is ignored, which left a blank page.
+  // navigate() during render is a no-op.
   if (!settings) return <Navigate to="/competitions" replace />;
 
   const allEntries = effectiveParsed

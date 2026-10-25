@@ -1,4 +1,4 @@
-import { useState, useRef, useEffect, type ChangeEvent } from 'react';
+import { useState, useRef, useEffect, useEffectEvent, type ChangeEvent } from 'react';
 import { Check, ChevronDown, ChevronRight, Info, RectangleHorizontal, RectangleVertical } from 'lucide-react';
 import { Navigate, useNavigate } from 'react-router';
 import { useTranslation } from 'react-i18next';
@@ -67,7 +67,7 @@ export default function SettingsPage() {
   // written still gets its initial value. /scope drops the blob when the preset changes.
   const previous = readSettings();
 
-  // Exactly the mutable half of CompetitionSettings, so `handleSubmit` is a spread plus the
+  // Exactly the mutable half of CompetitionSettings, so the submit is a spread plus the
   // four flow-owned values and a new setting cannot be forgotten there.
   const [draft, setDraft] = useState<SettingsDraft>(() => ({
     language: preset.language ?? defaultPrimary,
@@ -77,7 +77,7 @@ export default function SettingsPage() {
     logoDataUrl: presetLogoUrl(preset.logo),
     useDefaultLogo: preset.useDefaultLogo ?? isCanadianLanguage(i18n.resolvedLanguage ?? i18n.language),
     scorecardCompNameWithLogo: false,
-    // Overwritten on mount by the competition's own setting, unless modeTouched.
+    // Overwritten on mount by the competition's own setting, unless touched.
     liveResultsMode: 'wca-live',
     wcaLiveId: '',
     wcaLivePersonIds: null,
@@ -129,62 +129,80 @@ export default function SettingsPage() {
   const [logoName, setLogoName] = useState<string | null>(() => readFileName('logo') ?? preset.logo ?? null);
   const [wcaLiveFetchStatus, setWcaLiveFetchStatus] = useState<'loading' | 'found' | 'not-found'>('loading');
   // A restored or hand-picked choice beats the WCA record, which may not be updated yet.
-  const [modeTouched, setModeTouched] = useState(previous?.liveResultsMode !== undefined);
-  // Same rule for the OTS blanks: a restored choice beats the detected flag.
-  const otsTouched = previous?.otsBlanks !== undefined;
+  // A ref, so a lookup that answers late still sees a choice made after mount.
+  const touched = useRef({ mode: previous?.liveResultsMode !== undefined, ots: previous?.otsBlanks !== undefined });
   const [onTheSpot, setOnTheSpot] = useState(false);
   // A restored custom event behind a collapsed section reads as lost.
   const [advancedOpen, setAdvancedOpen] = useState(
     customEvents.length > 0 || Object.keys(scrambleDoubleCheckOverrides).length > 0,
   );
   const [dcOverridesName, setDcOverridesName] = useState<string | null>(() => readFileName('dcOverrides'));
+  // Generate waits for the WCA Live lookup: without its ids every name tag QR falls back to
+  // the WCA Live home page.
   const [submitting, setSubmitting] = useState(false);
-  // The WCA Live lookup, so a submit that beats it can wait for what it has not patched in yet.
-  const liveLookup = useRef<{ done: boolean; patched: Set<string>; found: Promise<Partial<SettingsDraft>> } | null>(null);
+  const [lookupDone, setLookupDone] = useState(!competitionId || isCustom);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const dcFileInputRef = useRef<HTMLInputElement>(null);
+
+  // Reads the draft as committed when the wait ends, lookup patches and edits made meanwhile included.
+  const save = useEffectEvent(() => {
+    try {
+      writeSettings(submittedSettings(draft, {
+        competitionId, competitionName, generationScope, isCustomCompetition: isCustom,
+      }));
+      writeFileName('logo', logoName);
+      writeFileName('dcOverrides', dcOverridesName);
+    } catch (e) {
+      setSaveError(e instanceof DOMException && e.name === 'QuotaExceededError' ? 'settings.storage_full' : 'settings.save_failed');
+      setSubmitting(false);
+      return;
+    }
+    navigate('/generate');
+  });
 
   useEffect(() => {
     // Custom competitions are unofficial - they run on neither live-results system.
     if (!competitionId || isCustom) return;
-    const patched = new Set<string>();
-    const out: Partial<SettingsDraft> = {};
-    const apply = (p: Partial<SettingsDraft>) => {
-      Object.assign(out, p);
-      for (const k of Object.keys(p)) patched.add(k);
-      patch(p);
-    };
-    const found = (async (): Promise<Partial<SettingsDraft>> => {
+    void (async () => {
       const { scoretakingSoftware: scoretaking, onTheSpot: ots } =
         await fetchCompetitionInfo(competitionId, token?.access_token);
       setOnTheSpot(ots);
-      if (ots && !otsTouched) apply({ otsBlanks: true });
+      if (ots && !touched.current.ots) patch({ otsBlanks: true });
       // ILR builds its URLs from ids already in hand; nothing to look up on WCA Live.
-      if (scoretaking === 'internal' && !modeTouched) {
-        apply({ liveResultsMode: 'ilr' });
-        return out;
+      if (scoretaking === 'internal' && !touched.current.mode) {
+        patch({ liveResultsMode: 'ilr' });
+        return;
       }
       const id = await fetchWcaLiveId(competitionId);
       if (!id) {
         setWcaLiveFetchStatus('not-found');
-        return out;
+        return;
       }
       // Only fill an empty field: a restored or hand-typed id is the organizer's.
       setDraft(d => (d.wcaLiveId ? d : { ...d, wcaLiveId: id }));
-      out.wcaLiveId = id;
-      patched.add('wcaLiveId');
       setWcaLiveFetchStatus('found');
-      apply({ wcaLivePersonIds: await fetchWcaLivePersonIds(id) });
-      return out;
-    })().catch(() => out);
-    const lookup = { done: false, patched, found };
-    liveLookup.current = lookup;
-    void found.then(() => { lookup.done = true; });
+      const personIds = await fetchWcaLivePersonIds(id);
+      // Person ids are only valid for the competition they came from.
+      setDraft(d => (d.wcaLiveId === id ? { ...d, wcaLivePersonIds: personIds } : d));
+    })().catch(() => {}).finally(() => setLookupDone(true));
   // competitionId is stable (from sessionStorage), no deps needed beyond mount
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  // navigate() during render is ignored, which left a blank page.
+  // A slow WCA Live must not hold Generate for long.
+  useEffect(() => {
+    if (!submitting || lookupDone) return;
+    const timer = setTimeout(() => setLookupDone(true), LIVE_LOOKUP_WAIT_MS);
+    return () => clearTimeout(timer);
+  }, [submitting, lookupDone]);
+
+  useEffect(() => {
+    // Only a refused save sets state, and it stops the effect from re-running.
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    if (submitting && lookupDone) save();
+  }, [submitting, lookupDone]);
+
+  // navigate() during render is a no-op.
   if (!competitionId) return <Navigate to="/competitions" replace />;
 
   // Driven by the shared LANGUAGES registry, so adding a language needs no strings here.
@@ -292,36 +310,6 @@ export default function SettingsPage() {
     if (dcFileInputRef.current) dcFileInputRef.current.value = '';
   }
 
-  async function handleSubmit() {
-    let submitted = draft;
-    // Without the lookup's ids every name tag QR falls back to the WCA Live home page. Only what
-    // it patches after this click is missing: anything earlier is in the draft, edits included.
-    const lookup = liveLookup.current;
-    if (lookup && !lookup.done) {
-      setSubmitting(true);
-      const before = new Set(lookup.patched);
-      // A slow WCA Live must not hold Generate: past the wait, save what the draft has.
-      const found = await Promise.race([
-        lookup.found,
-        new Promise<Partial<SettingsDraft>>(r => setTimeout(() => r({}), LIVE_LOOKUP_WAIT_MS)),
-      ]);
-      const late: Partial<SettingsDraft> = Object.fromEntries(Object.entries(found).filter(([k]) => !before.has(k)));
-      submitted = { ...draft, ...late, wcaLiveId: draft.wcaLiveId || late.wcaLiveId || '' };
-    }
-    try {
-      writeSettings(submittedSettings(submitted, {
-        competitionId, competitionName, generationScope, isCustom,
-      }));
-      writeFileName('logo', logoName);
-      writeFileName('dcOverrides', dcOverridesName);
-    } catch (e) {
-      setSaveError(e instanceof DOMException && e.name === 'QuotaExceededError' ? 'settings.storage_full' : 'settings.save_failed');
-      setSubmitting(false);
-      return;
-    }
-    navigate('/generate');
-  }
-
   const liveModeOptions: { value: LiveResultsMode; label: string; description: string }[] = [
     { value: 'wca-live', label: t('settings.wca_live.mode_wca_live'), description: t('settings.wca_live.mode_wca_live_desc') },
     { value: 'ilr',      label: t('settings.wca_live.mode_ilr'),      description: t('settings.wca_live.mode_ilr_desc') },
@@ -343,7 +331,6 @@ export default function SettingsPage() {
     { value: 'per-round-card', label: t('settings.check_mode.per_round'),      description: t('settings.check_mode.per_round_desc') },
     { value: 'none',           label: t('settings.check_mode.none'),           description: t('settings.check_mode.none_desc') },
   ];
-
 
   return (
     <div className={ui.page}>
@@ -505,7 +492,7 @@ export default function SettingsPage() {
                   name="liveResultsMode"
                   value={opt.value}
                   checked={liveResultsMode === opt.value}
-                  onChange={() => { setModeTouched(true); patch({ liveResultsMode: opt.value }); }}
+                  onChange={() => { touched.current.mode = true; patch({ liveResultsMode: opt.value }); }}
                   className={ui.radio}
                 />
                 <div>
@@ -543,7 +530,7 @@ export default function SettingsPage() {
             autoComplete="off"
             spellCheck={false}
             value={wcaLiveId ?? ''}
-            onChange={e => patch({ wcaLiveId: e.target.value.replace(/\D/g, '') })}
+            onChange={e => patch({ wcaLiveId: e.target.value.replace(/\D/g, ''), wcaLivePersonIds: null })}
             placeholder={t('settings.wca_live.placeholder')}
             className={ui.textInput}
             aria-label={t('settings.wca_live.title')}
@@ -724,7 +711,7 @@ export default function SettingsPage() {
             <input
               type="checkbox"
               checked={otsBlanks}
-              onChange={e => patch({ otsBlanks: e.target.checked })}
+              onChange={e => { touched.current.ots = true; patch({ otsBlanks: e.target.checked }); }}
               className={ui.radio}
             />
             <div>
@@ -972,7 +959,7 @@ export default function SettingsPage() {
 
         <div className={ui.stickyFooter}>
           {saveError && <div role="alert"><WarningBanner>{t(saveError)}</WarningBanner></div>}
-          <button className={ui.btnCta} onClick={handleSubmit} disabled={submitting}>
+          <button className={ui.btnCta} onClick={() => setSubmitting(true)} disabled={submitting}>
             {t('settings.generate_button')}
           </button>
         </div>
