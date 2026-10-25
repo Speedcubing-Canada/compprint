@@ -157,6 +157,24 @@ describe('custom competitions', () => {
     expect(sessionStorage.getItem('competition_settings')).not.toContain('data:image');
     expect(readSettings()?.customEvents).toEqual(withIcon);
   });
+
+  it('writeSettings stores the events itself', () => {
+    writeSettings(testSettings({ isCustomCompetition: true, customEvents: events }));
+    expect(readCustomEvents()).toEqual(events);
+  });
+
+  it('keeps the old events when the settings blob does not fit', () => {
+    writeCustom(events);
+    const set = sessionStorage.setItem;
+    vi.spyOn(sessionStorage, 'setItem').mockImplementation((k, v) => {
+      if (k === 'competition_settings') throw new DOMException('full', 'QuotaExceededError');
+      set(k, v);
+    });
+    const renamed = [{ ...events[0], name: 'Pyra Relay' }];
+    expect(() => writeSettings(testSettings({ isCustomCompetition: true, customEvents: renamed }))).toThrow();
+    vi.restoreAllMocks();
+    expect(readCustomEvents()).toEqual(events);
+  });
 });
 
 describe('settings blob', () => {

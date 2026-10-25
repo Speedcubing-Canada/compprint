@@ -1,5 +1,5 @@
 import type { CustomEvent, CustomEventFormat } from '../types/settings';
-import { printedName, stackQuadrants, type ScorecardData, type ScorecardEntry, type ScorecardFormat } from './wcif-parser';
+import { stackQuadrants, type ScorecardData, type ScorecardEntry, type ScorecardFormat } from './wcif-parser';
 
 import { scorecardsPerPage } from '../pdf/layoutConstants';
 
@@ -50,7 +50,8 @@ export function buildCustomEntries(custom: CustomEvent, a6 = false): ScorecardDa
 
   const entries: ScorecardData[] = (custom.competitors ?? []).map((c) => ({
     ...blank,
-    name: printedName(c.name),
+    // Not printedName: an organizer's "Team A (U12)" is the name, not a WCA local-name suffix.
+    name: c.name.normalize('NFC'),
     wcaId: c.wcaId,
   }));
   while (entries.length === 0 || entries.length % scorecardsPerPage(a6) !== 0) entries.push(blank);

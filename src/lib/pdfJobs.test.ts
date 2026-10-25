@@ -120,9 +120,8 @@ describe('buildPdfJobs', () => {
     expect(jobs.map(j => j.filename)).toEqual(['Test2026_custom_Real.pdf']);
   });
 
-  // Two names that sanitise alike used to share a filename, so the zip held two entries under
-  // one name and the organizer's unzip kept only one of them. Case counts as alike: macOS and
-  // Windows unzip onto case-insensitive disks.
+  // Two names that sanitise alike must not share a filename: an unzip keeps only one entry per
+  // name. Case counts as alike: macOS and Windows unzip onto case-insensitive disks.
   it.each([
     [['3x3 OH', '3x3-OH']],
     [['魔方', 'ルービック']],

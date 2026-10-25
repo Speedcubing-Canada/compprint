@@ -11,7 +11,7 @@ import { isChampionship } from '../lib/championship';
 import Tooltip from '../components/Tooltip';
 import {
   readCompetition, readCustomEvents, readDetection, readHasGroups, readIsCustom,
-  readFileName, readScope, readSettings, writeCustom, writeFileName, writeSettings,
+  readFileName, readScope, readSettings, writeFileName, writeSettings,
 } from '../lib/flowState';
 import { stageSplitSkipsRound2 } from '../lib/generationScope';
 import { mergesRounds } from '../lib/pdfJobs';
@@ -301,8 +301,6 @@ export default function SettingsPage() {
 
   function handleSubmit() {
     try {
-      // Custom events first: their icons are the big part, so an overflow leaves the old save whole.
-      if (isCustom) writeCustom(draft.customEvents.filter(e => e.name.trim()));
       writeSettings({
         ...draft,
         competitionId,

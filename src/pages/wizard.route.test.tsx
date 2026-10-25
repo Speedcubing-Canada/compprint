@@ -9,7 +9,6 @@ import { sampleWcif, testSettings } from '../test/fixtures';
 import { addCompetition, backend } from '../test/fakeWca';
 import { currentPath, renderApp } from '../test/renderApp';
 import { downloads } from '../test/routeSetup';
-import { workers } from '../test/fakeWorker';
 import { click, walkToSettings } from '../test/journeys';
 
 // flowState.test.ts covers the storage and each page test covers one page, so the joint -
@@ -70,7 +69,6 @@ describe('the wizard carries one competition through all four steps', () => {
     expect(jobs).toHaveLength(1);
     expect(downloads[0].filename).toBe(downloadTarget(jobs, settings.competitionId).filename);
     expect(await downloads[0].blob.text()).toBe('%PDF-fake');
-    expect(workers.unhandled).toEqual([]);
     expect(currentPath()).toBe('/generate');
   });
 

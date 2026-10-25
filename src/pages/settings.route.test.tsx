@@ -19,8 +19,7 @@ function upload(input: HTMLInputElement, file: File) {
 
 describe('a logo too big for sessionStorage', () => {
   // The logo rides in competition_settings as a data URL, and a phone photo blows the ~5 MB
-  // sessionStorage quota. The write used to throw inside the click handler, so Generate did
-  // nothing and said nothing.
+  // sessionStorage quota.
   it('tells the organizer instead of silently staying put', async () => {
     await atSettings();
     const input = document.querySelector<HTMLInputElement>('input[type="file"][accept="image/*"]')!;

@@ -102,15 +102,15 @@ describe('buildCustomEntries', () => {
     }
   });
 
-  // CSV names come from the same WCA exports as WCIF names, so they print the same way: no
-  // "(local name)" suffix, and composed accents (the PDF fonts have no combining marks).
-  it('prints CSV names the way WCIF names print', () => {
+  // Composed accents (the PDF fonts have no combining marks), but parentheses kept: the
+  // organizer typed them.
+  it('prints CSV names composed and otherwise as typed', () => {
     const competitors = [
-      { name: 'Xiaoming Wang (王小明)', wcaId: '' },
+      { name: 'Team A (U12)', wcaId: '' },
       { name: 'Nguye\u0302\u0303n Va\u0306n', wcaId: '' },
     ];
     const names = (buildCustomEntries(makeEvent({ competitors })) as ScorecardEntry[]).map(e => e.name);
-    expect(names.slice(0, 2)).toEqual(['Xiaoming Wang', 'Nguyễn Văn']);
+    expect(names.slice(0, 2)).toEqual(['Team A (U12)', 'Nguyễn Văn']);
   });
 
   // Cutting a stack of 4-up sheets makes four piles, top-left first; laid in order they must
