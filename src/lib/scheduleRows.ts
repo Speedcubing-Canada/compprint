@@ -14,17 +14,12 @@ export interface ScheduleRow {
 
 // One row per round, in the schedule tracker's chronological shape, carrying the group count
 // the delegate must account for. Every other column is filled in by hand.
-export interface CheckingRow {
-  startTime: string;
-  endTime: string;
-  eventRound: string;
+export interface CheckingRow extends ScheduleRow {
   // Groups scheduled for this round in this room. 0 when the WCIF has no groups yet.
   groupCount: number;
   // Round 1 is prepared before the competition, so those two boxes print ticked. Later
   // rounds are done on the day and ship blank.
   preChecked: boolean;
-  // See ScheduleRow.breakBefore.
-  breakBefore: boolean;
 }
 
 // One calendar day, one table. No room dimension: a round produces one pile of scorecards
