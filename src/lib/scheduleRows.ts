@@ -1,6 +1,7 @@
 import type { Activity, WCIF } from '../types/wcif';
 import type { LocaleCode } from '../types/settings';
 import { getEventName, getScheduleStrings } from './i18n';
+import { cmp, parseActivityCode, type ActivityCode } from './activityCode';
 
 export interface ScheduleRow {
   startTime: string;
@@ -44,26 +45,6 @@ export interface ScheduleDay {
   stages: ScheduleStage[];
 }
 
-export interface ActivityCode {
-  eventId: string;
-  round: number;
-  group?: number;
-  // FMC and multi-attempt MBLD are scheduled per attempt ("333fm-r1-a1").
-  attempt?: number;
-}
-
-/** `333-r1`, `333-r1-g2` or `333fm-r1-a1`; null for anything else (`other-lunch`, `333-r1-g1-a1`). */
-export function parseActivityCode(code: string): ActivityCode | null {
-  const m = /^([^-]+)-r(\d+)(?:-g(\d+)|-a(\d+))?$/.exec(code);
-  if (!m) return null;
-  return {
-    eventId: m[1],
-    round: Number(m[2]),
-    ...(m[3] ? { group: Number(m[3]) } : {}),
-    ...(m[4] ? { attempt: Number(m[4]) } : {}),
-  };
-}
-
 /** Falls back to UTC for a timezone this runtime does not know. */
 export function zonedFormat(timeZone: string, options: Intl.DateTimeFormatOptions): Intl.DateTimeFormat {
   try { return new Intl.DateTimeFormat('en-CA', { ...options, timeZone }); }
@@ -75,7 +56,7 @@ export function zonedFormat(timeZone: string, options: Intl.DateTimeFormatOption
 const LUNCH_NAME_RE = /\b(lunch|d[îi]ner|d[ée]jeuner|almuerzo|almo[çc]o|comida)\b/i;
 
 function isLunchActivity(activity: { activityCode: string; name: string }): boolean {
-  if (/^[a-z0-9]+-r\d+/.test(activity.activityCode)) return false;
+  if (parseActivityCode(activity.activityCode)) return false;
   return activity.activityCode === 'other-lunch' || LUNCH_NAME_RE.test(activity.name ?? '');
 }
 
@@ -109,12 +90,19 @@ function mergeSlots(slots: RoundSlot[]): RoundSlot[] {
   return [...byRound.values()].sort((a, b) => Date.parse(a.startTime) - Date.parse(b.startTime));
 }
 
-/** Plain code-unit order, for ASCII keys that need no collation. */
-export const cmp = (a: string, b: string) => (a < b ? -1 : a > b ? 1 : 0);
+export type ScheduleLabels = ReturnType<typeof scheduleLabels>;
 
-/** Day and round wording shared by the schedule tracker, the Round Checklist and the Group Overview. */
+/**
+ * Day, round and time wording shared by the schedule tracker, the Round Checklist and the
+ * Group Overview. Built once per parse: each Intl formatter holds ICU memory outside the JS heap.
+ */
 export function scheduleLabels(wcif: WCIF, language: LocaleCode) {
-  const dateFormat = zonedFormat(wcif.schedule.venues[0]?.timezone ?? 'UTC', { year: 'numeric', month: '2-digit', day: '2-digit' });
+  const timezone = wcif.schedule.venues[0]?.timezone ?? 'UTC';
+  const dateFormat = zonedFormat(timezone, { year: 'numeric', month: '2-digit', day: '2-digit' });
+  const timeFormat = zonedFormat(timezone, { hour: '2-digit', minute: '2-digit', hour12: false });
+  const localTime = (isoTime: string): string => {
+    try { return timeFormat.format(new Date(isoTime)); } catch { return isoTime.slice(11, 16); }
+  };
   // "YYYY-MM-DD" in the venue's timezone.
   const localDate = (isoTime: string): string => {
     try {
@@ -156,18 +144,17 @@ export function scheduleLabels(wcif: WCIF, language: LocaleCode) {
   const roundLabel = (eventId: string, round: number): string =>
     round === (roundCount[eventId] ?? 1) ? strings.finalLabel : strings.roundLabel(round);
 
-  return { strings, roundCount, localDate, dayLabel, roundLabel };
+  return { language, strings, roundCount, localDate, localTime, dayLabel, roundLabel };
 }
 
 /** The schedule tracker and the Round Checklist, one table per day. */
 export function buildScheduleDays(
   wcif: WCIF,
-  language: LocaleCode,
+  labels: ScheduleLabels,
   // The group codes that print for a round activity, synthesized ones included.
   groupCodesOf: (activity: Activity) => string[],
-  formatLocalTime: (isoTime: string) => string,
 ): { scheduleDays: ScheduleDay[]; checkingDays: CheckingDay[] } {
-  const { strings, roundCount, localDate, dayLabel, roundLabel } = scheduleLabels(wcif, language);
+  const { language, strings, roundCount, localDate, localTime, dayLabel, roundLabel } = labels;
 
   // Build a (date → roomIndex → activities[]) map, preserving WCIF room order via roomIndex.
   const dayRoomMap = new Map<string, Map<number, Activity[]>>();
@@ -206,7 +193,8 @@ export function buildScheduleDays(
         code,
         startTime: activity.startTime,
         endTime: activity.endTime,
-        groupCodes: new Set(groupCodesOf(activity)),
+        // Per round, not per attempt: one attempt's g1 is the same pile as the next one's.
+        groupCodes: new Set(groupCodesOf(activity).map(c => c.replace(/-a\d+$/, ''))),
       });
     }
     return slots;
@@ -226,8 +214,8 @@ export function buildScheduleDays(
         && lunchStarts.some((l) => l >= prevStart! && l < thisStart);
       prevStart = thisStart;
       rows.push({
-        startTime: formatLocalTime(startTime),
-        endTime: formatLocalTime(endTime),
+        startTime: localTime(startTime),
+        endTime: localTime(endTime),
         eventRound: code.attempt === undefined ? eventRound : `${eventRound} (${strings.attemptLabel(code.attempt)})`,
         breakBefore,
         groupCount: groupCodes.size,
