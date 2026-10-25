@@ -1223,6 +1223,24 @@ describe('schedule tracker', () => {
     expect(result.scheduleDays[0]?.stages[0]?.stageName).toBe('Stage');
   });
 
+  // FMC and multi-attempt MBLD are scheduled per attempt ("333fm-r1-a1"), not per round. The
+  // tracker dropped those codes, so an FMC-only competition had no tracker at all.
+  it('lists each FMC and MBLD attempt as its own row, and keeps them off the round checklist', () => {
+    const attempt = (eventId: string, n: number, hh: string): Activity => ({
+      id: uid(), name: '', activityCode: `${eventId}-r1-a${n}`,
+      startTime: `2024-01-01T${hh}:00:00Z`, endTime: `2024-01-01T${hh}:59:00Z`,
+      childActivities: [], scrambleSets: [],
+    });
+    const r = room('Stage', [attempt('333fm', 1, '09'), attempt('333fm', 2, '11'), attempt('333mbf', 1, '13')]);
+    const result = parseWCIF(mkWCIF([evt('333fm', [rSpec('m')]), evt('333mbf', [rSpec('2')])], [r]), cfg());
+    expect(result.scheduleDays[0]?.stages[0]?.rows.map(row => row.eventRound)).toEqual([
+      'FMC Final (Attempt 1)',
+      'FMC Final (Attempt 2)',
+      '3x3x3 Multi-Blind Final (Attempt 1)',
+    ]);
+    expect(result.checkingDays).toEqual([]);
+  });
+
   it('two rooms on the same day produce one day with two stages', () => {
     const e = evt('333', [rSpec('a'), rSpec('a')]);
     const rA = room('Stage A', [act('333', 1, [ch(100, '333', 1, 1)])]);

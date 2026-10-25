@@ -175,7 +175,9 @@ function isLunchActivity(activity: { activityCode: string; name: string }): bool
 // One room's activity on the schedule tracker, or the round collapsed across every room on
 // the Round Checklist.
 interface RoundSlot {
-  activityCode: string;   // "333-r1"
+  activityCode: string;   // "333-r1", or "333fm-r1-a1" for an FMC or MBLD attempt
+  // FMC and multi-attempt MBLD are scheduled per attempt. Those use no scorecards.
+  attempt?: number;
   startTime: string;
   endTime: string;
   // Codes, not a count: two stages running one logical group share its code, and a later
@@ -1386,13 +1388,15 @@ export function parseWCIF(wcif: WCIF, settings: CompetitionSettings): ParsedWCIF
     const sorted = [...activities].sort((a, b) => a.startTime.localeCompare(b.startTime));
     for (const activity of sorted) {
       const parts = activity.activityCode.split('-');
-      if (parts.length !== 2) continue;
+      const attempt = parts.length === 3 && /^a\d+$/.test(parts[2]) ? Number(parts[2].slice(1)) : undefined;
+      if (parts.length !== 2 && attempt === undefined) continue;
       const [eid, roundPart] = parts;
       if (!roundPart.startsWith('r')) continue;
       if (!isFinite(parseInt(roundPart.slice(1), 10))) continue;
       if (allEventRoundCount[eid] === undefined) continue;
       slots.push({
         activityCode: activity.activityCode,
+        attempt,
         startTime: activity.startTime,
         endTime: activity.endTime,
         // groupUnitsOf synthesizes later rounds' missing groups, matching what prints.
@@ -1424,7 +1428,9 @@ export function parseWCIF(wcif: WCIF, settings: CompetitionSettings): ParsedWCIF
         : schedStrings.roundLabel(roundNum);
       const startTime = formatLocalTime(slot.startTime);
       const endTime = formatLocalTime(slot.endTime);
-      const eventRound = `${eventName} ${roundLabel}`;
+      const eventRound = slot.attempt === undefined
+        ? `${eventName} ${roundLabel}`
+        : `${eventName} ${roundLabel} (${schedStrings.attemptLabel(slot.attempt)})`;
       // The first row has only the header border above it.
       const thisStart = Date.parse(slot.startTime);
       const breakBefore = prevStart !== null
@@ -1432,7 +1438,7 @@ export function parseWCIF(wcif: WCIF, settings: CompetitionSettings): ParsedWCIF
       prevStart = thisStart;
 
       schedule.push({ startTime, endTime, eventRound, breakBefore });
-      checking.push({
+      if (slot.attempt === undefined) checking.push({
         startTime, endTime, eventRound, breakBefore,
         groupCount: slot.groupCodes.size,
         preChecked: roundNum === 1,
