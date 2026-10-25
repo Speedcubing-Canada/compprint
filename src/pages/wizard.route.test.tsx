@@ -198,12 +198,12 @@ describe('going back', () => {
 
   it('from /settings keeps the documents picked on /scope', async () => {
     enter('/competitions');
-    fireEvent.click(await screen.findByText('Gros Jouets à Montréal 2026'));
-    const schedule = (await screen.findByText(i18n.t('scope.doc_schedule'))).closest('label')!.querySelector('input')!;
-    const wasChecked = schedule.checked;
-    fireEvent.click(schedule);
-    await click(i18n.t('scope.continue'));
-    await screen.findByRole('button', { name: i18n.t('settings.generate_button') });
+    let wasChecked = false;
+    await walkToSettings(async () => {
+      const schedule = (await screen.findByText(i18n.t('scope.doc_schedule'))).closest('label')!.querySelector('input')!;
+      wasChecked = schedule.checked;
+      fireEvent.click(schedule);
+    });
 
     await click(i18n.t('common.back'));
     const again = (await screen.findByText(i18n.t('scope.doc_schedule'))).closest('label')!.querySelector('input')!;
@@ -225,7 +225,7 @@ describe.each(['fr', 'es', 'pt'])('the wizard in %s', (lang) => {
       return keys.filter((k) => i18n.exists(k.split('.')[0], { lng: 'en' }));
     };
     enter('/competitions');
-    await screen.findByText('Gros Jouets à Montréal 2026');
+    await screen.findByText(SAMPLE.name);
     expect(rawKeys()).toEqual([]);
     await walkToSettings();
     expect(rawKeys()).toEqual([]);

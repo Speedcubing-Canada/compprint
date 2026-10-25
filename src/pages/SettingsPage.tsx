@@ -184,11 +184,13 @@ export default function SettingsPage() {
       // Only fill an empty field: a restored or hand-typed id is the organizer's.
       setDraft(d => (d.wcaLiveId ? d : { ...d, wcaLiveId: id }));
       setWcaLiveFetchStatus('found');
-      const personIds = await fetchWcaLivePersonIds(id);
+      // A failed fetch keeps the ids a previous run saved.
+      const personIds = (await fetchWcaLivePersonIds(id))
+        ?? (knownLive.current?.id === id ? knownLive.current.personIds : null);
       knownLive.current = { id, personIds };
       // Person ids are only valid for the competition they came from.
       setDraft(d => (d.wcaLiveId === id ? { ...d, wcaLivePersonIds: personIds } : d));
-    })().catch(() => {}).finally(() => setWaitOver(true));
+    })().finally(() => setWaitOver(true));
   // competitionId is stable (from sessionStorage), no deps needed beyond mount
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);

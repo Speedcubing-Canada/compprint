@@ -89,11 +89,11 @@ describe('starting a custom competition after a WCA one', () => {
 async function atSettingsWithNametags() {
   addCompetition(sampleWcif());
   renderApp('/competitions');
-  fireEvent.click(await screen.findByText(SAMPLE.name));
-  const nametags = (await screen.findByText(i18n.t('scope.doc_nametags'))).closest('label')!.querySelector('input')!;
-  if (!nametags.checked) fireEvent.click(nametags);
-  await click(i18n.t('scope.continue'));
-  await screen.findByRole('button', { name: i18n.t('settings.generate_button') });
+  await screen.findByText(SAMPLE.name);
+  await walkToSettings(async () => {
+    const nametags = (await screen.findByText(i18n.t('scope.doc_nametags'))).closest('label')!.querySelector('input')!;
+    if (!nametags.checked) fireEvent.click(nametags);
+  });
 }
 
 type Req = { body: string };
@@ -247,6 +247,21 @@ describe('a WCA Live id typed over the found one', () => {
     expect(readSettings()).toMatchObject({ wcaLiveId: '7777', wcaLivePersonIds: null });
   });
 
+  it('drops the person ids once the lookup has filled them', async () => {
+    backend.liveIds.set(SAMPLE.id, '4242');
+    backend.livePeople.set('4242', [{ id: '901', registrantId: 1 }]);
+    await atSettingsWithNametags();
+    const field = document.querySelector<HTMLInputElement>('#wca-live-id')!;
+    await waitFor(() => expect(field.value).toBe('4242'));
+    await act(() => new Promise((r) => setTimeout(r, 50)));
+    fireEvent.change(field, { target: { value: '7777' } });
+
+    await click(i18n.t('settings.generate_button'));
+
+    await waitFor(() => expect(currentPath()).toBe('/generate'));
+    expect(readSettings()).toMatchObject({ wcaLiveId: '7777', wcaLivePersonIds: null });
+  });
+
   it('gets the person ids back when the found id is typed again', async () => {
     backend.liveIds.set(SAMPLE.id, '4242');
     backend.livePeople.set('4242', [{ id: '901', registrantId: 1 }]);
@@ -257,6 +272,27 @@ describe('a WCA Live id typed over the found one', () => {
     fireEvent.change(field, { target: { value: '424' } });
     fireEvent.change(field, { target: { value: '4242' } });
 
+    await click(i18n.t('settings.generate_button'));
+
+    await waitFor(() => expect(currentPath()).toBe('/generate'));
+    expect(readSettings()).toMatchObject({ wcaLiveId: '4242', wcaLivePersonIds: { 1: '901' } });
+  });
+});
+
+describe('a failed person-id lookup', () => {
+  it('keeps the ids an earlier run saved', async () => {
+    backend.liveIds.set(SAMPLE.id, '4242');
+    backend.livePeople.set('4242', [{ id: '901', registrantId: 1 }]);
+    await atSettingsWithNametags();
+    await waitFor(() => expect(document.querySelector<HTMLInputElement>('#wca-live-id')!.value).toBe('4242'));
+    await act(() => new Promise((r) => setTimeout(r, 50)));
+    await click(i18n.t('settings.generate_button'));
+    await waitFor(() => expect(currentPath()).toBe('/generate'));
+
+    on('POST live.worldcubeassociation.org/api', (req, next) => (isPersonQuery(req) ? new Response('', { status: 500 }) : next()));
+    await click(i18n.t('common.back'));
+    await screen.findByRole('button', { name: i18n.t('settings.generate_button') });
+    await act(() => new Promise((r) => setTimeout(r, 50)));
     await click(i18n.t('settings.generate_button'));
 
     await waitFor(() => expect(currentPath()).toBe('/generate'));
