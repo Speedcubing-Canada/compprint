@@ -147,15 +147,15 @@ describe.skipIf(!hasPdftotext && !process.env.CI)('the printed text', () => {
   const text = (pdf: Uint8Array) => execFileSync('pdftotext', ['-raw', '-', '-'], { input: pdf, encoding: 'utf8' });
 
   it.each([
-    ['en', ['Square-1 Round 1 of 2 Red 1 of 2', '(DNF if not under 10:00)', 'Continue if Attempt 1 or 2 is below 1:00'], 'DNF if not under'],
-    ['fr', ['Square-1 Tour 1 sur 2 Red 1 sur 2', "(DNF si n'est pas inférieur à 10:00)", 'Essai 1 ou 2 sont inférieurs à 1:00'], "DNF si n'est pas inférieur à"],
+    ['en', ['Square-1 Round 1 of 2 Red 1 of 2', '(DNF if not under 10:00)', 'Continue if Attempt 1 or 2 is below 1:00'], '(DNF if not under )'],
+    ['fr', ['Square-1 Tour 1 sur 2 Red 1 sur 2', "(DNF si n'est pas inférieur à 10:00)", 'Essai 1 ou 2 sont inférieurs à 1:00'], "(DNF si n'est pas inférieur à )"],
   ] as const)('%s: a competitor card reads right', async (language, lines, blankPrompt) => {
     const settings = testSettings({ competitionId: waterloo.id, competitionName: waterloo.name, language });
     const { files } = await generate(waterloo, settings);
     const round1 = text(files['WaterlooSpring2026_round1.pdf']!);
     expect(round1).toContain('Avery Lam\n2026LAMA01 WCA Live: 79\n');
     for (const line of lines) expect(round1).toContain(line);
-    // The spare blank cards keep the limit prompt, for the delegate to fill in.
+    // The fully blank spare card keeps the limit prompt, for the delegate to fill in.
     expect(text(files['WaterlooSpring2026_extras.pdf']!)).toContain(blankPrompt);
   }, SLOW);
 });
