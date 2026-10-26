@@ -1,7 +1,4 @@
 import { describe, expect, it } from 'vitest';
-import { execFileSync } from 'node:child_process';
-import { unzipSync } from 'fflate';
-import { PDFDocument } from 'pdf-lib';
 import { runJobs, type WorkerResponse } from './renderBundle';
 import { renderToBuffer } from '@react-pdf/renderer';
 import { GROUP_OVERVIEW, RENDER_PART_PAGES } from './layoutConstants';
@@ -13,6 +10,7 @@ import { parseWCIF, type GroupOverviewEntry } from '../lib/wcif-parser';
 import { buildPdfJobs } from '../lib/pdfJobs';
 import { filterParsedByScope, type DocumentSelection } from '../lib/generationScope';
 import { estimateTotalPages } from '../lib/pageEstimate';
+import { hasPdftotext, pageCount, pdfText as text, unpack } from '../test/pdfFiles';
 import { sampleWcif, testSettings, variedSettings } from '../test/fixtures';
 import { corpus, corpusWcif } from '../test/corpus';
 import { randomWcif } from '../test/wcifGen';
@@ -36,9 +34,9 @@ async function generate(wcif: WCIF, settings: CompetitionSettings) {
   const last = msgs.at(-1);
   if (last?.type !== 'done') throw new Error(`worker ended with ${JSON.stringify(last)}`);
   const bytes = new Uint8Array(await last.blob.arrayBuffer());
-  const files = jobs.length === 1 ? { [last.filename]: bytes } : unzipSync(bytes);
+  const files = unpack(last.filename, bytes);
   const pages: Record<string, number> = {};
-  for (const [name, b] of Object.entries(files)) pages[name] = (await PDFDocument.load(b)).getPageCount();
+  for (const [name, b] of Object.entries(files)) pages[name] = await pageCount(b);
   return { parsed, jobs, last, files, pages };
 }
 
@@ -146,13 +144,9 @@ describe('the worker messages', () => {
 });
 
 // The pixel baselines are tolerant enough to miss a wrong digit; text is not.
-const hasPdftotext = (() => {
-  try { execFileSync('pdftotext', ['-v'], { stdio: 'ignore' }); return true; } catch { return false; }
-})();
 // CI installs poppler, so a missing pdftotext there is a broken job, not a reason to skip.
 describe.skipIf(!hasPdftotext && !process.env.CI)('the printed text', () => {
   const waterloo = corpusWcif('WaterlooSpring2026');
-  const text = (pdf: Uint8Array) => execFileSync('pdftotext', ['-raw', '-', '-'], { input: pdf, encoding: 'utf8' });
 
   it.each([
     ['en', ['Square-1 Round 1 of 2 Red 1 of 2', '(DNF if not under 10:00)', 'Continue if Attempt 1 or 2 is below 1:00'], '(DNF if not under )'],
@@ -185,6 +179,6 @@ describe('the group overview estimate at a cell edge', () => {
     }));
     const parsed = { ...parseWCIF(sampleWcif(), settings), scheduleDays: [], checkingDays: [], firstTimers: [], groupOverview: groups };
     const pdf = await renderToBuffer(jobElement({ kind: 'group-overview', filename: 'x.pdf', label: 'x' }, parsed, settings));
-    expect((await PDFDocument.load(pdf)).getPageCount()).toBe(estimateTotalPages(parsed, settings, []));
+    expect(await pageCount(pdf)).toBe(estimateTotalPages(parsed, settings, []));
   });
 });
