@@ -173,8 +173,9 @@ function ScorecardCard({
        : isMBF           ? strings.mbfSuffix
        :                   strings.dnfSuffix(card.limit));
   // A custom event's limit is optional. Without one the line stays, blank, so the rows keep
-  // the height every other card has.
-  const resultSuffix = card.limit === '' && !isMBF ? limitSuffix.replace(/[^\n]+/g, '\u00a0') : limitSuffix;
+  // the height every other card has. A WCA blank card keeps the prompt for the delegate to fill.
+  const resultSuffix = card.eventId === 'custom' && card.limit === ''
+    ? limitSuffix.replace(/[^\n]+/g, '\u00a0') : limitSuffix;
 
   // Prefix and suffix each hold two lines; merge per language so each takes exactly one.
   const prefLines = strings.resultPrefix.split('\n');

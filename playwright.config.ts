@@ -1,9 +1,6 @@
 import { defineConfig, devices } from '@playwright/test';
 import { APP_PORT, CLIENT_ID, CLIENT_SECRET, FAKE_WCA_ORIGIN, FAKE_WCA_PORT, REDIRECT_URI } from './e2e/protocol';
 
-// The production build behind the production server, so the real CSP, SPA fallback and token
-// proxy are what the browser meets. The WCA API is faked per page (e2e/fakeWca.ts); the token
-// exchange leaves from server.js, so it goes to e2e/fakeWcaOrigin.ts through WCA_ORIGIN.
 // Built into dist-e2e/, so a run never leaves its fake client id in the developer's dist/.
 
 export default defineConfig({

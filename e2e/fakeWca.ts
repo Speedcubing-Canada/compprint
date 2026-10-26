@@ -1,7 +1,4 @@
-// The WCA the browser talks to: OAuth authorize, API v0, avatars and WCA Live, answered from
-// page.route. The API itself is src/test/wcaApi.ts, the same one the unit fake serves. The token
-// exchange is not here: it leaves from server.js (fakeWcaOrigin.ts).
-// Anything else off-origin answers 404 naming the request, so a stray call fails loudly.
+// WCA as the browser sees it, from page.route. Anything unmatched off-origin 404s, naming the request.
 
 import { readFileSync } from 'node:fs';
 import type { Page, Route } from '@playwright/test';
@@ -33,6 +30,7 @@ export class FakeWca {
 
   add(wcif: WCIF) {
     addCompetition(this.data, wcif);
+    // The page fetches this for every competition, and its 404 would fail the console check.
     this.data.info.set(wcif.id, { scoretaking_software: 'wca_live', on_the_spot_registration: false });
     return wcif;
   }

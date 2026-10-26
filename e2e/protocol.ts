@@ -1,6 +1,5 @@
-// The fake WCA's contract, shared by the token fake (fakeWcaOrigin.ts, run by node), the page
-// fake (fakeWca.ts) and playwright.config.ts. Codes and tokens carry what WCA would have stored,
-// so the fakes check PKCE and expiry without sharing state.
+// The fake WCA's ports, ids and encodings. Codes and tokens carry what WCA would have stored, so
+// the two fakes check PKCE and expiry without sharing state.
 
 export const APP_PORT = 4173;
 export const FAKE_WCA_PORT = 4180;

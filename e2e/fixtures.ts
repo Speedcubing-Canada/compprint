@@ -1,7 +1,4 @@
 import { execFileSync } from 'node:child_process';
-import { mkdtempSync, writeFileSync } from 'node:fs';
-import { tmpdir } from 'node:os';
-import { join } from 'node:path';
 import { test as base, expect, type Download, type Page } from '@playwright/test';
 import { unzipSync } from 'fflate';
 import { PDFDocument } from 'pdf-lib';
@@ -76,8 +73,5 @@ async function read(dl: Download): Promise<Uint8Array> {
 export const pageCount = async (pdf: Uint8Array) => (await PDFDocument.load(pdf)).getPageCount();
 
 /** The PDF's text, through poppler: the CI job installs it. */
-export function pdfText(pdf: Uint8Array): string {
-  const path = join(mkdtempSync(join(tmpdir(), 'e2e-pdf-')), 'doc.pdf');
-  writeFileSync(path, pdf);
-  return execFileSync('pdftotext', ['-raw', path, '-'], { encoding: 'utf8' });
-}
+export const pdfText = (pdf: Uint8Array) =>
+  execFileSync('pdftotext', ['-raw', '-', '-'], { input: pdf, encoding: 'utf8' });

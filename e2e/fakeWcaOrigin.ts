@@ -1,7 +1,4 @@
-// WCA's /oauth/token, for server.js to proxy to under WCA_ORIGIN. The browser-side WCA API is
-// faked in the page (fakeWca.ts); this is the one call that leaves from the server.
-// Checks what Doorkeeper checks: client, redirect URI, the PKCE verifier against the challenge
-// the code carries, and that a refresh token is spent once. GET /calls lists every form received.
+// WCA's /oauth/token, checked the way Doorkeeper checks it. GET /calls lists every form received.
 
 import { createHash } from 'node:crypto';
 import { createServer } from 'node:http';
@@ -10,12 +7,14 @@ import {
 } from './protocol.ts';
 
 const calls: Record<string, string>[] = [];
+const issued = new Set<string>();
 const spent = new Set<string>();
 let minted = 0;
 
 function token(expiresIn = 7200) {
   minted += 1;
   const now = Date.now();
+  issued.add(`e2e-refresh-${minted}`);
   return {
     access_token: accessToken(minted, now + expiresIn * 1000), refresh_token: `e2e-refresh-${minted}`,
     token_type: 'Bearer', expires_in: expiresIn, scope: 'public manage_competitions',
@@ -29,7 +28,7 @@ function exchange(form: Record<string, string>): [number, unknown] {
   if (form['client_id'] !== CLIENT_ID || form['client_secret'] !== CLIENT_SECRET) return [401, { error: 'invalid_client' }];
   if (form['grant_type'] === 'refresh_token') {
     const refresh = form['refresh_token'] ?? '';
-    if (!/^e2e-refresh-\d+$/.test(refresh) || spent.has(refresh)) return [400, { error: 'invalid_grant' }];
+    if (!issued.has(refresh) || spent.has(refresh)) return [400, { error: 'invalid_grant' }];
     spent.add(refresh);
     return [200, token()];
   }

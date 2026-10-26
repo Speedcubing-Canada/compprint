@@ -11,8 +11,6 @@ import type { WCAToken } from '../auth/wca';
 import { freshToken, organizer } from './fixtures';
 import { addCompetition as add, answerWca, emptyWcaData, type ManagedCompetition } from './wcaApi';
 
-export type { ManagedCompetition };
-
 type Request = { url: URL; method: string; init: RequestInit | undefined; body: string };
 /** `next()` answers as the fake would have without the override. */
 type Handler = (req: Request, next: () => Promise<Response>) => Response | Promise<Response>;
@@ -100,7 +98,6 @@ export function stubWcaFetch() {
   return fetch;
 }
 
-/** Register a competition everywhere the app looks for it. The listing is upcoming by default. */
 export function addCompetition(wcif: WCIF, over: Partial<ManagedCompetition> = {}) {
   add(backend, wcif, over);
 }
