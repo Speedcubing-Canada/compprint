@@ -1,4 +1,4 @@
-import { test, expect, download } from './fixtures';
+import { test, expect, generate } from './fixtures';
 import { organizer, realWcif } from './fakeWca';
 import { sanitizeEvent } from '../analytics.js';
 
@@ -8,9 +8,7 @@ test('usage events survive the server sanitiser untouched and carry nobody\'s na
 
   const wcif = realWcif('PickeringBlindfolded2026');
   await pick(wcif);
-  await page.getByRole('button', { name: 'Continue →' }).click();
-  await page.getByRole('button', { name: 'Generate →' }).click();
-  await download(page, 'Download');
+  await generate(page);
   await expect.poll(() => sent.length).toBeGreaterThanOrEqual(2);
 
   for (const event of sent) expect(sanitizeEvent(event)).toEqual(event);

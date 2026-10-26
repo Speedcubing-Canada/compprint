@@ -41,7 +41,7 @@ export default function Header({ showBack, onBack, showUser, showSignOut = true 
 
   const userInfo = showUser && user && (
     <>
-      {user.avatar.thumb_url && <img
+      {user.avatar?.thumb_url && <img
         src={user.avatar.thumb_url}
         alt=""
         width={32}

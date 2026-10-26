@@ -30,8 +30,6 @@ export class FakeWca {
 
   add(wcif: WCIF) {
     addCompetition(this.data, wcif);
-    // The page fetches this for every competition, and its 404 would fail the console check.
-    this.data.info.set(wcif.id, { scoretaking_software: 'wca_live', on_the_spot_registration: false });
     return wcif;
   }
 

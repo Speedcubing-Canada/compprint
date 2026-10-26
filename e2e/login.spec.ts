@@ -73,6 +73,10 @@ test.describe('a revoked token', () => {
 
 test('signing out clears the session and the wizard', async ({ page, pick, isMobile }) => {
   await pick(realWcif('PickeringBlindfolded2026'));
+  // With a preset and from /settings, so every wizard key has been written.
+  await page.getByRole('radio', { name: 'Ontario Canada' }).check();
+  await page.getByRole('button', { name: 'Continue →' }).click();
+  await page.waitForURL('**/settings');
   if (isMobile) await page.getByRole('button', { name: 'Menu' }).click();
   await page.getByRole('button', { name: 'Sign out' }).click();
   await expect(page.getByRole('button', { name: 'Sign in with WCA' })).toBeVisible();

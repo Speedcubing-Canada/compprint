@@ -1,12 +1,11 @@
-import { execFileSync } from 'node:child_process';
 import { test as base, expect, type Download, type Page } from '@playwright/test';
-import { unzipSync } from 'fflate';
-import { PDFDocument } from 'pdf-lib';
 import { CHANGELOG } from '../src/changelog';
+import { unpack } from '../src/test/pdfFiles';
 import type { WCIF } from '../src/types/wcif';
 import { FakeWca } from './fakeWca';
 
 export { expect };
+export { pageCount, pdfText } from '../src/test/pdfFiles';
 
 type Fixtures = {
   wca: FakeWca;
@@ -61,7 +60,14 @@ export async function download(page: Page, button: string | RegExp): Promise<{ n
   const [dl] = await Promise.all([page.waitForEvent('download'), page.getByRole('button', { name: button }).click()]);
   const bytes = await read(dl);
   const name = dl.suggestedFilename();
-  return { name, files: name.endsWith('.zip') ? unzipSync(bytes) : { [name]: bytes } };
+  return { name, files: unpack(name, bytes) };
+}
+
+/** From the scope step: on through settings, generate, and download. */
+export async function generate(page: Page) {
+  await page.getByRole('button', { name: 'Continue →' }).click();
+  await page.getByRole('button', { name: 'Generate →' }).click();
+  return download(page, 'Download');
 }
 
 async function read(dl: Download): Promise<Uint8Array> {
@@ -69,9 +75,3 @@ async function read(dl: Download): Promise<Uint8Array> {
   for await (const c of await dl.createReadStream()) chunks.push(c as Buffer);
   return new Uint8Array(Buffer.concat(chunks));
 }
-
-export const pageCount = async (pdf: Uint8Array) => (await PDFDocument.load(pdf)).getPageCount();
-
-/** The PDF's text, through poppler: the CI job installs it. */
-export const pdfText = (pdf: Uint8Array) =>
-  execFileSync('pdftotext', ['-raw', '-', '-'], { input: pdf, encoding: 'utf8' });

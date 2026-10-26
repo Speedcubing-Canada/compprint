@@ -30,6 +30,8 @@ export function addCompetition(data: WcaData, wcif: WCIF, over: Partial<ManagedC
     // The picker hides past competitions, and the fixtures' dates are long gone.
     start_date: '2999-05-16', end_date: '2999-05-16', ...over,
   });
+  // The page fetches this for every competition, and a 404 logs a console error.
+  if (!data.info.has(wcif.id)) data.info.set(wcif.id, { scoretaking_software: 'wca_live', on_the_spot_registration: false });
 }
 
 export type WcaRequest = { url: URL; method: string; body: string; authed: boolean };

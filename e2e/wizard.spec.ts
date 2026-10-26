@@ -1,9 +1,8 @@
 import { test, expect, download, pageCount } from './fixtures';
 import { realWcif } from './fakeWca';
 
-/** A stat card shows its value just above its label. */
-const stat = (page: import('@playwright/test').Page, label: string) =>
-  page.getByText(label, { exact: true }).locator('xpath=preceding-sibling::*[1]').innerText();
+const stat = async (page: import('@playwright/test').Page, label: string) =>
+  Number(await page.getByRole('group', { name: label, exact: true }).getByText(/^\d+$/).innerText());
 
 test('picks a competition, prints everything, and downloads what the page promised', async ({ page, pick }) => {
   await pick(realWcif('PickeringBlindfolded2026'));
@@ -12,8 +11,8 @@ test('picks a competition, prints everything, and downloads what the page promis
   await page.getByRole('button', { name: 'Generate →' }).click();
 
   await expect(page.getByRole('button', { name: 'Download' })).toBeEnabled();
-  const promisedPdfs = Number(await stat(page, 'PDFs'));
-  const promisedPages = Number(await stat(page, 'Pages'));
+  const promisedPdfs = await stat(page, 'PDFs');
+  const promisedPages = await stat(page, 'Pages');
 
   const { name, files } = await download(page, 'Download');
   expect(name).toBe('PickeringBlindfolded2026_pdfs.zip');

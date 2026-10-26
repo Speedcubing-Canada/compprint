@@ -11,6 +11,7 @@ vi.mock('../lib/analytics', async (importOriginal) => ({
 
 import { send } from '../lib/analytics';
 import { readCompetition, readIsCustom, writeCompetition, writeCustom } from '../lib/flowState';
+import { readPresetId, writePresetId } from '../presets';
 import { AuthProvider } from './AuthContext';
 import { fetchManagedCompetitions } from './wca';
 import { useAuth, type AuthState } from './useAuth';
@@ -217,11 +218,13 @@ describe('session restore and logout', () => {
     sessionStorage.setItem('wca_token', JSON.stringify(token));
     writeCompetition('GrosJouetsaMontreal2026', 'Gros Jouets à Montréal 2026');
     writeCustom([]);
+    writePresetId('canada');
     mount();
     await act(async () => auth.logout());
 
     expect(readCompetition()).toEqual({ id: '', name: '' });
     expect(readIsCustom()).toBe(false);
+    expect(readPresetId()).toBeNull();
   });
 });
 

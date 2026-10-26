@@ -273,7 +273,7 @@ function StatsSkeleton({ label }: { label: string }) {
 
 function Stat({ label, value }: { label: string; value: number | string }) {
   return (
-    <div className={s.stat}>
+    <div className={s.stat} role="group" aria-label={label}>
       <div className={s.statValue}>{value}</div>
       <div className={s.statLabel}>{label}</div>
     </div>

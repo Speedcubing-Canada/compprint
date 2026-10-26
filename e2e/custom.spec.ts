@@ -1,4 +1,4 @@
-import { test, expect, download, pageCount, pdfText } from './fixtures';
+import { test, expect, generate, pageCount, pdfText } from './fixtures';
 
 test('a custom competition with a CSV of competitors prints one named card each', async ({ page, loginAs }) => {
   await loginAs();
@@ -12,9 +12,7 @@ test('a custom competition with a CSV of competitors prints one named card each'
   });
   await expect(page.getByText('2 competitor(s) loaded')).toBeVisible();
 
-  await page.getByRole('button', { name: 'Continue →' }).click();
-  await page.getByRole('button', { name: 'Generate →' }).click();
-  const { name, files } = await download(page, 'Download');
+  const { name, files } = await generate(page);
 
   // One event is one PDF, shipped bare; two named cards pad to a single sheet of four.
   expect(name).toMatch(/\.pdf$/);

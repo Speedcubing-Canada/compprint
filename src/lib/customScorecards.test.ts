@@ -32,6 +32,11 @@ describe('resolveCustomFormat', () => {
 });
 
 describe('buildCustomEntries', () => {
+  // null, not '': an empty limit on a WCA blank card means "the delegate writes it in".
+  it('marks a blank time limit as no limit', () => {
+    expect((buildCustomEntries(makeEvent({ limit: '  ' }))[0] as ScorecardEntry).limit).toBeNull();
+  });
+
   it('returns 4 identical blank cards when no competitors are set', () => {
     const entries = buildCustomEntries(makeEvent()) as ScorecardEntry[];
     expect(entries).toHaveLength(4);

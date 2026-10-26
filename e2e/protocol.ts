@@ -1,5 +1,4 @@
-// The fake WCA's ports, ids and encodings. Codes and tokens carry what WCA would have stored, so
-// the two fakes check PKCE and expiry without sharing state.
+// Codes and tokens carry what WCA would have stored, so the two fakes need no shared state.
 
 export const APP_PORT = 4173;
 export const FAKE_WCA_PORT = 4180;
@@ -8,10 +7,7 @@ export const CLIENT_ID = 'e2e-client';
 export const CLIENT_SECRET = 'e2e-secret';
 export const REDIRECT_URI = `http://localhost:${APP_PORT}/auth/callback`;
 
-/**
- * What the token endpoint does with a code. `short` issues a token already inside the app's 60s
- * expiry skew, which the API still accepts for 30s: the app must renew it unprompted.
- */
+/** `short`: a token inside the app's 60s expiry skew that still works for 30s, so the app must renew. */
 export type Outcome = 'good' | 'short' | 'down';
 
 /** An authorization code: the outcome, and the PKCE challenge WCA would have stored beside it. */

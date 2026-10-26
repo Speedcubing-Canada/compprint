@@ -65,7 +65,7 @@ export interface WCAUser {
   id: number;
   name: string;
   wca_id: string | null;
-  avatar: { thumb_url: string };
+  avatar?: { thumb_url: string };
   email: string;
 }
 

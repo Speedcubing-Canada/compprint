@@ -1,4 +1,4 @@
-import { test, expect, download } from './fixtures';
+import { test, expect, generate } from './fixtures';
 import { realWcif } from './fakeWca';
 
 /** Pickering on the morning of day two: round 1 done, the 3BLD final's groups assigned. */
@@ -20,8 +20,6 @@ test('mid-competition, the defaults print the latest round only', async ({ page,
   await expect(page.getByRole('radio', { name: /Latest round only/ })).toBeChecked();
   for (const doc of ['Schedule Tracker', 'Nametags']) await expect(page.getByRole('checkbox', { name: doc })).not.toBeChecked();
 
-  await page.getByRole('button', { name: 'Continue →' }).click();
-  await page.getByRole('button', { name: 'Generate →' }).click();
-  const { name } = await download(page, 'Download');
+  const { name } = await generate(page);
   expect(name).toBe('PickeringBlindfolded2026_finals.pdf');
 });
