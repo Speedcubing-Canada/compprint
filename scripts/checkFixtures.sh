@@ -39,7 +39,10 @@ fail=0
 check() { # <label> <rendered-basename> <baseline-basename>
   local label="$1" got="$RENDERED/$2" want="$BASELINE/$3"
   if [ ! -f "$want" ]; then
-    echo "SKIP $label (no baseline at $want)"; return
+    # A required gate must not pass on a fixture nobody baselined.
+    if [ -n "${CI:-}" ]; then echo "FAIL $label (no baseline at $want)"; fail=1
+    else echo "SKIP $label (no baseline at $want)"; fi
+    return
   fi
   bash "$DIFF" "$want" "$got" "$OUTDIR/$label" "$DPI" >"$OUTDIR/$label.log" 2>&1 || true
   local max
@@ -57,28 +60,13 @@ check() { # <label> <rendered-basename> <baseline-basename>
 }
 
 cd "$APP"
+source "$HERE/fixtureBaselines.sh"
+
 FIXTURE_OUT_DIR="$RENDERED" npm run --silent render:fixtures >/dev/null
-check nametags_vertical GrosJouetsaMontreal2026_nametags.pdf     nametags_vertical.pdf
-check first_timers      GrosJouetsaMontreal2026_first_timers.pdf first_timers.pdf
-check scorecards        scorecard-layout-test.pdf                scorecards.pdf
-check long_names        scorecard-long-names-test.pdf            long_names.pdf
-check long_nametags     nametag-long-names-test.pdf              long_nametags.pdf
-check staff_nametags    nametag-staff-test.pdf                   staff_nametags.pdf
-check covers            cover-layout-test.pdf                    covers.pdf
-check schedule          schedule-layout-test.pdf                 schedule.pdf
-check checklist         checklist-layout-test.pdf                checklist.pdf
-check group_overview    group-overview-layout-test.pdf           group_overview.pdf
-check scorecards_a4     scorecard-layout-test-a4.pdf             scorecards_a4.pdf
-check scorecards_a6     scorecard-layout-test-a6.pdf             scorecards_a6.pdf
-check custom_event      custom-event-test.pdf                    custom_event.pdf
-check merged_rounds     merged-rounds-test.pdf                   merged_rounds.pdf
-check extras            extras-test.pdf                          extras.pdf
-check checklist_fr      checklist-layout-test-fr.pdf             checklist_fr.pdf
-check checklist_es      checklist-layout-test-es.pdf             checklist_es.pdf
-check checklist_pt      checklist-layout-test-pt.pdf             checklist_pt.pdf
+for f in "${FIXTURES[@]}"; do check $f; done
 
 FIXTURE_OUT_DIR="$RENDERED" npm run --silent render:fixtures -- --horizontal >/dev/null
-check nametags_horizontal GrosJouetsaMontreal2026_nametags.pdf nametags_horizontal.pdf
+for f in "${HORIZONTAL_FIXTURES[@]}"; do check $f; done
 
 if [ "$fail" -ne 0 ]; then
   echo

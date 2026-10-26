@@ -6,12 +6,16 @@ import { join } from 'node:path';
 import { unzipSync } from 'fflate';
 import { PDFDocument } from 'pdf-lib';
 import { runJobs, type WorkerResponse } from './renderBundle';
-import { RENDER_PART_PAGES } from './layoutConstants';
-import { parseWCIF } from '../lib/wcif-parser';
+import { renderToBuffer } from '@react-pdf/renderer';
+import { GROUP_OVERVIEW, RENDER_PART_PAGES } from './layoutConstants';
+import { jobElement, jobElements } from './jobElement';
+import { groupBlockRows, visibleColumns } from './groupOverviewColumns';
+import { textWidth } from './nameFit';
+import { parseWCIF, type GroupOverviewEntry } from '../lib/wcif-parser';
 import { buildPdfJobs } from '../lib/pdfJobs';
-import { filterParsedByScope } from '../lib/generationScope';
+import { filterParsedByScope, type DocumentSelection } from '../lib/generationScope';
 import { estimateTotalPages } from '../lib/pageEstimate';
-import { testSettings, variedSettings } from '../test/fixtures';
+import { sampleWcif, testSettings, variedSettings } from '../test/fixtures';
 import { corpus } from '../test/corpus';
 import { randomWcif } from '../test/wcifGen';
 import type { CompetitionSettings } from '../types/settings';
@@ -40,28 +44,38 @@ async function generate(wcif: WCIF, settings: CompetitionSettings) {
   return { parsed, jobs, last, files, pages };
 }
 
-const onlyDocument = (doc: string): Partial<CompetitionSettings> => ({
+/** Every document off but `doc`; null for none at all. */
+const onlyDocument = (doc: keyof DocumentSelection | null): Partial<CompetitionSettings> => ({
   generationScope: {
     mode: 'everything',
     documents: {
       scorecards: false, scheduleTracker: false, nametags: false,
-      roundChecklist: false, firstTimerSlips: false, groupOverview: false, [doc]: true,
+      roundChecklist: false, firstTimerSlips: false, groupOverview: false,
+      ...(doc ? { [doc]: true } : {}),
     },
-  } as CompetitionSettings['generationScope'],
+  },
 });
 
 // One settings mix per competition, so A6, merged rounds, stage splits, blank second rounds
-// and OTS each run on a real WCIF. Seeds 9, 25 and 26 have names that wrap in the group overview.
-const BITS = [3, 14, 21, 0, 5, 10, 19];
-const cases: [string, number, WCIF][] = [
-  ...corpus().map(([id, w], i): [string, number, WCIF] => [id, BITS[i % BITS.length], w]),
-  ...[9, 25, 26].map((s): [string, number, WCIF] => [`seed ${s}`, s, randomWcif(s)]),
+// and OTS each run on a real WCIF. `splits` and `wraps` name what a case is there to cover, and
+// the case checks it still does: a fixture or generator change cannot quietly drop it.
+type Case = { seed: number; splits?: true; wraps?: true };
+const REAL: Record<string, Case> = {
+  BCChampionship2026: { seed: 3, splits: true },
+  CuberBrasilSumare2026: { seed: 14 },
+  FMCaMontreal2026: { seed: 21 },
+  GrosJouetsaMontreal2025: { seed: 0 },
+  HUNbelievableChallengeBSB2026: { seed: 5 },
+  PickeringBlindfolded2026: { seed: 10 },
+  WaterlooSpring2026: { seed: 19 },
+};
+const cases: [string, Case, WCIF][] = [
+  ...corpus().map(([id, w]): [string, Case, WCIF] => [id, REAL[id] ?? { seed: 0 }, w]),
+  ...[9, 25, 26].map((seed): [string, Case, WCIF] => [`seed ${seed}`, { seed, wraps: true }, randomWcif(seed)]),
 ];
 
-let largestFile = 0;
-
 describe('the download, end to end', () => {
-  it.each(cases)('%s #%i: one file per job, page count as estimated', async (_id, seed, wcif) => {
+  it.each(cases)('%s: one file per job, page count as estimated', async (_id, { seed, splits, wraps }, wcif) => {
     const settings = variedSettings(wcif, seed);
     const { parsed, jobs, pages } = await generate(wcif, settings);
 
@@ -74,12 +88,16 @@ describe('the download, end to end', () => {
     const total = Object.values(pages).reduce((a, b) => a + b, 0);
     expect(total - flowingPages).toBe(estimateTotalPages(parsed, settings, jobs) - flowing.length);
 
-    largestFile = Math.max(largestFile, ...Object.values(pages));
-  }, SLOW);
+    const parted = jobs.filter((j) => jobElements(j, parsed, settings).length > 1);
+    if (splits) expect(parted.length).toBeGreaterThan(0);
+    for (const j of parted) expect(pages[j.filename]).toBeGreaterThan(RENDER_PART_PAGES);
 
-  it('drew at least one file in parts and merged it', () => {
-    expect(largestFile).toBeGreaterThan(RENDER_PART_PAGES);
-  });
+    if (wraps) {
+      const columns = visibleColumns(parsed.groupOverview);
+      expect(parsed.groupOverview.some((g) =>
+        groupBlockRows(g, columns, settings.paperFormat) > Math.max(...columns.map((c) => g[c.key].length)))).toBe(true);
+    }
+  }, SLOW);
 });
 
 describe('the worker messages', () => {
@@ -93,7 +111,7 @@ describe('the worker messages', () => {
   });
 
   it('reports an error when nothing is selected', async () => {
-    const settings = testSettings({ competitionId: pickering.id, ...onlyDocument('none') });
+    const settings = testSettings({ competitionId: pickering.id, ...onlyDocument(null) });
     const msgs: WorkerResponse[] = [];
     await runJobs({ parsed: prepare(pickering, settings), settings, uiLanguage: 'en' }, (m) => msgs.push(m));
     expect(msgs).toEqual([{ type: 'error', message: 'No entries to render.' }]);
@@ -149,4 +167,25 @@ describe.skipIf(!hasPdftotext && !process.env.CI)('the printed text', () => {
     expect(out).toContain('Avery Lam\n2026LAMA01 WCA Live: 79\n');
     for (const line of lines) expect(out).toContain(line);
   }, SLOW);
+});
+
+// A name within a point of its cell's edge is where the estimate and react-pdf part ways: one
+// wraps it, the other does not, and every block on the page grows by a line.
+describe('the group overview estimate at a cell edge', () => {
+  const settings = testSettings();
+  const names = [...new Set(Array.from({ length: 60 }, (_, i) => `Ana ${'n'.repeat(22 + (i >> 2))}${'i'.repeat(i & 3)}`))]
+    .filter((n) => { const w = textWidth(n, GROUP_OVERVIEW.fontSize, false); return w > 145 && w < 160; });
+
+  it('covers both sides of the edge', () => expect(names.length).toBeGreaterThan(8));
+
+  it.each(names)('%s', async (judge) => {
+    const groups: GroupOverviewEntry[] = Array.from({ length: 12 }, (_, g) => ({
+      eventId: '333', roundNum: 1, dayLabel: 'Day 1', heading: `3x3x3 Cube Round 1 - Group ${g + 1}`,
+      startTime: '09:00', endTime: '09:30', room: 'Hall',
+      competitors: ['Ali Hakim'], scramblers: ['Bo'], runners: ['Cy'], judges: Array(9).fill(judge),
+    }));
+    const parsed = { ...parseWCIF(sampleWcif(), settings), scheduleDays: [], checkingDays: [], firstTimers: [], groupOverview: groups };
+    const pdf = await renderToBuffer(jobElement({ kind: 'group-overview', filename: 'x.pdf', label: 'x' }, parsed, settings));
+    expect((await PDFDocument.load(pdf)).getPageCount()).toBe(estimateTotalPages(parsed, { ...settings, customEvents: [] }, []));
+  });
 });

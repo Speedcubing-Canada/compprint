@@ -3,7 +3,7 @@ import { docMeta } from './docMeta';
 import type { CompetitionSettings } from '../types/settings';
 import type { GroupOverviewEntry } from '../lib/wcif-parser';
 import { getGroupOverviewStrings } from '../lib/i18n';
-import { groupBlockRows, visibleColumns } from './groupOverviewColumns';
+import { cellText, groupBlockRows, visibleColumns } from './groupOverviewColumns';
 import {
   GROUP_OVERVIEW as G, groupBlockFitsPage,
   PDF_FONT as FONT, PDF_FONT_BOLD as FONT_BOLD,
@@ -70,7 +70,7 @@ function cellStyle(flex: number, last: boolean, header: boolean) {
   return {
     flex,
     paddingVertical: header ? 5 : G.cellPadV,
-    paddingHorizontal: 5,
+    paddingHorizontal: G.cellPadH,
     ...(header ? { justifyContent: 'center' as const, alignItems: 'center' as const } : {}),
     ...(last ? {} : { borderRight: header ? BORDER : BORDER_INNER }),
   };
@@ -129,8 +129,7 @@ export function GroupOverviewDocument({ entries, settings }: Props) {
                   <View key={col.key} style={cellStyle(col.flex, ci === columns.length - 1, false)}>
                     {entry[col.key].map((name, ni) => (
                       <Text key={ni} style={styles.name}>
-                        {/* The ordinal IS the station number when the WCIF assigns stations. */}
-                        {col.key === 'competitors' ? `${ni + 1}. ${name}` : name}
+                        {cellText(col.key, name, ni)}
                       </Text>
                     ))}
                   </View>

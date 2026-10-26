@@ -14,8 +14,10 @@ export const PDF_FONT_BOLD = ['Helvetica-Bold', PDF_FONT_BOLD_EXT];
 
 // Schedule tracker and Round Checklist share a clipboard, so they share their chrome.
 // Row tint stays light enough to photocopy.
-export const TABLE_BORDER = '0.75pt solid #888';
-export const TABLE_BORDER_INNER = '0.5pt solid #bbb';
+export const TABLE_BORDER_W = 0.75;
+export const TABLE_BORDER = `${TABLE_BORDER_W}pt solid #888`;
+export const TABLE_RULE_W = 0.5;
+export const TABLE_BORDER_INNER = `${TABLE_RULE_W}pt solid #bbb`;
 export const TABLE_ROW_ALT = '#f2f2f2';
 export const TABLE_HEADER_BG = '#d8d8d8';
 
@@ -215,10 +217,12 @@ export const GROUP_OVERVIEW = {
   subHeadH: 14,   // "09:00 - 09:25   Room: Salon"
   dayLabelH: 19,
   cellPadV: 4,
+  cellPadH: 5,
   blockGap: 14,
-  titleH: 41.8,   // measured
+  titleH: 41.8,   // measured, for a title on one line
 };
 
+export const PAGE_W: Record<PaperFormat, number> = { LETTER: 612, A4: 595.28 };
 const PAGE_H: Record<PaperFormat, number> = { LETTER: 792, A4: 842 };
 
 /** One group's block, including the gap below it. Shared so the estimator cannot drift. */

@@ -1,7 +1,7 @@
 import type { GroupOverviewEntry } from '../lib/wcif-parser';
 import type { GroupOverviewStrings } from '../lib/i18n';
 import type { PaperFormat } from '../types/settings';
-import { GROUP_OVERVIEW as G, GROUP_OVERVIEW_FLEX } from './layoutConstants';
+import { GROUP_OVERVIEW as G, GROUP_OVERVIEW_FLEX, PAGE_W, TABLE_BORDER_W, TABLE_RULE_W } from './layoutConstants';
 import { textWidth } from './nameFit';
 
 // Beside the document rather than in it, so the layout test can import this without
@@ -27,8 +27,9 @@ export function visibleColumns(entries: Pick<GroupOverviewEntry, ColumnKey>[]) {
   );
 }
 
-const PAGE_W: Record<PaperFormat, number> = { LETTER: 612, A4: 595.28 };
-const CELL_PAD_H = 5;
+/** The ordinal IS the station number when the WCIF assigns stations. */
+export const cellText = (key: ColumnKey, name: string, i: number) =>
+  key === 'competitors' ? `${i + 1}. ${name}` : name;
 
 /** Lines one name prints on, wrapped at spaces the way react-pdf does when it is wider than its cell. */
 function lineCount(text: string, width: number): number {
@@ -43,15 +44,18 @@ function lineCount(text: string, width: number): number {
   return lines;
 }
 
-/** Printed lines in the group's tallest column, the row count its block is sized by. */
+/**
+ * Printed lines in the group's tallest column, the row count its block is sized by. The table's
+ * borders come off before the flex split. Measured against react-pdf, this wraps up to 0.1pt
+ * early: a name in that band costs the estimate a line it does not print.
+ */
 export function groupBlockRows(
   entry: Pick<GroupOverviewEntry, ColumnKey>, columns: typeof COLUMNS, paperFormat: PaperFormat,
 ): number {
   const flex = columns.reduce((n, c) => n + c.flex, 0);
-  const tableW = (PAGE_W[paperFormat] ?? PAGE_W.LETTER) - 2 * G.pagePadH;
+  const tableW = PAGE_W[paperFormat] - 2 * G.pagePadH - 2 * TABLE_BORDER_W - (columns.length - 1) * TABLE_RULE_W;
   return Math.max(...columns.map((c) => {
-    const w = (tableW * c.flex) / flex - 2 * CELL_PAD_H;
-    return entry[c.key].reduce(
-      (n, name, i) => n + lineCount(c.key === 'competitors' ? `${i + 1}. ${name}` : name, w), 0);
+    const w = (tableW * c.flex) / flex - 2 * G.cellPadH;
+    return entry[c.key].reduce((n, name, i) => n + lineCount(cellText(c.key, name, i), w), 0);
   }));
 }

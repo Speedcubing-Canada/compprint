@@ -24,12 +24,11 @@ import { GroupOverviewDocument } from '../src/pdf/GroupOverviewDocument';
 import type {
   NametTagEntry, FirstTimerEntry, ScorecardData, ScheduleDay, CheckingDay, GroupOverviewEntry,
 } from '../src/lib/wcif-parser';
-import { finalizeEntries } from '../src/lib/wcif-parser';
+import { finalizeEntries, parseWCIF } from '../src/lib/wcif-parser';
 import { buildCustomEntries } from '../src/lib/customScorecards';
 import type { CompetitionSettings } from '../src/types/settings';
 import { testSettings } from '../src/test/fixtures';
 import { corpus } from '../src/test/corpus';
-import { parseWCIF } from '../src/lib/wcif-parser';
 import { buildPdfJobs } from '../src/lib/pdfJobs';
 import { jobElement } from '../src/pdf/jobElement';
 import { scorecardsPerPage } from '../src/pdf/layoutConstants';
