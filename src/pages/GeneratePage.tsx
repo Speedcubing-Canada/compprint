@@ -1,12 +1,11 @@
 import { useState, useEffect, useRef, useMemo } from 'react';
 import { Download, XCircle } from 'lucide-react';
-import { useNavigate } from 'react-router';
+import { Navigate, useNavigate } from 'react-router';
 import { useTranslation } from 'react-i18next';
-import { useAuth } from '../auth/useAuth';
-import { fetchErrorKey, fetchWcif } from '../auth/wca';
-import { getCachedWcif, setCachedWcif } from '../lib/wcifCache';
+import { getCachedWcif } from '../lib/wcifCache';
+import { useParsedCompetition } from '../lib/useParsedCompetition';
 import type { CompetitionSettings } from '../types/settings';
-import { parseWCIF, emptyParsedWcif, type ParsedWCIF } from '../lib/wcif-parser';
+import { parseWCIF, emptyParsedWcif } from '../lib/wcif-parser';
 import { filterParsedByScope, hasUnassignedIntermediate, stageSplitSkipsRound2, type GenerationScope } from '../lib/generationScope';
 import { estimateTotalPages } from '../lib/pageEstimate';
 import { customEventCardCount } from '../lib/customScorecards';
@@ -25,11 +24,8 @@ import i18n from '../i18n/index';
 import ui from '../styles/ui.module.css';
 import s from './GeneratePage.module.css';
 
-type Status = 'idle' | 'fetching' | 'parsing' | 'ready' | 'building' | 'error';
-
 export default function GeneratePage() {
   const { t } = useTranslation();
-  const { token } = useAuth();
   const navigate = useNavigate();
 
   // Offered here, not on /settings: only the built job list knows whether a file is past the cap.
@@ -37,10 +33,17 @@ export default function GeneratePage() {
   const stored = readSettings();
   const settings: CompetitionSettings | null = stored && { ...stored, splitLargePdfs: splitLarge };
 
-  const [status, setStatus] = useState<Status>('idle');
-  const [statusMsg, setStatusMsg] = useState('');
+  // Custom competitions have no WCIF; only settings.customEvents drive the PDFs.
+  const custom = settings?.isCustomCompetition === true;
+  const load = useParsedCompetition(settings && !custom ? settings.competitionId : null, (wcif) => parseWCIF(wcif, settings!));
+  const [customParsed] = useState(emptyParsedWcif);
+  const parsed = custom ? customParsed : load.parsed;
+  const [building, setBuilding] = useState(false);
+  const [progressMsg, setProgressMsg] = useState('');
   const [buildPercent, setBuildPercent] = useState(0);
-  const [parsed, setParsed] = useState<ParsedWCIF | null>(null);
+  // A failed render keeps the page usable: the competition is still loaded, so Download stays.
+  const [renderError, setRenderError] = useState<string | null>(null);
+  const error = load.error ?? renderError;
   const workerRef = useRef<Worker | null>(null);
 
   // Memoised on stable string keys: `settings` is re-parsed from sessionStorage every
@@ -48,48 +51,6 @@ export default function GeneratePage() {
   const settingsKey = JSON.stringify(settings);
   const scopeKey = JSON.stringify(settings?.generationScope ?? { mode: 'everything' });
   const scope = useMemo<GenerationScope>(() => JSON.parse(scopeKey) as GenerationScope, [scopeKey]);
-
-  useEffect(() => {
-    if (!settings || !token) return;
-    let cancelled = false;
-
-    async function run() {
-      // Custom competitions have no WCIF; only settings.customEvents drive the PDFs.
-      if (settings!.isCustomCompetition) {
-        setParsed(emptyParsedWcif());
-        setStatus('ready');
-        return;
-      }
-
-      setStatus('fetching');
-      // React state is stale in this closure, so the error event needs its own step.
-      let stage: analytics.ErrorStage = 'fetch';
-      try {
-        const wcif = getCachedWcif(settings!.competitionId)
-          ?? await fetchWcif(settings!.competitionId, token!.access_token);
-        if (cancelled) return;
-        setCachedWcif(settings!.competitionId, wcif);
-
-        setStatus('parsing');
-        stage = 'parse';
-        const result = parseWCIF(wcif, settings!);
-        if (cancelled) return;
-
-        setParsed(result);
-        setStatus('ready');
-      } catch (e) {
-        if (cancelled) return;
-        analytics.send(analytics.buildErrorEvent(settings!.competitionId, stage, e));
-        const key = fetchErrorKey(e);
-        setStatusMsg(key ? t(key) : String(e));
-        setStatus('error');
-      }
-    }
-
-    run();
-    return () => { cancelled = true; };
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
 
   useEffect(() => () => { workerRef.current?.terminate(); }, []);
 
@@ -110,10 +71,8 @@ export default function GeneratePage() {
     [effectiveParsed, jobs, settingsKey],
   );
 
-  if (!settings) {
-    navigate('/competitions', { replace: true });
-    return null;
-  }
+  // navigate() during render is a no-op.
+  if (!settings) return <Navigate to="/competitions" replace />;
 
   const allEntries = effectiveParsed
     ? [...effectiveParsed.firstRound, ...effectiveParsed.intermediate, ...effectiveParsed.semis, ...effectiveParsed.finals]
@@ -127,7 +86,7 @@ export default function GeneratePage() {
   const filename       = downloadTarget(jobs, settings.competitionId).filename;
 
   function handleDownload() {
-    if (status === 'building' || !effectiveParsed || pdfCount === 0) return;
+    if (building || !effectiveParsed || pdfCount === 0) return;
 
     workerRef.current?.terminate();
     const worker = new Worker(
@@ -135,25 +94,27 @@ export default function GeneratePage() {
       { type: 'module' },
     );
     workerRef.current = worker;
-    setStatus('building');
-    setStatusMsg('');
+    setBuilding(true);
+    setProgressMsg('');
+    setRenderError(null);
     setBuildPercent(0);
 
     const uiLang = (i18n.language?.slice(0, 2) ?? 'en') as 'en' | 'fr' | 'es' | 'pt';
-
-    worker.onerror = (e) => {
-      analytics.send(analytics.buildErrorEvent(settings!.competitionId, 'render', e.message));
-      setStatusMsg(`Worker error: ${e.message}`);
-      setStatus('error');
+    const fail = (message: string) => {
+      analytics.send(analytics.buildErrorEvent(settings!.competitionId, 'render', message));
+      setRenderError(message);
+      setBuilding(false);
       worker.terminate();
       workerRef.current = null;
     };
+
+    worker.onerror = (e) => fail(`Worker error: ${e.message}`);
 
     worker.onmessage = (e: MessageEvent<WorkerResponse>) => {
       const msg = e.data;
       if (msg.type === 'progress') {
         setBuildPercent(msg.percent);
-        setStatusMsg(msg.message);
+        setProgressMsg(msg.message);
       } else if (msg.type === 'done') {
         // The worker decided zip-vs-bare-PDF, and hands over a Blob: a WC-sized archive
         // must never be copied through the heap on this side either.
@@ -166,7 +127,7 @@ export default function GeneratePage() {
         setTimeout(() => URL.revokeObjectURL(url), 0);
         worker.terminate();
         workerRef.current = null;
-        setStatus('ready');
+        setBuilding(false);
         // After the download, so a beacon failure cannot cost anyone their PDFs. `parsed`
         // sizes the competition; the counts below describe only this download.
         analytics.send(analytics.buildGenerateEvent({
@@ -178,11 +139,7 @@ export default function GeneratePage() {
           output: analytics.buildOutput(jobs, totalPages, scorecardCount, coverCount),
         }));
       } else {
-        analytics.send(analytics.buildErrorEvent(settings!.competitionId, 'render', msg.message));
-        setStatusMsg(msg.message);
-        setStatus('error');
-        worker.terminate();
-        workerRef.current = null;
+        fail(msg.message);
       }
     };
 
@@ -198,16 +155,14 @@ export default function GeneratePage() {
         <div className={ui.compBadge}>{settings.competitionName}</div>
         <h1 className={`${ui.pageTitle} ${s.pageTitle}`}>{t('generate.title')}</h1>
 
-        {(status === 'fetching' || status === 'parsing') && (
-          <StatsSkeleton label={status === 'fetching' ? t('generate.fetching') : t('generate.parsing')} />
+        {!parsed && !error && <StatsSkeleton label={t('generate.fetching')} />}
+        {error && (
+          <StatusBox icon={<XCircle size={28} strokeWidth={2} color="var(--danger)" />} text={error} isError />
         )}
-        {status === 'error'    && (
-          <StatusBox icon={<XCircle size={28} strokeWidth={2} color="var(--danger)" />} text={statusMsg} isError />
-        )}
-        {status === 'building' && (
+        {building && (
           <div className={s.progressBox}>
             <div className={s.progressHeader}>
-              <span className={s.progressLabel}>{statusMsg || t('generate.rendering')}</span>
+              <span className={s.progressLabel}>{progressMsg || t('generate.rendering')}</span>
               <span className={s.progressPct}>{buildPercent}%</span>
             </div>
             <div
@@ -223,48 +178,49 @@ export default function GeneratePage() {
           </div>
         )}
 
-        {(status === 'ready' || status === 'building') && (
+        {parsed && (
           <>
-            {status === 'ready' && parsed?.hasGroups === false && (
-              <WarningBanner>{t('warnings.no_groups')}</WarningBanner>
-            )}
-            {status === 'ready' && settings?.otsBlanks && <OtsNotice />}
+            {!building && (
+              <>
+                {parsed.hasGroups === false && (
+                  <WarningBanner>{t('warnings.no_groups')}</WarningBanner>
+                )}
+                {settings.otsBlanks && <OtsNotice />}
 
-            {status === 'ready' && settings && effectiveParsed
-              && stageSplitSkipsRound2(settings, hasUnassignedIntermediate(effectiveParsed)) && (
-              <WarningBanner>{t('warnings.stage_split_prefilled')}</WarningBanner>
-            )}
+                {effectiveParsed
+                  && stageSplitSkipsRound2(settings, hasUnassignedIntermediate(effectiveParsed)) && (
+                  <WarningBanner>{t('warnings.stage_split_prefilled')}</WarningBanner>
+                )}
 
-            {status === 'ready'
-              && hasOversizedPdf(jobs.filter(j => j.kind === 'scorecards' && j.mergedRounds), settings.scorecardsA6) && (
-              <WarningBanner>{t('warnings.merge_rounds_large')}</WarningBanner>
-            )}
+                {hasOversizedPdf(jobs.filter(j => j.kind === 'scorecards' && j.mergedRounds), settings.scorecardsA6) && (
+                  <WarningBanner>{t('warnings.merge_rounds_large')}</WarningBanner>
+                )}
 
-            {status === 'ready' && (splitLarge || hasOversizedPdf(jobs, settings.scorecardsA6)) && (
-              <label className={`${ui.toggleCard} ${s.splitToggle} ${splitLarge ? ui.toggleCardActive : ''}`}>
-                <input
-                  type="checkbox"
-                  checked={splitLarge}
-                  onChange={e => setSplitLarge(e.target.checked)}
-                  className={ui.radio}
-                />
-                <div>
-                  <div className={ui.optionLabel}>{t('generate.split_large.label')}</div>
-                  <div className={ui.optionDesc}>
-                    {t('generate.split_large.desc', { pages: MAX_PAGES_PER_SCORECARD_PDF })}
-                  </div>
+                {(splitLarge || hasOversizedPdf(jobs, settings.scorecardsA6)) && (
+                  <label className={`${ui.toggleCard} ${s.splitToggle} ${splitLarge ? ui.toggleCardActive : ''}`}>
+                    <input
+                      type="checkbox"
+                      checked={splitLarge}
+                      onChange={e => setSplitLarge(e.target.checked)}
+                      className={ui.radio}
+                    />
+                    <div>
+                      <div className={ui.optionLabel}>{t('generate.split_large.label')}</div>
+                      <div className={ui.optionDesc}>
+                        {t('generate.split_large.desc', { pages: MAX_PAGES_PER_SCORECARD_PDF })}
+                      </div>
+                    </div>
+                  </label>
+                )}
+
+                <div className={s.stats}>
+                  <Stat label={t('generate.stats.scorecards')} value={scorecardCount} />
+                  <Stat label={t('generate.stats.cover_cards')} value={coverCount} />
+                  <Stat label={t('generate.stats.pdfs')} value={pdfCount} />
+                  <Stat label={t('generate.stats.total_pages')} value={totalPages} />
+                  <Stat label={t('generate.stats.paper')} value={settings.scorecardsA6 ? `${settings.paperFormat} + A6` : settings.paperFormat} />
                 </div>
-              </label>
-            )}
-
-            {status === 'ready' && (
-              <div className={s.stats}>
-                <Stat label={t('generate.stats.scorecards')} value={scorecardCount} />
-                <Stat label={t('generate.stats.cover_cards')} value={coverCount} />
-                <Stat label={t('generate.stats.pdfs')} value={pdfCount} />
-                <Stat label={t('generate.stats.total_pages')} value={totalPages} />
-                <Stat label={t('generate.stats.paper')} value={settings.scorecardsA6 ? `${settings.paperFormat} + A6` : settings.paperFormat} />
-              </div>
+              </>
             )}
 
             {/* The filename sits under the button, not inside it: a long competition id used
@@ -272,12 +228,12 @@ export default function GeneratePage() {
             <button
               className={ui.btnPrimary}
               onClick={handleDownload}
-              disabled={status === 'building' || pdfCount === 0}
+              disabled={building || pdfCount === 0}
             >
-              {status !== 'building' && <Download size={18} aria-hidden />}
-              {status === 'building' ? t('generate.building_button') : t('generate.download_button')}
+              {!building && <Download size={18} aria-hidden />}
+              {building ? t('generate.building_button') : t('generate.download_button')}
             </button>
-            {status === 'ready' && pdfCount > 0 && (
+            {!building && pdfCount > 0 && (
               <p className={s.downloadFilename}>{filename}</p>
             )}
 

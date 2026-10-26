@@ -192,7 +192,6 @@
   "generate": {
     "title": "Generar hojas de puntuación",
     "fetching": "Obteniendo WCIF de WCA…",
-    "parsing": "Construyendo lista de hojas…",
     "rendering": "Renderizando PDF…",
     "stats": {
       "scorecards": "Hojas de puntuación",

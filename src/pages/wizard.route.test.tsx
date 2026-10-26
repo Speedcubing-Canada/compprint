@@ -81,13 +81,6 @@ describe('the wizard carries one competition through all four steps', () => {
     ]));
     expect(readCompetition().id).toBe('AutreCompetition2026');
   });
-
-  it('records the scope choice for the settings step to act on', async () => {
-    enter('/competitions');
-    await walkToSettings();
-    // Written by /scope, read by /settings and /generate. Absent means the handoff broke.
-    expect(readStoredScope()).not.toBeNull();
-  });
 });
 
 describe('switching competitions', () => {
@@ -184,5 +177,60 @@ describe('settings defaults', () => {
     const defaults = testSettings();
     expect(settings.paperFormat).toBe(defaults.paperFormat);
     expect(settings.language).toBeTruthy();
+  });
+});
+
+describe('going back', () => {
+  it('from /generate shows the settings the organizer chose, not the defaults', async () => {
+    enter('/competitions');
+    await walkToSettings();
+    fireEvent.click(screen.getByText(i18n.t('settings.paper.a4')));
+    await click(i18n.t('settings.generate_button'));
+    await screen.findByRole('button', { name: i18n.t('generate.download_button') });
+
+    await click(i18n.t('common.back'));
+    await screen.findByRole('button', { name: i18n.t('settings.generate_button') });
+    const a4 = screen.getByText(i18n.t('settings.paper.a4')).closest('label')!.querySelector('input')!;
+    expect(a4.checked).toBe(true);
+    await click(i18n.t('settings.generate_button'));
+    expect(readSettings()?.paperFormat).toBe('A4');
+  });
+
+  it('from /settings keeps the documents picked on /scope', async () => {
+    enter('/competitions');
+    let wasChecked = false;
+    await walkToSettings(async () => {
+      const schedule = (await screen.findByText(i18n.t('scope.doc_schedule'))).closest('label')!.querySelector('input')!;
+      wasChecked = schedule.checked;
+      fireEvent.click(schedule);
+    });
+
+    await click(i18n.t('common.back'));
+    const again = (await screen.findByText(i18n.t('scope.doc_schedule'))).closest('label')!.querySelector('input')!;
+    expect(again.checked).toBe(!wasChecked);
+  });
+});
+
+// Every step in every UI language. A key missing from one bundle falls back to English (the
+// parity test catches that); one missing from all of them renders raw, which this catches.
+describe.each(['fr', 'es', 'pt'])('the wizard in %s', (lang) => {
+  it('reaches the download step with no raw i18n key on any page', async () => {
+    await i18n.changeLanguage(lang);
+    // Per text node, since textContent glues neighbours together. Anything under a real
+    // top-level section ("settings.nope") is a missing key rendering as itself.
+    const rawKeys = () => {
+      const walker = document.createTreeWalker(document.body, NodeFilter.SHOW_TEXT);
+      const keys: string[] = [];
+      while (walker.nextNode()) keys.push(...(walker.currentNode.textContent?.match(/\b[a-z_]+(\.[a-z_]+)+\b/g) ?? []));
+      return keys.filter((k) => i18n.exists(k.split('.')[0], { lng: 'en' }));
+    };
+    enter('/competitions');
+    await screen.findByText(SAMPLE.name);
+    expect(rawKeys()).toEqual([]);
+    await walkToSettings();
+    expect(rawKeys()).toEqual([]);
+    await click(i18n.t('settings.generate_button'));
+    await screen.findByRole('button', { name: i18n.t('generate.download_button') });
+    expect(rawKeys()).toEqual([]);
   });
 });

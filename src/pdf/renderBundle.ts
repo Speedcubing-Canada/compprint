@@ -74,18 +74,19 @@ async function addToZip(zip: Zip, filename: string, blob: Blob): Promise<void> {
 export async function runJobs({ parsed, settings, uiLanguage }: WorkerRequest, post: Post) {
   const msgs = getWorkerStrings(uiLanguage);
 
-  // Shared with the generate page, so its stat and button label cannot drift from this.
-  const jobs = buildPdfJobs(parsed, settings);
-  const target = downloadTarget(jobs, settings.competitionId);
-
-  if (jobs.length === 0) {
-    post({ type: 'error', message: msgs.noEntries });
-    return;
-  }
-
-  post({ type: 'progress', percent: 2, message: msgs.starting });
-
+  // Everything inside: a worker drops a rejected onmessage, which would leave the page building.
   try {
+    // Shared with the generate page, so its stat and button label cannot drift from this.
+    const jobs = buildPdfJobs(parsed, settings);
+    const target = downloadTarget(jobs, settings.competitionId);
+
+    if (jobs.length === 0) {
+      post({ type: 'error', message: msgs.noEntries });
+      return;
+    }
+
+    post({ type: 'progress', percent: 2, message: msgs.starting });
+
     // A single document ships as the PDF itself, not a one-file zip.
     if (jobs.length === 1) {
       post({ type: 'progress', percent: 5, message: msgs.rendering(jobs[0].label) });

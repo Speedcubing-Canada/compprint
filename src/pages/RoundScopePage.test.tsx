@@ -103,22 +103,6 @@ describe('RoundScopePage', () => {
     expect(readHasGroups()).toBe(true);
   });
 
-  it('restores the previous selection on back-navigation', async () => {
-    renderWithProviders(<RoundScopePage />, { auth: signedInAuth });
-    await screen.findByText(i18n.t('scope.docs_title'));
-    const box = screen.getByLabelText(i18n.t('scope.doc_schedule')) as HTMLInputElement;
-    const chosen = !box.checked;
-    fireEvent.click(box);
-    fireEvent.click(screen.getByRole('button', { name: i18n.t('scope.continue') }));
-    cleanup();
-
-    renderWithProviders(<RoundScopePage />, { auth: signedInAuth });
-    await screen.findByText(i18n.t('scope.docs_title'));
-    // Coming back must show what was chosen, not the defaults.
-    expect((screen.getByLabelText(i18n.t('scope.doc_schedule')) as HTMLInputElement).checked)
-      .toBe(chosen);
-  });
-
   /*
    * The preset picker is a custom tile, not a labelled radio: the native input is still
    * in the DOM but transparent, so the radio group keeps its accessible name and its

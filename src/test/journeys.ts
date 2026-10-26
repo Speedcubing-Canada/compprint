@@ -19,8 +19,9 @@ export function seedCompetition() {
 }
 
 /** Picker → scope → settings, through the UI only. Leaves the caller on /settings. */
-export async function walkToSettings(competitionName = SAMPLE.name) {
-  fireEvent.click(await screen.findByText(competitionName));
+export async function walkToSettings(onScope?: () => Promise<void>) {
+  fireEvent.click(await screen.findByText(SAMPLE.name));
+  await onScope?.();
   await click(i18n.t('scope.continue'));
   await screen.findByRole('button', { name: i18n.t('settings.generate_button') });
 }
