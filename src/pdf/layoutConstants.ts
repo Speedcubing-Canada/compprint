@@ -210,13 +210,13 @@ export const GROUP_OVERVIEW = {
   pagePadV: 36,
   fontSize: 9,
   lineH: 12,
-  headerH: 18,
+  headerH: 19.15, // measured off a render: the table's borders included
   headingH: 17,   // "3x3x3 Cube Round 1 - Group 2"
   subHeadH: 14,   // "09:00 - 09:25   Room: Salon"
   dayLabelH: 19,
   cellPadV: 4,
   blockGap: 14,
-  titleH: 40,
+  titleH: 41.8,   // measured
 };
 
 const PAGE_H: Record<PaperFormat, number> = { LETTER: 792, A4: 842 };

@@ -114,6 +114,21 @@ function person(
  * round 1, a final), a 2x2 final, and one competitor with no WCA ID so the
  * first-timer slips are non-empty.
  */
+/** Settings vary with the seed too, so every combination gets exercised somewhere. */
+export function variedSettings(wcif: WCIF, seed: number): CompetitionSettings {
+  const bit = (n: number) => ((seed >> n) & 1) === 1;
+  return testSettings({
+    competitionId: wcif.id,
+    competitionName: wcif.name,
+    scorecardsA6: bit(0),
+    mergeScorecardRounds: bit(1),
+    splitPdfsByStage: bit(2),
+    secondRoundMode: bit(3) ? 'blanks' : 'prefilled',
+    otsBlanks: bit(4),
+    language: (['en', 'fr', 'es', 'pt'] as const)[seed % 4],
+  });
+}
+
 export function sampleWcif(): WCIF {
   const events: Event[] = [
     { id: '333', rounds: [round('333-r1', 'a'), round('333-r2', 'a')], qualification: null },

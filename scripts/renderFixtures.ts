@@ -25,8 +25,14 @@ import type {
   NametTagEntry, FirstTimerEntry, ScorecardData, ScheduleDay, CheckingDay, GroupOverviewEntry,
 } from '../src/lib/wcif-parser';
 import { finalizeEntries } from '../src/lib/wcif-parser';
+import { buildCustomEntries } from '../src/lib/customScorecards';
 import type { CompetitionSettings } from '../src/types/settings';
 import { testSettings } from '../src/test/fixtures';
+import { corpus } from '../src/test/corpus';
+import { parseWCIF } from '../src/lib/wcif-parser';
+import { buildPdfJobs } from '../src/lib/pdfJobs';
+import { jobElement } from '../src/pdf/jobElement';
+import { scorecardsPerPage } from '../src/pdf/layoutConstants';
 
 const __dir = dirname(fileURLToPath(import.meta.url));
 // ../../current-output is outside the git repo, so CI overrides this.
@@ -283,6 +289,20 @@ const GROUP_OVERVIEW: GroupOverviewEntry[] = [
   },
 ];
 
+/**
+ * One file of a real competition, through the real parser and job planner, cut to its first
+ * `sheets` pages so the baseline stays small.
+ */
+function corpusFile(id: string, over: Partial<CompetitionSettings>, suffix: string, sheets: number) {
+  const wcif = corpus().find(([cid]) => cid === id)![1];
+  const s = settings({ competitionId: id, competitionName: wcif.name, ...over });
+  const parsed = parseWCIF(wcif, s);
+  const job = buildPdfJobs(parsed, s).find((j) => j.filename === `${id}_${suffix}.pdf`);
+  if (job?.kind !== 'scorecards') throw new Error(`${id} has no ${suffix} scorecards`);
+  const cut = { ...job, entries: job.entries.slice(0, sheets * scorecardsPerPage(s.scorecardsA6)) };
+  return jobElement(cut, parsed, s);
+}
+
 async function write(name: string, element: React.ReactElement): Promise<void> {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const buffer = await renderToBuffer(element as any);
@@ -371,6 +391,25 @@ async function main() {
     e(ScorecardDocument, { entries: COVERS, settings: settings({ language: 'fr' }) }),
   );
 
+  // A custom event with a CSV list (named cards padded to a sheet) beside one of blanks.
+  const custom = settings({
+    customEvents: [
+      { name: 'Team Blind', iconDataUrl: null, format: 'mo3', cutoff: '', limit: '5:00',
+        competitors: [{ name: 'Ali Hakim', wcaId: '2019HAKI01' }, { name: 'Matheus de Souza Macêdo', wcaId: '' }] },
+      { name: '3x3 With Feet', iconDataUrl: null, format: 'avg5', cutoff: '1:30', limit: '3:00' },
+    ],
+  });
+  await write('custom-event-test.pdf', e(ScorecardDocument, {
+    entries: custom.customEvents.flatMap((c) => buildCustomEntries(c)), settings: custom,
+  }));
+
+  // Brazil's preset: every round in one cut deck, Portuguese.
+  await write('merged-rounds-test.pdf',
+    corpusFile('CuberBrasilSumare2026', { language: 'pt', mergeScorecardRounds: true }, 'scorecards', 3));
+  // Spare cards per event, plus the OTS blanks.
+  await write('extras-test.pdf',
+    corpusFile('PickeringBlindfolded2026', { otsBlanks: true }, 'extras', 6));
+
   console.log(`Rendering schedule tracker (${SCHEDULE_DAYS.length} days)…`);
   await write(
     'schedule-layout-test.pdf',
@@ -382,6 +421,13 @@ async function main() {
     'checklist-layout-test.pdf',
     e(CheckingSheetDocument, { days: CHECKING_DAYS, settings: settings() }),
   );
+
+  for (const language of ['fr', 'es', 'pt'] as const) {
+    await write(
+      `checklist-layout-test-${language}.pdf`,
+      e(CheckingSheetDocument, { days: CHECKING_DAYS, settings: settings({ language }) }),
+    );
+  }
 
   console.log(`Rendering Group Overview (${GROUP_OVERVIEW.length} groups)…`);
   await write(

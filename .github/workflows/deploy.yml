@@ -65,6 +65,10 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
+      # pdftotext, for the printed-text checks in src/pdf/pipeline.pdf.test.ts.
+      - name: Install poppler-utils
+        run: sudo apt-get update && sudo apt-get install -y poppler-utils
+
       - name: Lint
         run: npm run lint
 

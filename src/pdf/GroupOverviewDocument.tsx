@@ -3,7 +3,7 @@ import { docMeta } from './docMeta';
 import type { CompetitionSettings } from '../types/settings';
 import type { GroupOverviewEntry } from '../lib/wcif-parser';
 import { getGroupOverviewStrings } from '../lib/i18n';
-import { visibleColumns } from './groupOverviewColumns';
+import { groupBlockRows, visibleColumns } from './groupOverviewColumns';
 import {
   GROUP_OVERVIEW as G, groupBlockFitsPage,
   PDF_FONT as FONT, PDF_FONT_BOLD as FONT_BOLD,
@@ -96,7 +96,7 @@ export function GroupOverviewDocument({ entries, settings }: Props) {
 
         {entries.map((entry, ei) => {
           const withDayLabel = multiDay && entry.dayLabel !== entries[ei - 1]?.dayLabel;
-          const rows = Math.max(...columns.map((c) => entry[c.key].length));
+          const rows = groupBlockRows(entry, columns, settings.paperFormat);
           return (
           // Pinned so a group is never split, except when it could not fit a page anyway:
           // react-pdf squashes an oversized non-breaking block rather than paginating it.

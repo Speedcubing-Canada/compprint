@@ -252,7 +252,7 @@ Test data:
   email address, shows up in a fixture. Never hand-copy a WCIF from a manager's session into the
   repo.
 
-Four files cover seams rather than single modules, because the halves either side of each are
+Five files cover seams rather than single modules, because the halves either side of each are
 tested on their own and the joint is what breaks:
 
 - `src/pages/wizard.route.test.tsx` drives the real routes (`AppRoutes`) through picker →
@@ -262,6 +262,13 @@ tested on their own and the joint is what breaks:
 - `src/pdf/render.pdf.test.ts` renders every job kind `buildPdfJobs` can emit through the
   real documents with `renderToBuffer`. It asserts only that a valid PDF comes out, never layout:
   the `*-layout.test.ts` files own the measurements, and `scripts/checkFixtures.sh` owns the pixels.
+- `src/pdf/pipeline.pdf.test.ts` runs the worker's `runJobs` with nothing stubbed, on every
+  real competition and a few generated ones: parse, plan, render, split and merge, zip. It unzips
+  the download and checks one file per job and that the page count matches what `/generate`
+  promised (`estimateTotalPages`; exact except for the schedule and checklist, which flow). It
+  also reads a rendered card back with `pdftotext` and checks the name, round, group, cutoff and
+  limit in English and French. That part needs `poppler-utils`: it skips locally without it and
+  fails in CI.
 - `src/pdf/renderBundle.test.ts` covers the orchestration around that - which jobs run, bare PDF
   versus zip, progress, what happens when one document throws - with the renderer stubbed, so it
   does not re-render what the file above already renders.

@@ -68,6 +68,14 @@ check covers            cover-layout-test.pdf                    covers.pdf
 check schedule          schedule-layout-test.pdf                 schedule.pdf
 check checklist         checklist-layout-test.pdf                checklist.pdf
 check group_overview    group-overview-layout-test.pdf           group_overview.pdf
+check scorecards_a4     scorecard-layout-test-a4.pdf             scorecards_a4.pdf
+check scorecards_a6     scorecard-layout-test-a6.pdf             scorecards_a6.pdf
+check custom_event      custom-event-test.pdf                    custom_event.pdf
+check merged_rounds     merged-rounds-test.pdf                   merged_rounds.pdf
+check extras            extras-test.pdf                          extras.pdf
+check checklist_fr      checklist-layout-test-fr.pdf             checklist_fr.pdf
+check checklist_es      checklist-layout-test-es.pdf             checklist_es.pdf
+check checklist_pt      checklist-layout-test-pt.pdf             checklist_pt.pdf
 
 FIXTURE_OUT_DIR="$RENDERED" npm run --silent render:fixtures -- --horizontal >/dev/null
 check nametags_horizontal GrosJouetsaMontreal2026_nametags.pdf nametags_horizontal.pdf

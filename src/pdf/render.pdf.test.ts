@@ -13,10 +13,6 @@ import type { ScorecardData } from '../lib/wcif-parser';
 // Nothing else in the suite executes src/pdf/*Document.tsx, so a job kind that
 // buildPdfJobs can emit but no document can render would otherwise only surface
 // on an organizer's download.
-//
-// renderToBuffer is @react-pdf's Node entry point - the worker's pdf().toBlob()
-// path needs a browser. Both go through the same `jobElement` mapping, which is
-// the part that can drift.
 
 const settings = testSettings({
   customEvents: [{ name: 'Team BLD', iconDataUrl: null, format: 'mo3', cutoff: '', limit: '' }],

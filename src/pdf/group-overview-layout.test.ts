@@ -5,7 +5,7 @@ import {
 } from './layoutConstants';
 import { getGroupOverviewStrings } from '../lib/i18n';
 import type { LocaleCode, PaperFormat } from '../types/settings';
-import { COLUMNS, visibleColumns } from './groupOverviewColumns';
+import { COLUMNS, groupBlockRows, visibleColumns } from './groupOverviewColumns';
 
 // Same Helvetica AFM width table as checking-sheet-layout.test.ts. An untabulated glyph
 // measures as the widest one (W, 944), so a new translation errs towards failing.
@@ -146,6 +146,22 @@ describe('Group Overview visible columns', () => {
 
   it('keeps the competitor column even when every group is empty', () => {
     expect(visibleColumns([entry()]).map(c => c.key)).toEqual(['competitors']);
+  });
+});
+
+// A name wider than its cell wraps, and the block grows by a line. Counting names instead
+// undercounted the estimate by a page on real competitions.
+describe('Group Overview row count', () => {
+  const long = 'Maria da Conceição Albuquerque de Oliveira Santos Ferreira';
+  const group = { competitors: [long, 'Ana Lima', 'Bo Chen'], scramblers: ['A'], runners: ['B'], judges: ['C', 'D', 'E'] };
+
+  it('counts a wrapped name as two lines', () => {
+    expect(groupBlockRows(group, visibleColumns([group]), 'LETTER')).toBe(4);
+  });
+
+  it('does not wrap once the staff columns are gone and the cell is wide', () => {
+    const solo = { ...group, scramblers: [], runners: [], judges: [] };
+    expect(groupBlockRows(solo, visibleColumns([solo]), 'LETTER')).toBe(3);
   });
 });
 
