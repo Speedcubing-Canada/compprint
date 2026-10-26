@@ -69,7 +69,7 @@ const styles = StyleSheet.create({
 function cellStyle(flex: number, last: boolean, header: boolean) {
   return {
     flex,
-    paddingVertical: header ? 5 : G.cellPadV,
+    paddingVertical: header ? G.headerPadV : G.cellPadV,
     paddingHorizontal: G.cellPadH,
     ...(header ? { justifyContent: 'center' as const, alignItems: 'center' as const } : {}),
     ...(last ? {} : { borderRight: header ? BORDER : BORDER_INNER }),

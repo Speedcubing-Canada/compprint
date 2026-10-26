@@ -21,6 +21,9 @@ export function scrubWcif(value: unknown): unknown {
 
 const files = import.meta.glob<WCIF>('../../tests/fixtures/wcif/*.json', { eager: true, import: 'default' });
 
+/** One fixture, as a fresh copy. */
+export const corpusWcif = (id: string): WCIF => corpus().find(([cid]) => cid === id)![1];
+
 /** Every fixture, by competition id. A fresh copy per call: the parser must not see another test's edits. */
 export function corpus(): [string, WCIF][] {
   return Object.values(files).map((w) => [w.id, structuredClone(w)]);

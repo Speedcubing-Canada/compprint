@@ -1,7 +1,7 @@
 import type { GroupOverviewEntry } from '../lib/wcif-parser';
 import type { GroupOverviewStrings } from '../lib/i18n';
 import type { PaperFormat } from '../types/settings';
-import { GROUP_OVERVIEW as G, GROUP_OVERVIEW_FLEX, PAGE_W, TABLE_BORDER_W, TABLE_RULE_W } from './layoutConstants';
+import { GROUP_OVERVIEW as G, GROUP_OVERVIEW_FLEX, PAGE_W, TABLE_BORDER_W, TABLE_BORDER_INNER_W } from './layoutConstants';
 import { textWidth } from './nameFit';
 
 // Beside the document rather than in it, so the layout test can import this without
@@ -53,7 +53,7 @@ export function groupBlockRows(
   entry: Pick<GroupOverviewEntry, ColumnKey>, columns: typeof COLUMNS, paperFormat: PaperFormat,
 ): number {
   const flex = columns.reduce((n, c) => n + c.flex, 0);
-  const tableW = PAGE_W[paperFormat] - 2 * G.pagePadH - 2 * TABLE_BORDER_W - (columns.length - 1) * TABLE_RULE_W;
+  const tableW = PAGE_W[paperFormat] - 2 * G.pagePadH - 2 * TABLE_BORDER_W - (columns.length - 1) * TABLE_BORDER_INNER_W;
   return Math.max(...columns.map((c) => {
     const w = (tableW * c.flex) / flex - 2 * G.cellPadH;
     return entry[c.key].reduce((n, name, i) => n + lineCount(cellText(c.key, name, i), w), 0);

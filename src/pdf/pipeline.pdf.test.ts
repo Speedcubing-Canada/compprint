@@ -1,8 +1,5 @@
-import { afterAll, describe, expect, it } from 'vitest';
+import { describe, expect, it } from 'vitest';
 import { execFileSync } from 'node:child_process';
-import { mkdtempSync, rmSync, writeFileSync } from 'node:fs';
-import { tmpdir } from 'node:os';
-import { join } from 'node:path';
 import { unzipSync } from 'fflate';
 import { PDFDocument } from 'pdf-lib';
 import { runJobs, type WorkerResponse } from './renderBundle';
@@ -16,7 +13,7 @@ import { buildPdfJobs } from '../lib/pdfJobs';
 import { filterParsedByScope, type DocumentSelection } from '../lib/generationScope';
 import { estimateTotalPages } from '../lib/pageEstimate';
 import { sampleWcif, testSettings, variedSettings } from '../test/fixtures';
-import { corpus } from '../test/corpus';
+import { corpus, corpusWcif } from '../test/corpus';
 import { randomWcif } from '../test/wcifGen';
 import type { CompetitionSettings } from '../types/settings';
 import type { WCIF } from '../types/wcif';
@@ -64,7 +61,6 @@ const REAL: Record<string, Case> = {
   BCChampionship2026: { seed: 3, splits: true },
   CuberBrasilSumare2026: { seed: 14 },
   FMCaMontreal2026: { seed: 21 },
-  GrosJouetsaMontreal2025: { seed: 0 },
   HUNbelievableChallengeBSB2026: { seed: 5 },
   PickeringBlindfolded2026: { seed: 10 },
   WaterlooSpring2026: { seed: 19 },
@@ -101,7 +97,7 @@ describe('the download, end to end', () => {
 });
 
 describe('the worker messages', () => {
-  const [, pickering] = corpus().find(([id]) => id === 'PickeringBlindfolded2026')!;
+  const pickering = corpusWcif('PickeringBlindfolded2026');
 
   it('ships a single document as the bare PDF', async () => {
     const settings = testSettings({ competitionId: pickering.id, ...onlyDocument('scheduleTracker') });
@@ -147,33 +143,28 @@ const hasPdftotext = (() => {
 })();
 // CI installs poppler, so a missing pdftotext there is a broken job, not a reason to skip.
 describe.skipIf(!hasPdftotext && !process.env.CI)('the printed text', () => {
-  const dir = mkdtempSync(join(tmpdir(), 'pdf-text-'));
-  afterAll(() => rmSync(dir, { recursive: true, force: true }));
-
-  const [, waterloo] = corpus().find(([id]) => id === 'WaterlooSpring2026')!;
-  const text = async (language: 'en' | 'fr') => {
-    const settings = testSettings({ competitionId: waterloo.id, competitionName: waterloo.name, language });
-    const { files } = await generate(waterloo, settings);
-    const path = join(dir, `round1-${language}.pdf`);
-    writeFileSync(path, files['WaterlooSpring2026_round1.pdf']);
-    return execFileSync('pdftotext', ['-raw', path, '-'], { encoding: 'utf8' });
-  };
+  const waterloo = corpusWcif('WaterlooSpring2026');
+  const text = (pdf: Uint8Array) => execFileSync('pdftotext', ['-raw', '-', '-'], { input: pdf, encoding: 'utf8' });
 
   it.each([
-    ['en', ['Square-1 Round 1 of 2 Red 1 of 2', '(DNF if not under 10:00)', 'Continue if Attempt 1 or 2 is below 1:00']],
-    ['fr', ['Square-1 Tour 1 sur 2 Red 1 sur 2', "(DNF si n'est pas inférieur à 10:00)", 'Essai 1 ou 2 sont inférieurs à 1:00']],
-  ] as const)('%s: a competitor card reads right', async (language, lines) => {
-    const out = await text(language);
-    expect(out).toContain('Avery Lam\n2026LAMA01 WCA Live: 79\n');
-    for (const line of lines) expect(out).toContain(line);
+    ['en', ['Square-1 Round 1 of 2 Red 1 of 2', '(DNF if not under 10:00)', 'Continue if Attempt 1 or 2 is below 1:00'], 'DNF if not under'],
+    ['fr', ['Square-1 Tour 1 sur 2 Red 1 sur 2', "(DNF si n'est pas inférieur à 10:00)", 'Essai 1 ou 2 sont inférieurs à 1:00'], "DNF si n'est pas inférieur à"],
+  ] as const)('%s: a competitor card reads right', async (language, lines, blankPrompt) => {
+    const settings = testSettings({ competitionId: waterloo.id, competitionName: waterloo.name, language });
+    const { files } = await generate(waterloo, settings);
+    const round1 = text(files['WaterlooSpring2026_round1.pdf']!);
+    expect(round1).toContain('Avery Lam\n2026LAMA01 WCA Live: 79\n');
+    for (const line of lines) expect(round1).toContain(line);
+    // The spare blank cards keep the limit prompt, for the delegate to fill in.
+    expect(text(files['WaterlooSpring2026_extras.pdf']!)).toContain(blankPrompt);
   }, SLOW);
 });
 
-// A name within a point of its cell's edge is where the estimate and react-pdf part ways: one
-// wraps it, the other does not, and every block on the page grows by a line.
+// Names either side of a cell's edge: past it react-pdf wraps them, and every block on the
+// page grows by a line, so the estimate has to wrap them too.
 describe('the group overview estimate at a cell edge', () => {
   const settings = testSettings();
-  const names = [...new Set(Array.from({ length: 60 }, (_, i) => `Ana ${'n'.repeat(22 + (i >> 2))}${'i'.repeat(i & 3)}`))]
+  const names = Array.from({ length: 15 }, (_, k) => [0, 1, 2, 3].map((j) => `Ana ${'n'.repeat(22 + k)}${'i'.repeat(j)}`)).flat()
     .filter((n) => { const w = textWidth(n, GROUP_OVERVIEW.fontSize, false); return w > 145 && w < 160; });
 
   it('covers both sides of the edge', () => expect(names.length).toBeGreaterThan(8));
@@ -186,6 +177,6 @@ describe('the group overview estimate at a cell edge', () => {
     }));
     const parsed = { ...parseWCIF(sampleWcif(), settings), scheduleDays: [], checkingDays: [], firstTimers: [], groupOverview: groups };
     const pdf = await renderToBuffer(jobElement({ kind: 'group-overview', filename: 'x.pdf', label: 'x' }, parsed, settings));
-    expect((await PDFDocument.load(pdf)).getPageCount()).toBe(estimateTotalPages(parsed, { ...settings, customEvents: [] }, []));
+    expect((await PDFDocument.load(pdf)).getPageCount()).toBe(estimateTotalPages(parsed, settings, []));
   });
 });

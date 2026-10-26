@@ -28,7 +28,7 @@ import { finalizeEntries, parseWCIF } from '../src/lib/wcif-parser';
 import { buildCustomEntries } from '../src/lib/customScorecards';
 import type { CompetitionSettings } from '../src/types/settings';
 import { testSettings } from '../src/test/fixtures';
-import { corpus } from '../src/test/corpus';
+import { corpusWcif } from '../src/test/corpus';
 import { buildPdfJobs } from '../src/lib/pdfJobs';
 import { jobElement } from '../src/pdf/jobElement';
 import { scorecardsPerPage } from '../src/pdf/layoutConstants';
@@ -293,7 +293,7 @@ const GROUP_OVERVIEW: GroupOverviewEntry[] = [
  * `sheets` pages so the baseline stays small.
  */
 function corpusFile(id: string, over: Partial<CompetitionSettings>, suffix: string, sheets: number) {
-  const wcif = corpus().find(([cid]) => cid === id)![1];
+  const wcif = corpusWcif(id);
   const s = settings({ competitionId: id, competitionName: wcif.name, ...over });
   const parsed = parseWCIF(wcif, s);
   const job = buildPdfJobs(parsed, s).find((j) => j.filename === `${id}_${suffix}.pdf`);
