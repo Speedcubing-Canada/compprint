@@ -198,6 +198,11 @@ export function clearDownstream(): void {
   clearSettings();
 }
 
+/** On sign-out: the next organizer at this browser must not inherit the wizard. */
+export function clearFlow(): void {
+  for (const key of [...Object.values(KEYS), ...Object.values(FILE_NAME_KEYS)]) sessionStorage.removeItem(key);
+}
+
 /** Reseed the settings step: a preset changed, and its seeds must not lose to stale input. */
 export function clearSettings(): void {
   sessionStorage.removeItem(KEYS.settings);

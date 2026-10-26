@@ -30,4 +30,15 @@ export default defineConfig([
       globals: globals.browser,
     },
   },
+  // Playwright fixtures hand the test a `use()` callback the hooks rule mistakes for React's.
+  {
+    files: ['e2e/**', 'playwright.config.ts'],
+    rules: { 'react-hooks/rules-of-hooks': 'off' },
+    languageOptions: { globals: globals.node },
+  },
+  {
+    files: ['e2e/**/*.mjs'],
+    extends: [js.configs.recommended],
+    languageOptions: { globals: globals.node },
+  },
 ])

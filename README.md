@@ -196,6 +196,7 @@ they were on. Any 401 from an authed call triggers the same path, registered onc
 | `npm run test:coverage` | The same run, with coverage and its thresholds enforced |
 | `npm run lint` | ESLint |
 | `npm run typecheck` | `tsc -b` (also the first half of `npm run build`) |
+| `npm run test:e2e` | Playwright browser journeys against the production build (see below) |
 | `npm run render:fixtures` | Render every PDF headlessly to `../current-output/` (override with `FIXTURE_OUT_DIR`) |
 | `scripts/checkFixtures.sh` | Re-render the fixtures and pixel-diff them against `tests/pdf-baseline/` |
 | `scripts/updateFixtureBaseline.sh` | Refresh that baseline, after an intentional PDF change |
@@ -275,6 +276,25 @@ tested on their own and the joint is what breaks:
 - `server.test.js` starts the real express app on an ephemeral port and asserts the things that
   live in headers and status codes: the CSP directives, and `/api/event` answering 204 to
   everything so a prober learns nothing.
+
+### Browser journeys
+
+`npm run test:e2e` builds the app, serves it with the real `server.js`, and drives it in Chromium
+twice: as a desktop and as a Pixel 7. That is the only layer that sees the real CSP, the PDF
+worker loading as a module, and a download landing on disk. One spec per journey in `e2e/`:
+sign-in (and its failures, renewal, sign-out), the wizard to a zip, a custom competition with a
+CSV, mid-competition defaults, settings (an oversized logo, the French UI), and analytics.
+
+Nothing reaches WCA. `e2e/fakeWca.ts` answers the browser's WCA calls from `page.route`, serving
+the real competitions in `tests/fixtures/wcif/`. The token exchange leaves from `server.js`, so
+it goes to `e2e/fakeWcaOrigin.mjs` through the `WCA_ORIGIN` env var. Sign-in always runs the real
+PKCE redirect; nothing seeds a session. Every test fails on a console error, which is also how a
+CSP violation shows up. A test that provokes one on purpose lists it in `allowConsole`.
+
+Run one spec with `npx playwright test e2e/login.spec.ts --project desktop`. Locally, a server
+already on port 4173 is reused, so stop `npm run preview` first or it tests a stale build. CI
+uploads the HTML report and traces when a journey fails; open a trace with
+`npx playwright show-trace <trace.zip>`.
 
 ### PDF output regression
 

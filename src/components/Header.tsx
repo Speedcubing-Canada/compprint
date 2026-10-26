@@ -2,7 +2,6 @@ import { useEffect, useRef, useState } from 'react';
 import { Menu, X } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { useAuth } from '../auth/useAuth';
-import { WCA_API_URL } from '../auth/wca';
 import { useIsMobile } from '../lib/useIsMobile';
 import LanguageSelect from './LanguageSelect';
 import ThemeToggle from './ThemeToggle';
@@ -42,14 +41,14 @@ export default function Header({ showBack, onBack, showUser, showSignOut = true 
 
   const userInfo = showUser && user && (
     <>
-      <img
-        src={`${WCA_API_URL}/users/${user.id}/avatar/thumb`}
+      {user.avatar?.thumb_url && <img
+        src={user.avatar.thumb_url}
         alt=""
         width={32}
         height={32}
         className={s.avatar}
         onError={(e) => (e.currentTarget.style.display = 'none')}
-      />
+      />}
       <span className={s.userName}>{user.name}</span>
     </>
   );
