@@ -22,7 +22,7 @@ function e<P extends object>(component: (props: P) => Element, props: P): Elemen
 
 /**
  * Out of scorecardWorker.ts, which assigns `self.onmessage` at module scope and so cannot be
- * imported: this is what render.integration.test.ts exercises.
+ * imported: this is what render.pdf.test.ts exercises.
  */
 export function jobElement(
   job: PdfJob, parsed: ParsedWCIF, settings: CompetitionSettings,

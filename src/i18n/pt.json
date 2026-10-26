@@ -185,7 +185,9 @@
       "title": "Inscrição no local",
       "label": "Adicionar itens em branco para inscrições no local",
       "desc": "Uma página de crachás e fichas de novato em branco, para preencher à mão."
-    }
+    },
+    "save_failed": "Não foi possível salvar as configurações neste navegador. Permita o armazenamento do site e tente novamente.",
+    "storage_full": "Estas imagens são grandes demais para serem salvas. Use um logo ou ícone de evento menor e tente novamente."
   },
   "generate": {
     "title": "Gerar súmulas",

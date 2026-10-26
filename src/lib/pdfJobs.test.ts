@@ -120,6 +120,23 @@ describe('buildPdfJobs', () => {
     expect(jobs.map(j => j.filename)).toEqual(['Test2026_custom_Real.pdf']);
   });
 
+  // Two names that sanitise alike must not share a filename: an unzip keeps only one entry per
+  // name. Case counts as alike: macOS and Windows unzip onto case-insensitive disks.
+  it.each([
+    [['3x3 OH', '3x3-OH']],
+    [['魔方', 'ルービック']],
+    [['Mini Guildford', 'mini guildford']],
+    // A generated suffix must not land on a name someone actually typed.
+    [['Relay 2', 'Relay', 'Relay']],
+    [['Relay', 'Relay', 'Relay 2']],
+    [['Relay', 'relay ', 'Relay!']],
+  ])('gives custom events that sanitise alike distinct filenames: %j', (names) => {
+    const jobs = buildPdfJobs(mkParsed(), mkSettings({ customEvents: names.map(customEvent) }));
+    const files = jobs.map(j => j.filename);
+    expect(files).toHaveLength(names.length);
+    expect(new Set(files.map(f => f.toLowerCase())).size).toBe(names.length);
+  });
+
   it('sanitises custom names into filenames and caps them at 40 chars', () => {
     const jobs = buildPdfJobs(mkParsed(), mkSettings({
       customEvents: [customEvent('3x3 / OH — "fun"!'), customEvent('x'.repeat(60))],

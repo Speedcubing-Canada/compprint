@@ -10,6 +10,7 @@ import { vi } from 'vitest';
 import { AuthContext, type AuthState } from '../auth/useAuth';
 import { ThemeProvider } from '../theme/ThemeContext';
 import i18n from '../i18n/index';
+import { freshToken, organizer } from './fixtures';
 
 /** jsdom ships no matchMedia; ThemeContext and useIsMobile both read one. */
 export function stubMatchMedia(matches = false) {
@@ -25,20 +26,13 @@ export const anonymousAuth = {
 } as unknown as AuthState;
 
 /** `created_at` is live, not 0: pages skip their fetch when isExpired() says the token is dead. */
-export const signedInAuth = {
-  ...anonymousAuth,
-  token: {
-    access_token: 'test-token', token_type: 'Bearer', scope: 'public',
-    expires_in: 7200, created_at: Math.floor(Date.now() / 1000),
-  },
-  user: { id: 1, name: 'Test Organizer' },
-} as unknown as AuthState;
+export const signedInAuth = { ...anonymousAuth, token: freshToken(), user: organizer } as AuthState;
 
 /** Past its 2h life, so the page holds its fetch and waits out the renewal. */
 export const expiredAuth = {
   ...signedInAuth,
-  token: { ...(signedInAuth.token ?? {}), created_at: Math.floor(Date.now() / 1000) - 10_800 },
-} as unknown as AuthState;
+  token: freshToken({ created_at: Math.floor(Date.now() / 1000) - 10_800 }),
+} as AuthState;
 
 export interface ProviderOptions extends Omit<RenderOptions, 'wrapper'> {
   auth?: AuthState;

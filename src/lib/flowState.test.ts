@@ -7,9 +7,10 @@ import {
   writeSettings,
 } from './flowState';
 import type { CompetitionSettings } from '../types/settings';
+import { testSettings } from '../test/fixtures';
 
 // The storage layer of the wizard handoff (the pages themselves are driven by
-// pages/wizard.integration.test.tsx). Two things break it: a value not surviving the round
+// pages/wizard.route.test.tsx). Two things break it: a value not surviving the round
 // trip, and a missing or corrupt blob throwing on a page that is mid-render.
 
 // vitest runs in the `node` environment here, so provide the storage the module expects.
@@ -147,6 +148,32 @@ describe('custom competitions', () => {
     clearCustom();
     expect(readIsCustom()).toBe(false);
     expect(readCustomEvents()).toEqual([]);
+  });
+
+  it('keeps the events, icons included, out of the settings blob', () => {
+    const withIcon = [{ ...events[0], iconDataUrl: 'data:image/png;base64,AAAA' }];
+    writeCustom(withIcon);
+    writeSettings(testSettings({ isCustomCompetition: true, customEvents: withIcon }));
+    expect(sessionStorage.getItem('competition_settings')).not.toContain('data:image');
+    expect(readSettings()?.customEvents).toEqual(withIcon);
+  });
+
+  it('writeSettings stores the events itself', () => {
+    writeSettings(testSettings({ isCustomCompetition: true, customEvents: events }));
+    expect(readCustomEvents()).toEqual(events);
+  });
+
+  it('keeps the old events when the settings blob does not fit', () => {
+    writeCustom(events);
+    const set = sessionStorage.setItem;
+    vi.spyOn(sessionStorage, 'setItem').mockImplementation((k, v) => {
+      if (k === 'competition_settings') throw new DOMException('full', 'QuotaExceededError');
+      set(k, v);
+    });
+    const renamed = [{ ...events[0], name: 'Pyra Relay' }];
+    expect(() => writeSettings(testSettings({ isCustomCompetition: true, customEvents: renamed }))).toThrow();
+    vi.restoreAllMocks();
+    expect(readCustomEvents()).toEqual(events);
   });
 });
 

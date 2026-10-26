@@ -11,7 +11,7 @@ import { isChampionship } from '../lib/championship';
 import Tooltip from '../components/Tooltip';
 import {
   readCompetition, readCustomEvents, readDetection, readHasGroups, readIsCustom,
-  readFileName, readScope, readSettings, writeCustom, writeFileName, writeSettings,
+  readFileName, readScope, readSettings, writeFileName, writeSettings,
 } from '../lib/flowState';
 import { stageSplitSkipsRound2 } from '../lib/generationScope';
 import { mergesRounds } from '../lib/pdfJobs';
@@ -133,7 +133,10 @@ export default function SettingsPage() {
     ...(isCustom ? { customEvents: readCustomEvents() } : {}),
   }));
 
-  const patch = (fields: Partial<SettingsDraft>) => setDraft(d => ({ ...d, ...fields }));
+  const [saveError, setSaveError] = useState<'settings.storage_full' | 'settings.save_failed' | null>(null);
+  // Any organizer edit may be what makes the next save fit.
+  const edit = (update: (d: SettingsDraft) => SettingsDraft) => { setSaveError(null); setDraft(update); };
+  const patch = (fields: Partial<SettingsDraft>) => edit(d => ({ ...d, ...fields }));
 
   const {
     language, secondaryLanguage, paperFormat, secondRoundMode, logoDataUrl, useDefaultLogo,
@@ -168,10 +171,10 @@ export default function SettingsPage() {
       const { scoretakingSoftware: scoretaking, onTheSpot: ots } =
         await fetchCompetitionInfo(competitionId, token?.access_token);
       setOnTheSpot(ots);
-      if (ots && !otsTouched) patch({ otsBlanks: true });
+      if (ots && !otsTouched) setDraft(d => ({ ...d, otsBlanks: true }));
       // ILR builds its URLs from ids already in hand; nothing to look up on WCA Live.
       if (scoretaking === 'internal' && !modeTouched) {
-        patch({ liveResultsMode: 'ilr' });
+        setDraft(d => ({ ...d, liveResultsMode: 'ilr' }));
         return;
       }
       const id = await fetchWcaLiveId(competitionId);
@@ -182,7 +185,8 @@ export default function SettingsPage() {
       // Only fill an empty field: a restored or hand-typed id is the organizer's.
       setDraft(d => (d.wcaLiveId ? d : { ...d, wcaLiveId: id }));
       setWcaLiveFetchStatus('found');
-      patch({ wcaLivePersonIds: await fetchWcaLivePersonIds(id) });
+      const personIds = await fetchWcaLivePersonIds(id);
+      setDraft(d => ({ ...d, wcaLivePersonIds: personIds }));
     })();
   // competitionId is stable (from sessionStorage), no deps needed beyond mount
   // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -255,7 +259,7 @@ export default function SettingsPage() {
   }
 
   function toggleDoubleCheckRound(round: DoubleCheckRound) {
-    setDraft(d => ({
+    edit(d => ({
       ...d,
       scrambleDoubleCheckRounds: d.scrambleDoubleCheckRounds.includes(round)
         ? d.scrambleDoubleCheckRounds.filter(r => r !== round)
@@ -266,7 +270,7 @@ export default function SettingsPage() {
   // Off when the threshold is null. Ticking restores the default, not the last value.
   function toggleDcRankingRule(key: 'scrambleDoubleCheckWorldTop' | 'scrambleDoubleCheckRegionTop') {
     const fallback = key === 'scrambleDoubleCheckWorldTop' ? DC_WORLD_TOP_DEFAULT : DC_REGION_TOP_DEFAULT;
-    setDraft(d => ({ ...d, [key]: d[key] === null ? fallback : null }));
+    edit(d => ({ ...d, [key]: d[key] === null ? fallback : null }));
   }
 
   // Digits only. An emptied box holds 0 (matching nobody) while typing and snaps back to the
@@ -280,7 +284,7 @@ export default function SettingsPage() {
 
   function normalizeDcRankingTop(key: 'scrambleDoubleCheckWorldTop' | 'scrambleDoubleCheckRegionTop') {
     const fallback = key === 'scrambleDoubleCheckWorldTop' ? DC_WORLD_TOP_DEFAULT : DC_REGION_TOP_DEFAULT;
-    setDraft(d => (d[key] === 0 ? { ...d, [key]: fallback } : d));
+    edit(d => (d[key] === 0 ? { ...d, [key]: fallback } : d));
   }
 
   function handleDcOverridesChange(e: ChangeEvent<HTMLInputElement>) {
@@ -299,25 +303,28 @@ export default function SettingsPage() {
   }
 
   function handleSubmit() {
-    writeFileName('logo', logoName);
-    writeFileName('dcOverrides', dcOverridesName);
-    // Write them back so /custom and the restore above see them.
-    if (isCustom) writeCustom(draft.customEvents.filter(e => e.name.trim()));
-    writeSettings({
-      ...draft,
-      competitionId,
-      competitionName,
-      generationScope,
-      isCustomCompetition: isCustom,
-      customEvents: draft.customEvents.filter(e => e.name.trim()),
-      // Unofficial: no live results, no double-checking, no "WCA Live:" line.
-      liveResultsMode: isCustom ? 'wca-live' : draft.liveResultsMode,
-      wcaLiveId: isCustom ? null : (draft.wcaLiveId?.trim() || null),
-      wcaLivePersonIds: isCustom ? null : draft.wcaLivePersonIds,
-      hideWcaLiveId: isCustom ? true : draft.hideWcaLiveId,
-      otsBlanks: !isCustom && draft.otsBlanks,
-      scrambleDoubleCheck: !isCustom,
-    });
+    try {
+      writeSettings({
+        ...draft,
+        competitionId,
+        competitionName,
+        generationScope,
+        isCustomCompetition: isCustom,
+        customEvents: draft.customEvents.filter(e => e.name.trim()),
+        // Unofficial: no live results, no double-checking, no "WCA Live:" line.
+        liveResultsMode: isCustom ? 'wca-live' : draft.liveResultsMode,
+        wcaLiveId: isCustom ? null : (draft.wcaLiveId?.trim() || null),
+        wcaLivePersonIds: isCustom ? null : draft.wcaLivePersonIds,
+        hideWcaLiveId: isCustom ? true : draft.hideWcaLiveId,
+        otsBlanks: !isCustom && draft.otsBlanks,
+        scrambleDoubleCheck: !isCustom,
+      });
+      writeFileName('logo', logoName);
+      writeFileName('dcOverrides', dcOverridesName);
+    } catch (e) {
+      setSaveError(e instanceof DOMException && e.name === 'QuotaExceededError' ? 'settings.storage_full' : 'settings.save_failed');
+      return;
+    }
     navigate('/generate');
   }
 
@@ -970,6 +977,7 @@ export default function SettingsPage() {
         )}
 
         <div className={ui.stickyFooter}>
+          {saveError && <div role="alert"><WarningBanner>{t(saveError)}</WarningBanner></div>}
           <button className={ui.btnCta} onClick={handleSubmit}>
             {t('settings.generate_button')}
           </button>

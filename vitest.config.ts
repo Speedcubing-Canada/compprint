@@ -13,6 +13,20 @@ export default defineConfig({
     // that. Under --coverage they cross the 5s default on a loaded machine while passing on
     // their own, so the default fails CI on contention rather than on anything real.
     testTimeout: 20000,
+    // `*.route.test.tsx` mount the whole app at a URL; `*.pdf.test.ts` render real PDFs and
+    // are slow enough that running them in parallel with each other starves the pool.
+    projects: [
+      { extends: true, test: { name: 'unit', exclude: ['**/node_modules/**', '**/*.route.test.tsx', '**/*.pdf.test.ts'] } },
+      {
+        extends: true,
+        test: {
+          name: 'routes', environment: 'jsdom',
+          setupFiles: ['./src/test/setup.ts', './src/test/routeSetup.ts'],
+          include: ['src/**/*.route.test.tsx'],
+        },
+      },
+      { extends: true, test: { name: 'pdf', include: ['src/**/*.pdf.test.ts'], fileParallelism: false } },
+    ],
     coverage: {
       provider: 'v8',
       // Files no test imports are listed on purpose: the baseline has to be the
@@ -31,7 +45,7 @@ export default defineConfig({
       // coverage, so CI only ever fails on a drop. Never lower them by hand.
       // Exception, 2026-09-10: coverage-v8 5.x stopped counting two lines 4.x
       // counted as coverable. Denominator shrank, nothing lost coverage.
-      thresholds: { autoUpdate: true, lines: 91.52, functions: 88.45, branches: 82.76, statements: 89.69 },
+      thresholds: { autoUpdate: true, lines: 92.4, functions: 90.1, branches: 84.5, statements: 90.9 },
     },
   },
 });

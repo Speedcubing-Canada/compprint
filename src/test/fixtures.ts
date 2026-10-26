@@ -5,6 +5,19 @@ import type {
   Activity, Assignment, ChildActivity, Event, EventId, Person, Room, RoundFormat, WCIF,
 } from '../types/wcif';
 import type { CompetitionSettings } from '../types/settings';
+import type { WCAToken, WCAUser } from '../auth/wca';
+
+export const organizer: WCAUser = {
+  id: 1, name: 'Test Organizer', wca_id: '2010TEST01', email: '', avatar: { thumb_url: '' },
+};
+
+/** Issued now, so it has its whole 2h life ahead. */
+export function freshToken(over: Partial<WCAToken> = {}): WCAToken {
+  return {
+    access_token: 'test-token', refresh_token: 'test-refresh', token_type: 'Bearer',
+    scope: 'public manage_competitions', expires_in: 7200, created_at: Math.floor(Date.now() / 1000), ...over,
+  };
+}
 
 /** A complete, plausible settings object. Override only what the test exercises. */
 export function testSettings(over: Partial<CompetitionSettings> = {}): CompetitionSettings {

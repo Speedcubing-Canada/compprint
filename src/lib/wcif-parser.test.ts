@@ -213,6 +213,21 @@ describe('scorecard format selection', () => {
     expect(scs(result.finals)[0]?.format).toBe('bo2');
   });
 
+  // Minutes and seconds only, past an hour too: the originals print a cumulative hour as "60:00",
+  // and judges read limits that way.
+  it.each([
+    [999, 2000, '0:09', '0:20'],
+    [5999, 6000, '0:59', '1:00'],
+    [59999, 360000, '9:59', '60:00'],
+    [18050, 366099, '3:00', '61:00'],
+  ])('prints cutoff %i cs and limit %i cs as %s / %s', (cutoffCs, limitCs, cutoff, limit) => {
+    const c = ch(100, '333', 1, 1);
+    const e = evt('333', [rSpec('a', { cutoffCs, limitCs })]);
+    const r = room('Stage', [act('333', 1, [c])]);
+    const sc = scs(parseWCIF(mkWCIF([e], [r], [per(1, [{ aid: 100 }])]), cfg()).firstRound)[0];
+    expect([sc?.cutoff, sc?.limit]).toEqual([cutoff, limit]);
+  });
+
   it('null timeLimit does not throw and produces empty limit string', () => {
     const c = ch(100, '333', 1, 1);
     const e = evt('333', [rSpec('a', { limitCs: null })]);

@@ -125,8 +125,22 @@ export function clearCustom(): void {
   sessionStorage.removeItem(KEYS.customEvents);
 }
 
+/** A custom competition's events live under their own key only: their icons would count twice against the quota. */
 export function writeSettings(settings: CompetitionSettings): void {
-  sessionStorage.setItem(KEYS.settings, JSON.stringify(settings));
+  if (!settings.isCustomCompetition) {
+    sessionStorage.setItem(KEYS.settings, JSON.stringify(settings));
+    return;
+  }
+  const previous = sessionStorage.getItem(KEYS.customEvents);
+  writeCustom(settings.customEvents);
+  try {
+    sessionStorage.setItem(KEYS.settings, JSON.stringify({ ...settings, customEvents: [] }));
+  } catch (e) {
+    // All or nothing: new events beside the old blob would generate a mix of both.
+    if (previous === null) sessionStorage.removeItem(KEYS.customEvents);
+    else sessionStorage.setItem(KEYS.customEvents, previous);
+    throw e;
+  }
 }
 
 /** Untyped on purpose: an older build may have written it. `readSettings` migrates first. */
@@ -158,6 +172,7 @@ export function readSettings(): CompetitionSettings | null {
   if (s.stationsPerStage === undefined) s.stationsPerStage = null;
   if (s.liveResultsMode === undefined) s.liveResultsMode = 'wca-live';
   if (s.isCustomCompetition === undefined) s.isCustomCompetition = false;
+  if (s.isCustomCompetition) s.customEvents = readCustomEvents();
   if (s.scorecardCheckMode === undefined) s.scorecardCheckMode = 'per-group-card';
   if (s.scorecardCheckMode === 'checking-sheet') s.scorecardCheckMode = 'none';
   // Backfilled to the live defaults, not to "off": the same blob must not mean two things.

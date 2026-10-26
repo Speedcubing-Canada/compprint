@@ -2,13 +2,16 @@ import { describe, it, expect } from 'vitest';
 import { fileURLToPath } from 'node:url';
 import * as fontkit from 'fontkit';
 import {
-  textWidth, nameBox, nameLayout, nametagName, nametagNameW,
+  textWidth, nameBox, nameLayout, nametagName, nametagNameW, nametagInnerW,
   NAME_LINE_HEIGHT, NAME_MAX_FS, NAME_MIN_FS, NAMETAG_NAME_MAX_FS,
 } from './nameFit';
 import {
   NAMETAG_CONFIGS, PDF_FONT, PDF_FONT_BOLD, PDF_FONT_BOLD_EXT, PDF_FONT_EXT,
   SCORECARD_CONFIGS, nametagNameH,
 } from './layoutConstants';
+import { corpus } from '../test/corpus';
+import { randomWcif } from '../test/wcifGen';
+import { printedName } from '../lib/wcif-parser';
 
 const LONG = 'André Rodrigo César Pinheiro Monte Amado';
 const lines = (text: string) => text.split('\n');
@@ -117,5 +120,34 @@ describe('Vertical name tag name', () => {
 
   it('compact tags stay on one line', () => {
     expect(nametagName(LONG, 244, 40, true).text).toBe(LONG);
+  });
+});
+
+// Over every name in the real corpus and the generator's hard ones (long, accented, Vietnamese,
+// astral-plane): whatever size and break the layout picks must fit the box it is drawn in.
+describe('every real name fits', () => {
+  const names = [...new Set([
+    ...corpus().map(([, w]) => w),
+    ...Array.from({ length: 30 }, (_, i) => randomWcif(i + 1)),
+  ].flatMap(w => w.persons.map(p => printedName(p.name))))];
+  const widest = (text: string, fs: number, bold: boolean) => Math.max(...lines(text).map(l => textWidth(l, fs, bold)));
+
+  it.each(Object.entries(SCORECARD_CONFIGS))('its %s scorecard name box', (_paper, cfg) => {
+    const box = nameBox(cfg.cardW, true, false);
+    const over = names.filter((n) => {
+      const r = nameLayout(n, box.w, box.h);
+      return r.fontSize > NAME_MIN_FS && widest(r.text, r.fontSize, true) > box.w + 0.01;
+    });
+    expect(over).toEqual([]);
+  });
+
+  it.each(Object.entries(NAMETAG_CONFIGS))('its %s name tag panel', (_paper, cfg) => {
+    const inner = nametagInnerW(cfg.panelW);
+    const over = names.filter((n) => [false, true].some((compact) => {
+      const r = nametagName(n, cfg.panelW, nametagNameH('with-name'), compact);
+      // At the floor a name too long for one line wraps, rather than print unreadably small.
+      return r.fontSize > NAME_MIN_FS && widest(r.text, r.fontSize, false) > inner;
+    }));
+    expect(over).toEqual([]);
   });
 });

@@ -12,3 +12,7 @@ export function getCachedWcif(competitionId: string): WCIF | undefined {
 export function setCachedWcif(competitionId: string, wcif: WCIF): void {
   cache.set(competitionId, wcif);
 }
+
+export function clearWcifCache(): void {
+  cache.clear();
+}

@@ -225,21 +225,41 @@ one; only `src/assets`, `src/types`, `src/main.tsx` and the test helpers are exc
 
 ### Writing tests
 
-Tests run in Node. A test that mounts a page opts into a DOM per file with a
-`// @vitest-environment jsdom` docblock and renders through `renderWithProviders`
-(`src/test/render.tsx`), which wires the router, the theme and the auth context and stubs
-`matchMedia`, which jsdom does not implement. `src/test/fixtures.ts` has `testSettings()` (a
-complete `CompetitionSettings`) and `sampleWcif()` (a one-day competition that fills every
-bucket `parseWCIF` produces); `scripts/renderFixtures.ts` uses the same settings builder.
+Vitest runs three projects, picked by file name:
+
+| Project | Files | What it is |
+|---|---|---|
+| `unit` | `*.test.ts(x)` | Node by default. A test that mounts a component opts into a DOM with a `// @vitest-environment jsdom` docblock and renders through `renderWithProviders` (`src/test/render.tsx`) |
+| `routes` | `*.route.test.tsx` | The whole app at a URL: `renderApp(path)` (`src/test/renderApp.tsx`) mounts the real routes and `AuthProvider`. `fetch` is an in-memory WCA (`src/test/fakeWca.ts`: seed it with `addCompetition`, break an endpoint with `on()`), and the PDF worker runs the real `runJobs` on the main thread (`src/test/fakeWorker.ts`) with `pdf()` stubbed. Downloads land in `downloads` from `src/test/routeSetup.ts` |
+| `pdf` | `*.pdf.test.ts` | Real `@react-pdf` rendering, one file at a time |
+
+Run one with `npx vitest run --project routes`.
+
+Test data:
+
+- `src/test/fixtures.ts`: `testSettings()` (a complete `CompetitionSettings`) and `sampleWcif()`,
+  a one-day competition that fills every bucket `parseWCIF` produces.
+  `scripts/renderFixtures.ts` uses the same settings builder.
+- `src/test/wcifGen.ts`: `randomWcif(seed)` builds small, messy competitions. They have random
+  events (FMC and MBLD included), stages, stations, and hard names. They also include the people
+  the parser must leave out: withdrawn, pending, staff-only, and organizer accounts with no
+  registration. `scripts/bench.ts` uses the same generator through its fixed profiles.
+- `tests/fixtures/wcif/*.json`: real competitions, loaded with `corpus()` from
+  `src/test/corpus.ts`. Add one with
+  `npx vite-node scripts/fetchWcifFixtures.ts -- <competitionId>`. The script only reads the
+  **public** WCIF, and it still strips `email`, `birthdate`, comments and admin notes, because the
+  repo is public. `src/test/corpus.test.ts` fails if any of those, or anything shaped like an
+  email address, shows up in a fixture. Never hand-copy a WCIF from a manager's session into the
+  repo.
 
 Four files cover seams rather than single modules, because the halves either side of each are
 tested on their own and the joint is what breaks:
 
-- `src/pages/wizard.integration.test.tsx` drives the real routes (`AppRoutes`) through picker →
-  scope → settings → generate, using only the UI. The wizard's steps share no React state, so
+- `src/pages/wizard.route.test.tsx` drives the real routes (`AppRoutes`) through picker →
+  scope → settings → generate → download, using only the UI. The wizard's steps share no React state, so
   this is what proves they agree about the same competition. `flowState.test.ts` still owns the
   sessionStorage layer, and each page test still owns its own rendering.
-- `src/pdf/render.integration.test.ts` renders every job kind `buildPdfJobs` can emit through the
+- `src/pdf/render.pdf.test.ts` renders every job kind `buildPdfJobs` can emit through the
   real documents with `renderToBuffer`. It asserts only that a valid PDF comes out, never layout:
   the `*-layout.test.ts` files own the measurements, and `scripts/checkFixtures.sh` owns the pixels.
 - `src/pdf/renderBundle.test.ts` covers the orchestration around that - which jobs run, bare PDF

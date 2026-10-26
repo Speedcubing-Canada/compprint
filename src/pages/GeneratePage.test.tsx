@@ -34,7 +34,7 @@ const mockWcif = vi.mocked(fetchWcif);
 //
 // The worker itself is stubbed: jsdom implements no Worker, and vitest cannot load
 // a `new URL(..., import.meta.url)` module worker. Rendering is covered headlessly
-// by src/pdf/render.integration.test.ts instead.
+// by src/pdf/render.pdf.test.ts instead.
 
 const posted: unknown[] = [];
 // The handler the page installed, so a test can play worker messages back at it.
@@ -102,10 +102,8 @@ describe('GeneratePage', () => {
   });
 
   it('needs no WCIF for a custom competition', async () => {
-    writeSettings(testSettings({
-      isCustomCompetition: true,
-      customEvents: [{ name: 'Mystery', iconDataUrl: null, format: 'avg5', cutoff: '', limit: '' }],
-    }));
+    const customEvents = [{ name: 'Mystery', iconDataUrl: null, format: 'avg5' as const, cutoff: '', limit: '' }];
+    writeSettings(testSettings({ isCustomCompetition: true, customEvents }));
     renderWithProviders(<GeneratePage />, { auth: signedInAuth });
 
     await downloadButton();
