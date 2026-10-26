@@ -203,13 +203,14 @@ they were on. Any 401 from an authed call triggers the same path, registered onc
 | `npm run bench` | Time and heap for a whole generation, on a synthetic competition (`small`/`medium`/`wc`) |
 | `npm run record:walkthrough` | Re-record `docs/readme/walkthrough.gif` after a UI change (needs ffmpeg; `-- --shots` for one PNG per step) |
 
-Lint, typecheck and `test:coverage` run in CI **once per commit**: on every PR, and on pushes
-to `main`. There is no staging environment, so that job is the only thing between a branch and
-production. A second job, `pdf-fixtures`, runs the pixel diff alongside it. The PR run tests the
+CI runs three jobs **once per commit**, on every PR and on pushes to `main`: lint, typecheck and
+`test:coverage`; the pixel diff (`pdf-fixtures`); and the browser journeys (`e2e`). There is no
+staging environment, so those three are the only thing between a branch and production, and the
+deploy waits for all of them. The PR run tests the
 branch merged with `main` rather than the branch head, which is what actually lands. A branch
 with no PR open gets no CI - open the PR.
 
-`main` is protected: that job must be green and the branch must be up to date with `main`
+`main` is protected: all three must be green and the branch must be up to date with `main`
 before a PR can merge, and force-pushes and deletion are blocked. Admins are not bound by it,
 so an emergency fix can still go straight in.
 
@@ -315,8 +316,7 @@ it.
 It passes below a max page MAE of `0.002` (override with `FIXTURE_MAE_TOLERANCE`) rather than
 demanding pixel identity, because the CI runner's poppler and font stack are not the ones a
 baseline was rendered on. For scale, a 1pt padding change measures about `0.02`. The CI job runs
-`continue-on-error` until that tolerance has proved itself across a few PRs; promote it to a
-required check by dropping that line and adding it to `deploy.needs`.
+on a pinned runner image, so poppler only changes when someone bumps it.
 
 When it fails, look at the red-highlighted diff images it points at (CI uploads them as the
 `pdf-fixture-diff` artifact). If the change was intended, run `scripts/updateFixtureBaseline.sh`
