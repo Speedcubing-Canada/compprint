@@ -106,9 +106,7 @@ jobs:
   # unit tests assert measurements; this catches what they cannot see - a changed colour, a
   # shifted margin, a dropped glyph - on documents that get printed and cut.
   #
-  # A pinned image rather than ubuntu-latest: poppler and graphicsmagick come from its apt
-  # archive, so a new image could move the rasteriser under the tolerance without any change
-  # here. Bump it on purpose, and rerun this job before trusting a red.
+  # Pinned: poppler comes from the image's apt archive, so a new image can shift the rasteriser.
   pdf-fixtures:
     name: PDF output regression
     runs-on: ubuntu-24.04

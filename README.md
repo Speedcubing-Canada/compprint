@@ -206,13 +206,12 @@ they were on. Any 401 from an authed call triggers the same path, registered onc
 CI runs three jobs **once per commit**, on every PR and on pushes to `main`: lint, typecheck and
 `test:coverage`; the pixel diff (`pdf-fixtures`); and the browser journeys (`e2e`). There is no
 staging environment, so those three are the only thing between a branch and production, and the
-deploy waits for all of them. The PR run tests the
-branch merged with `main` rather than the branch head, which is what actually lands. A branch
-with no PR open gets no CI - open the PR.
+deploy waits for all of them. The PR run tests the branch merged with `main` rather than the
+branch head, which is what actually lands. A branch with no PR open gets no CI - open the PR.
 
 `main` is protected: all three must be green and the branch must be up to date with `main`
 before a PR can merge, and force-pushes and deletion are blocked. Admins are not bound by it,
-so an emergency fix can still go straight in.
+so an emergency fix can still go straight in, though its deploy still waits for all three jobs.
 
 Run `npm run test:coverage`, not `npm test`, before pushing: only the former enforces the
 coverage thresholds, so it is the one that matches CI.
