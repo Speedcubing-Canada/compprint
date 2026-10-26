@@ -390,12 +390,14 @@ async function main() {
     e(ScorecardDocument, { entries: COVERS, settings: settings({ language: 'fr' }) }),
   );
 
-  // A custom event with a CSV list (named cards padded to a sheet) beside one of blanks.
+  // A custom event with a CSV list (named cards padded to a sheet), and two of blanks.
   const custom = settings({
     customEvents: [
       { name: 'Team Blind', iconDataUrl: null, format: 'mo3', cutoff: '', limit: '5:00',
         competitors: [{ name: 'Ali Hakim', wcaId: '2019HAKI01' }, { name: 'Matheus de Souza Macêdo', wcaId: '' }] },
       { name: '3x3 With Feet', iconDataUrl: null, format: 'avg5', cutoff: '1:30', limit: '3:00' },
+      // The limit is optional on a custom event.
+      { name: 'Mystery Puzzle', iconDataUrl: null, format: 'mo3', cutoff: '', limit: '' },
     ],
   });
   await write('custom-event-test.pdf', e(ScorecardDocument, {

@@ -1,7 +1,12 @@
+import { execFileSync } from 'node:child_process';
+import { mkdtempSync, writeFileSync } from 'node:fs';
+import { tmpdir } from 'node:os';
+import { join } from 'node:path';
 import { test as base, expect, type Download, type Page } from '@playwright/test';
 import { unzipSync } from 'fflate';
 import { PDFDocument } from 'pdf-lib';
 import { CHANGELOG } from '../src/changelog';
+import type { WCIF } from '../src/types/wcif';
 import { FakeWca } from './fakeWca';
 
 export { expect };
@@ -10,21 +15,24 @@ type Fixtures = {
   wca: FakeWca;
   /** Console errors a test expects, such as the 401 it provokes. Anything else fails the test. */
   allowConsole: RegExp[];
-  loginAs: (page?: Page) => Promise<void>;
+  /** Signs in through the real PKCE redirect. */
+  loginAs: () => Promise<void>;
+  /** Puts the competition on the fake WCA, signs in and picks it: the start of most journeys. */
+  pick: (wcif: WCIF) => Promise<void>;
 };
 
 export const test = base.extend<Fixtures>({
   allowConsole: [[], { option: true }],
 
-  wca: async ({ page }, use) => {
+  wca: [async ({ page }, use) => {
     const wca = new FakeWca();
     await wca.install(page);
     // A UI preference, not auth: keeps the What's New dialog from covering the first page.
     await page.addInitScript((id) => localStorage.setItem('changelog_seen', id), CHANGELOG[0]!.id);
     await use(wca);
-  },
+  }, { auto: true }],
 
-  // Auto: every test fails on a console error or a CSP violation, which Chromium logs as one.
+  // Every test fails on a console error or a CSP violation, which Chromium logs as one.
   page: async ({ page, allowConsole }, use) => {
     const errors: string[] = [];
     page.on('console', (m) => { if (m.type() === 'error') errors.push(m.text()); });
@@ -33,12 +41,20 @@ export const test = base.extend<Fixtures>({
     expect(errors.filter((e) => !allowConsole.some((re) => re.test(e)))).toEqual([]);
   },
 
-  loginAs: async ({ page, wca }, use) => {
-    await use(async (p = page) => {
-      void wca;
-      await p.goto('/');
-      await p.getByRole('button', { name: 'Sign in with WCA' }).click();
-      await p.waitForURL('**/competitions');
+  loginAs: async ({ page }, use) => {
+    await use(async () => {
+      await page.goto('/');
+      await page.getByRole('button', { name: 'Sign in with WCA' }).click();
+      await page.waitForURL('**/competitions');
+    });
+  },
+
+  pick: async ({ page, wca, loginAs }, use) => {
+    await use(async (wcif) => {
+      wca.add(wcif);
+      await loginAs();
+      await page.getByText(wcif.name).click();
+      await page.getByRole('button', { name: 'Continue →' }).waitFor();
     });
   },
 });
@@ -58,3 +74,10 @@ async function read(dl: Download): Promise<Uint8Array> {
 }
 
 export const pageCount = async (pdf: Uint8Array) => (await PDFDocument.load(pdf)).getPageCount();
+
+/** The PDF's text, through poppler: the CI job installs it. */
+export function pdfText(pdf: Uint8Array): string {
+  const path = join(mkdtempSync(join(tmpdir(), 'e2e-pdf-')), 'doc.pdf');
+  writeFileSync(path, pdf);
+  return execFileSync('pdftotext', ['-raw', path, '-'], { encoding: 'utf8' });
+}

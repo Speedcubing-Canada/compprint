@@ -7,11 +7,12 @@ import { sanitizeEvent } from './analytics.js';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
-const DIST_DIR = path.join(__dirname, 'dist');
+// The E2E suite serves its own build (playwright.config.ts).
+const DIST_DIR = path.join(__dirname, process.env.DIST_DIR || 'dist');
 const INDEX_PATH = path.join(DIST_DIR, 'index.html');
 const PORT = Number(process.env.PORT || 8080);
 const CANONICAL_ORIGIN = 'https://compprint.net';
-// The E2E suite points this at a local fake (e2e/fakeWcaOrigin.mjs).
+// The E2E suite points this at a local fake (e2e/fakeWcaOrigin.ts).
 const WCA_ORIGIN = process.env.WCA_ORIGIN || 'https://www.worldcubeassociation.org';
 const TYPO_HOSTS = new Set([
   'www.compprint.net', 'comprint.speedcubingcanada.org', 'www.comprint.speedcubingcanada.org',

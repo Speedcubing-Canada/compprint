@@ -5,6 +5,9 @@ node_modules/
 vitest.config.ts
 eslint.config.js
 scripts/
+e2e/
+dist-e2e/
+playwright.config.ts
 *.test.*
 
 # Misc

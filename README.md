@@ -286,15 +286,23 @@ sign-in (and its failures, renewal, sign-out), the wizard to a zip, a custom com
 CSV, mid-competition defaults, settings (an oversized logo, the French UI), and analytics.
 
 Nothing reaches WCA. `e2e/fakeWca.ts` answers the browser's WCA calls from `page.route`, serving
-the real competitions in `tests/fixtures/wcif/`. The token exchange leaves from `server.js`, so
-it goes to `e2e/fakeWcaOrigin.mjs` through the `WCA_ORIGIN` env var. Sign-in always runs the real
-PKCE redirect; nothing seeds a session. Every test fails on a console error, which is also how a
-CSP violation shows up. A test that provokes one on purpose lists it in `allowConsole`.
+the real competitions in `tests/fixtures/wcif/` through `src/test/wcaApi.ts`, the same API the
+route tests' fake serves. The token exchange leaves from `server.js`, so it goes to
+`e2e/fakeWcaOrigin.ts` through the `WCA_ORIGIN` env var. That fake checks what WCA checks: the
+client, the redirect URI, the PKCE verifier against the challenge, and that a refresh token is
+spent once. Access tokens expire on the clock, so renewal is tested for real. Their shared
+contract (ports, ids, how codes and tokens are encoded) is `e2e/protocol.ts`.
 
-Run one spec with `npx playwright test e2e/login.spec.ts --project desktop`. Locally, a server
-already on port 4173 is reused, so stop `npm run preview` first or it tests a stale build. CI
-uploads the HTML report and traces when a journey fails; open a trace with
-`npx playwright show-trace <trace.zip>`.
+Sign-in always runs the real redirect; nothing seeds a session. Every test fails on a console
+error, which is also how a CSP violation shows up. A test that provokes one on purpose lists it
+in `allowConsole`. The custom-competition journey reads the PDF back with `pdftotext`, so
+locally it needs `poppler-utils`.
+
+Run one spec with `npx playwright test e2e/login.spec.ts --project desktop`. The run builds into
+`dist-e2e/` with a fake client id, leaving your `dist/` alone, and serves it with
+`DIST_DIR=dist-e2e`. Locally, servers already on ports 4173 and 4180 are reused, so stop
+`npm run preview` first or it tests a stale build. CI uploads the HTML report and traces when a
+journey fails; open a trace with `npx playwright show-trace <trace.zip>`.
 
 ### PDF output regression
 

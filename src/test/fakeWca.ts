@@ -6,11 +6,12 @@
 // token it was given and rotates in a new one.
 
 import { vi } from 'vitest';
-import type { WCACompetition, WCIF } from '../types/wcif';
+import type { WCIF } from '../types/wcif';
 import type { WCAToken } from '../auth/wca';
 import { freshToken, organizer } from './fixtures';
+import { addCompetition as add, answerWca, emptyWcaData, type ManagedCompetition } from './wcaApi';
 
-export type ManagedCompetition = Pick<WCACompetition, 'id' | 'name' | 'city' | 'country_iso2' | 'start_date' | 'end_date'>;
+export type { ManagedCompetition };
 
 type Request = { url: URL; method: string; init: RequestInit | undefined; body: string };
 /** `next()` answers as the fake would have without the override. */
@@ -18,14 +19,7 @@ type Handler = (req: Request, next: () => Promise<Response>) => Response | Promi
 
 function emptyBackend() {
   return {
-    me: organizer,
-    competitions: [] as ManagedCompetition[],
-    wcifs: new Map<string, WCIF>(),
-    /** Fields of the single-competition endpoint, by id. Absent answers 404. */
-    info: new Map<string, { scoretaking_software?: string; on_the_spot_registration?: boolean }>(),
-    /** WCA Live: wcaId → live id, and live id → competitors. */
-    liveIds: new Map<string, string>(),
-    livePeople: new Map<string, { id: string; registrantId: number }[]>(),
+    ...emptyWcaData(organizer),
     /** Access tokens the API has issued; past `created_at + expires_in` they answer 401. */
     issued: new Map<string, WCAToken>(),
     /** The one refresh token that still works. */
@@ -73,37 +67,8 @@ function authed(init: RequestInit | undefined): boolean {
 async function route(req: Request): Promise<Response> {
   const { url, method, init, body } = req;
 
-  if (url.host === 'www.worldcubeassociation.org' && url.pathname.startsWith('/api/v0/')) {
-    const path = url.pathname.slice('/api/v0'.length);
-    const wcif = path.match(/^\/competitions\/([^/]+)\/wcif\/version\/2$/);
-    const single = path.match(/^\/competitions\/([^/]+)$/);
-    if (single) {
-      const info = backend.info.get(single[1]);
-      return info ? json(info) : json({ error: 'not found' }, 404);
-    }
-    if (!authed(init)) return json({ error: 'invalid_token' }, 401);
-    if (path === '/me') return json({ me: backend.me });
-    if (path === '/competitions' && url.searchParams.get('managed_by_me') === 'true') {
-      const perPage = Number(url.searchParams.get('per_page') ?? 25);
-      const page = Number(url.searchParams.get('page') ?? 1);
-      return json(backend.competitions.slice((page - 1) * perPage, page * perPage));
-    }
-    if (wcif) {
-      const found = backend.wcifs.get(wcif[1]);
-      return found ? json(structuredClone(found)) : json({ error: 'not found' }, 404);
-    }
-  }
-
-  if (url.host === 'live.worldcubeassociation.org' && url.pathname === '/api' && method === 'POST') {
-    const { query, variables } = JSON.parse(body) as { query: string; variables?: { id: string } };
-    if (query.includes('competitions {')) {
-      return json({ data: { competitions: [...backend.liveIds].map(([wcaId, id]) => ({ id, wcaId })) } });
-    }
-    if (variables?.id) {
-      const competitors = backend.livePeople.get(variables.id);
-      return json({ data: { competition: competitors ? { competitors } : null } });
-    }
-  }
+  const api = answerWca(backend, { url, method, body, authed: authed(init) });
+  if (api) return json(api[1], api[0]);
 
   if (url.origin === window.location.origin) {
     if (url.pathname === '/wca-token' && method === 'POST') {
@@ -137,10 +102,5 @@ export function stubWcaFetch() {
 
 /** Register a competition everywhere the app looks for it. The listing is upcoming by default. */
 export function addCompetition(wcif: WCIF, over: Partial<ManagedCompetition> = {}) {
-  backend.wcifs.set(wcif.id, wcif);
-  backend.competitions.push({
-    id: wcif.id, name: wcif.name, city: 'Montréal', country_iso2: 'CA',
-    // The picker hides past competitions, and the fixtures' dates are long gone.
-    start_date: '2999-05-16', end_date: '2999-05-16', ...over,
-  });
+  add(backend, wcif, over);
 }

@@ -165,13 +165,16 @@ function ScorecardCard({
 
   // The 6-column layout's result column is narrower, so compact suffixes keep the bilingual
   // header off a fourth line.
-  const resultSuffix = doubleCheck
+  const limitSuffix = doubleCheck
     ? (card.isCumulative ? strings.shortCumulativeSuffix(card.limit)
        : isMBF           ? strings.mbfSuffix
        :                   strings.shortDnfSuffix(card.limit))
     : (card.isCumulative ? strings.cumulativeSuffix(card.limit)
        : isMBF           ? strings.mbfSuffix
        :                   strings.dnfSuffix(card.limit));
+  // A custom event's limit is optional. Without one the line stays, blank, so the rows keep
+  // the height every other card has.
+  const resultSuffix = card.limit === '' && !isMBF ? limitSuffix.replace(/[^\n]+/g, '\u00a0') : limitSuffix;
 
   // Prefix and suffix each hold two lines; merge per language so each takes exactly one.
   const prefLines = strings.resultPrefix.split('\n');

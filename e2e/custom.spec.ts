@@ -1,4 +1,4 @@
-import { test, expect, download, pageCount } from './fixtures';
+import { test, expect, download, pageCount, pdfText } from './fixtures';
 
 test('a custom competition with a CSV of competitors prints one named card each', async ({ page, loginAs }) => {
   await loginAs();
@@ -19,4 +19,10 @@ test('a custom competition with a CSV of competitors prints one named card each'
   // One event is one PDF, shipped bare; two named cards pad to a single sheet of four.
   expect(name).toMatch(/\.pdf$/);
   expect(await pageCount(files[name]!)).toBe(1);
+  // A long name wraps on the card, so compare words, not lines.
+  const text = pdfText(files[name]!).replace(/\s+/g, ' ');
+  expect(text).toContain('Ali Hakim 2019HAKI01');
+  expect(text).toContain('Matheus de Souza Macêdo');
+  // No time limit was given, so no limit line either.
+  expect(text).not.toContain('DNF if not under');
 });

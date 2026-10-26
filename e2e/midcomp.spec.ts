@@ -14,11 +14,8 @@ function midComp() {
   return wcif;
 }
 
-test('mid-competition, the defaults print the latest round only', async ({ page, wca, loginAs }) => {
-  const wcif = midComp();
-  wca.add(wcif);
-  await loginAs();
-  await page.getByText('Pickering Blindfolded 2026').click();
+test('mid-competition, the defaults print the latest round only', async ({ page, pick }) => {
+  await pick(midComp());
 
   await expect(page.getByRole('radio', { name: /Latest round only/ })).toBeChecked();
   for (const doc of ['Schedule Tracker', 'Nametags']) await expect(page.getByRole('checkbox', { name: doc })).not.toBeChecked();

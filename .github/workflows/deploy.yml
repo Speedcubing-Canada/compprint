@@ -168,8 +168,9 @@ jobs:
           path: ~/.cache/ms-playwright
           key: playwright-${{ runner.os }}-${{ hashFiles('package-lock.json') }}
 
-      - name: Install Chromium
-        run: npx playwright install --with-deps chromium
+      # pdftotext reads a downloaded PDF back in e2e/custom.spec.ts.
+      - name: Install Chromium and poppler-utils
+        run: npx playwright install --with-deps chromium && sudo apt-get install -y poppler-utils
 
       - name: Run the journeys
         run: npm run test:e2e

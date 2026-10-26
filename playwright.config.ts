@@ -1,11 +1,10 @@
 import { defineConfig, devices } from '@playwright/test';
+import { APP_PORT, CLIENT_ID, CLIENT_SECRET, FAKE_WCA_ORIGIN, FAKE_WCA_PORT, REDIRECT_URI } from './e2e/protocol';
 
 // The production build behind the production server, so the real CSP, SPA fallback and token
 // proxy are what the browser meets. The WCA API is faked per page (e2e/fakeWca.ts); the token
-// exchange leaves from server.js, so it goes to e2e/fakeWcaOrigin.mjs through WCA_ORIGIN.
-
-const PORT = 4173;
-const FAKE_WCA_PORT = 4180;
+// exchange leaves from server.js, so it goes to e2e/fakeWcaOrigin.ts through WCA_ORIGIN.
+// Built into dist-e2e/, so a run never leaves its fake client id in the developer's dist/.
 
 export default defineConfig({
   testDir: 'e2e',
@@ -14,7 +13,7 @@ export default defineConfig({
   forbidOnly: !!process.env.CI,
   reporter: process.env.CI ? [['list'], ['html', { open: 'never' }]] : 'list',
   use: {
-    baseURL: `http://localhost:${PORT}`,
+    baseURL: `http://localhost:${APP_PORT}`,
     trace: 'retain-on-failure',
     locale: 'en-US',
   },
@@ -24,20 +23,22 @@ export default defineConfig({
   ],
   webServer: [
     {
-      command: 'node e2e/fakeWcaOrigin.mjs',
-      env: { FAKE_WCA_PORT: String(FAKE_WCA_PORT) },
+      command: 'node e2e/fakeWcaOrigin.ts',
       port: FAKE_WCA_PORT,
       reuseExistingServer: !process.env.CI,
     },
     {
-      command: 'npm run build && node server.js',
+      command: 'vite build --outDir dist-e2e --emptyOutDir && node server.js',
       env: {
-        PORT: String(PORT),
-        VITE_WCA_CLIENT_ID: 'e2e-client',
-        WCA_CLIENT_SECRET: 'e2e-secret',
-        WCA_ORIGIN: `http://127.0.0.1:${FAKE_WCA_PORT}`,
+        PORT: String(APP_PORT),
+        DIST_DIR: 'dist-e2e',
+        // Pinned over the developer's .env, which may point either at another port.
+        VITE_WCA_CLIENT_ID: CLIENT_ID,
+        VITE_WCA_REDIRECT_URI: REDIRECT_URI,
+        WCA_CLIENT_SECRET: CLIENT_SECRET,
+        WCA_ORIGIN: FAKE_WCA_ORIGIN,
       },
-      port: PORT,
+      port: APP_PORT,
       timeout: 180_000,
       reuseExistingServer: !process.env.CI,
     },

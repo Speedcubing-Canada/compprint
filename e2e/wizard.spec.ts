@@ -5,12 +5,8 @@ import { realWcif } from './fakeWca';
 const stat = (page: import('@playwright/test').Page, label: string) =>
   page.getByText(label, { exact: true }).locator('xpath=preceding-sibling::*[1]').innerText();
 
-test('picks a competition, prints everything, and downloads what the page promised', async ({ page, wca, loginAs }) => {
-  wca.add(realWcif('PickeringBlindfolded2026'));
-  await loginAs();
-
-  await page.getByText('Pickering Blindfolded 2026').click();
-  await page.getByRole('heading', { name: 'What to generate' }).waitFor();
+test('picks a competition, prints everything, and downloads what the page promised', async ({ page, pick }) => {
+  await pick(realWcif('PickeringBlindfolded2026'));
   for (const box of await page.getByRole('group', { name: 'Document types' }).getByRole('checkbox').all()) await box.check();
   await page.getByRole('button', { name: 'Continue →' }).click();
   await page.getByRole('button', { name: 'Generate →' }).click();

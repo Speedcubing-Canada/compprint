@@ -2,13 +2,12 @@ import { test, expect, download } from './fixtures';
 import { organizer, realWcif } from './fakeWca';
 import { sanitizeEvent } from '../analytics.js';
 
-test('usage events survive the server sanitiser untouched and carry nobody\'s name', async ({ page, wca, loginAs }) => {
+test('usage events survive the server sanitiser untouched and carry nobody\'s name', async ({ page, pick }) => {
   const sent: unknown[] = [];
   page.on('request', (r) => { if (r.url().endsWith('/api/event')) sent.push(JSON.parse(r.postData() ?? 'null')); });
 
-  const wcif = wca.add(realWcif('PickeringBlindfolded2026'));
-  await loginAs();
-  await page.getByText('Pickering Blindfolded 2026').click();
+  const wcif = realWcif('PickeringBlindfolded2026');
+  await pick(wcif);
   await page.getByRole('button', { name: 'Continue →' }).click();
   await page.getByRole('button', { name: 'Generate →' }).click();
   await download(page, 'Download');
