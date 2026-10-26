@@ -41,6 +41,7 @@ export interface ScheduleStrings {
   actualEnd: string;
   numberOfCompetitors: string;
   dayPrefix: string;
+  attemptLabel: (n: number) => string;
   roundLabel: (n: number) => string;
   finalLabel: string;
 }
@@ -354,6 +355,7 @@ const SCHEDULE_EN: ScheduleStrings = {
   actualEnd: 'Actual\nEnd Time',
   numberOfCompetitors: 'Number of\nCompetitors',
   dayPrefix: 'Day',
+  attemptLabel: (n) => `Attempt ${n}`,
   roundLabel: (n) => `Round ${n}`,
   finalLabel: 'Final',
 };
@@ -367,6 +369,7 @@ const SCHEDULE_FR: ScheduleStrings = {
   actualEnd: 'Heure de\nfin réelle',
   numberOfCompetitors: 'Nombre de\ncompétiteurs',
   dayPrefix: 'Jour',
+  attemptLabel: (n) => `Essai ${n}`,
   roundLabel: (n) => `Tour ${n}`,
   finalLabel: 'Final',
 };
@@ -380,6 +383,7 @@ const SCHEDULE_ES: ScheduleStrings = {
   actualEnd: 'Hora de\nfin real',
   numberOfCompetitors: 'Número de\ncompetidores',
   dayPrefix: 'Día',
+  attemptLabel: (n) => `Intento ${n}`,
   roundLabel: (n) => `Ronda ${n}`,
   finalLabel: 'Final',
 };
@@ -393,6 +397,7 @@ const SCHEDULE_PT: ScheduleStrings = {
   actualEnd: 'Horário de\nTérmino Real',
   numberOfCompetitors: 'Número de\nCompetidores',
   dayPrefix: 'Dia',
+  attemptLabel: (n) => `Tentativa ${n}`,
   roundLabel: (n) => `Rodada ${n}`,
   finalLabel: 'Final',
 };

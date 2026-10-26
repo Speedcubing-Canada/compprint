@@ -1223,6 +1223,42 @@ describe('schedule tracker', () => {
     expect(result.scheduleDays[0]?.stages[0]?.stageName).toBe('Stage');
   });
 
+  // FMC and multi-attempt MBLD are scheduled per attempt ("333fm-r1-a1"), not per round, and an
+  // FMC-only competition still needs a tracker.
+  it('lists each FMC and MBLD attempt as its own row, and one row per round on the checklist', () => {
+    const attempt = (eventId: string, n: number, hh: string): Activity => ({
+      id: uid(), name: '', activityCode: `${eventId}-r1-a${n}`,
+      startTime: `2024-01-01T${hh}:00:00Z`, endTime: `2024-01-01T${hh}:59:00Z`,
+      childActivities: [], scrambleSets: [],
+    });
+    const r = room('Stage', [attempt('333fm', 1, '09'), attempt('333fm', 2, '11'), attempt('333mbf', 1, '13')]);
+    const result = parseWCIF(mkWCIF([evt('333fm', [rSpec('m')]), evt('333mbf', [rSpec('2')])], [r]), cfg());
+    expect(result.scheduleDays[0]?.stages[0]?.rows.map(row => row.eventRound)).toEqual([
+      'FMC Final (Attempt 1)',
+      'FMC Final (Attempt 2)',
+      '3x3x3 Multi-Blind Final (Attempt 1)',
+    ]);
+    expect(result.checkingDays[0]?.rows.map(row => [row.eventRound, row.startTime, row.endTime])).toEqual([
+      ['FMC Final', '10:00', '12:59'],
+      ['3x3x3 Multi-Blind Final', '14:00', '14:59'],
+    ]);
+  });
+
+  it('counts an attempt\'s groups once per round on the checklist', () => {
+    const attempt = (n: number, hh: string): Activity => ({
+      id: uid(), name: '', activityCode: `333fm-r1-a${n}`,
+      startTime: `2024-01-01T${hh}:00:00Z`, endTime: `2024-01-01T${hh}:59:00Z`,
+      childActivities: [1, 2].map(g => ({
+        id: uid(), name: '', activityCode: `333fm-r1-g${g}-a${n}`,
+        startTime: `2024-01-01T${hh}:00:00Z`, endTime: `2024-01-01T${hh}:59:00Z`,
+        childActivities: [], scrambleSets: [],
+      })),
+      scrambleSets: [],
+    });
+    const result = parseWCIF(mkWCIF([evt('333fm', [rSpec('m')])], [room('Stage', [attempt(1, '09'), attempt(2, '11')])]), cfg());
+    expect(result.checkingDays[0]?.rows.map(row => row.groupCount)).toEqual([2]);
+  });
+
   it('two rooms on the same day produce one day with two stages', () => {
     const e = evt('333', [rSpec('a'), rSpec('a')]);
     const rA = room('Stage A', [act('333', 1, [ch(100, '333', 1, 1)])]);
@@ -2617,6 +2653,26 @@ describe('checking sheet: one table per day', () => {
     expect(rows.map(x => x.breakBefore)).toEqual([false, true]);
   });
 
+  // The checklist prints no attempt rows, so an attempt must not stand in as the row before lunch.
+  it('keeps the lunch line when an FMC attempt starts during lunch in another room', () => {
+    const fmc: Activity = {
+      id: 900, name: '', activityCode: '333fm-r1-a1', startTime: '2024-01-01T12:15:00Z',
+      endTime: '2024-01-01T13:15:00Z', childActivities: [], scrambleSets: [],
+    };
+    const wcif = mkWCIF([evt('333', [rSpec('a')]), evt('222', [rSpec('a')]), evt('333fm', [rSpec('m')])], [
+      room('Main', [
+        act('333', 1, [ch(100, '333', 1, 1, '2024-01-01T09:00:00Z')]),
+        otherAct('Lunch', '2024-01-01T12:00:00Z'),
+        act('222', 1, [ch(101, '222', 1, 1, '2024-01-01T13:30:00Z')]),
+      ]),
+      room('Side', [fmc]),
+    ]);
+    const rows = parseWCIF(wcif, cfg()).checkingDays[0]?.rows ?? [];
+    expect(rows.map(x => [x.eventRound, x.breakBefore])).toEqual([
+      ['3x3x3 Cube Final', false], ['FMC Final', true], ['2x2x2 Cube Final', false],
+    ]);
+  });
+
   it('leaves the schedule tracker one table per room', () => {
     // The tracker records when each stage actually runs, which merging would erase.
     const parsed = parseWCIF(twoRooms('Red Stage', 'Blue Stage'), cfg());
@@ -3107,6 +3163,18 @@ describe('finals station numbers', () => {
     return { stations: result.stations, groups: new Set(scs(result.finals).map(c => c.group)) };
   }
   const stationary = (g: Set<string>) => g.has('Station 01') && g.has('Station 16');
+
+  // The cover label ("Grupo 1 de 1") and the station label ("Estación 01") sort differently per
+  // language; the cover must still land on top of its pile.
+  it.each(['en', 'fr', 'es', 'pt'] as const)('puts the cover on top of its station cards in %s', (language) => {
+    const e = evt('222', [rSpec('a', { adv: { type: 'ranking', level: 16 } }), rSpec('a')]);
+    const r = room('Stage', [
+      act('222', 1, [ch(100, '222', 1, 1)]),
+      act('222', 2, [ch(110, '222', 2, 1, '2024-01-01T14:00:00Z')]),
+    ]);
+    const result = parseWCIF(mkWCIF([e], [r], [per(1, [{ aid: 100 }])]), cfg({ language }));
+    expect(unimpose(result.finals).filter(c => c.eventId === '222')[0]?.kind).toBe('cover');
+  });
 
   it('keeps station numbers when no station count is known', () => {
     const { groups, stations } = finalGroups({});

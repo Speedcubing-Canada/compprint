@@ -26,7 +26,7 @@ export interface RoundRef {
   roundNum: number;
 }
 
-const SCORECARD_BUCKETS = ['firstRound', 'intermediate', 'semis', 'finals'] as const;
+export const SCORECARD_BUCKETS = ['firstRound', 'intermediate', 'semis', 'finals'] as const;
 
 // Every distinct (eventId, roundNum) that produces scorecards, in bucket → encounter order.
 // Drives the per-event+round checklist shown for the "select" scope.

@@ -1,7 +1,10 @@
 import type { WCIF, Round, EventId, Assignment, ChildActivity, PersonalBest } from '../types/wcif';
 import type { CompetitionSettings, DoubleCheckRound } from '../types/settings';
-import { getStrings, getEventName, getFirstTimerSlipStrings, getNametTagTitleStrings, getNametTagStrings, getShortNametTagNames, getScheduleStrings, type NametTagTitleStrings } from './i18n';
+import { getStrings, getEventName, getFirstTimerSlipStrings, getNametTagTitleStrings, getNametTagStrings, getShortNametTagNames, type NametTagTitleStrings } from './i18n';
 import { packSlipPages } from '../pdf/firstTimerSlipLines';
+import { buildScheduleDays, scheduleLabels, type CheckingDay, type ScheduleDay } from './scheduleRows';
+import { cmp } from './sort';
+import { parseActivityCode, roundIdOf, type ActivityCode } from './activityCode';
 
 export type ScorecardFormat = 'avg5' | 'bo2-avg5' | 'mo3' | 'bo1-mo3' | 'bo2' | 'bo1';
 
@@ -70,13 +73,9 @@ function buildDuties(
     if (a.assignmentCode !== code) continue;
     const actCode = activityCodeMap[a.activityId];
     if (!actCode) continue;
-    const parts = actCode.split('-');
-    if (parts.length < 3) continue;
-    const eventId = parts[0];
-    const groupNum = parseInt(parts[2].slice(1), 10);
-    if (!isFinite(groupNum)) continue;
-    if (!byEvent[eventId]) byEvent[eventId] = new Set();
-    byEvent[eventId].add(groupNum);
+    const parsed = parseActivityCode(actCode);
+    if (parsed?.group === undefined) continue;
+    (byEvent[parsed.eventId] ??= new Set()).add(parsed.group);
   }
 
   if (Object.keys(byEvent).length === 0) return [];
@@ -100,6 +99,8 @@ export interface ScorecardEntry {
   // without re-parsing labels.
   roundNum: number;
   group: string;
+  // The cover label of the group when `group` is a station number, so the cover sorts on top.
+  coverGroup?: string;
   // Keeps stages grouped in finalizeEntries when `group` is a station number that omits the
   // stage. Undefined on blank/prefilled entries, which fall through to group sorting.
   stage?: string;
@@ -137,87 +138,6 @@ export interface CoverEntry {
 }
 
 export type ScorecardData = ScorecardEntry | CoverEntry;
-
-export interface ScheduleRow {
-  startTime: string;
-  endTime: string;
-  eventRound: string;
-  // Lunch falls between the previous row and this one; both documents draw a thick rule above.
-  breakBefore: boolean;
-}
-
-// One row per round, in the schedule tracker's chronological shape, carrying the group count
-// the delegate must account for. Every other column is filled in by hand.
-export interface CheckingRow {
-  startTime: string;
-  endTime: string;
-  eventRound: string;
-  // Groups scheduled for this round in this room. 0 when the WCIF has no groups yet.
-  groupCount: number;
-  // Round 1 is prepared before the competition, so those two boxes print ticked. Later
-  // rounds are done on the day and ship blank.
-  preChecked: boolean;
-  // See ScheduleRow.breakBefore.
-  breakBefore: boolean;
-}
-
-// Delegates often file lunch under a generic code with a localised name, so the name is
-// checked too. Narrow on purpose: only lunch draws a rule.
-const LUNCH_NAME_RE = /\b(lunch|d[îi]ner|d[ée]jeuner|almuerzo|almo[çc]o|comida)\b/i;
-
-// A scheduled lunch break: never a round activity (those are `<eventId>-r<N>`), matched by
-// the standard WCA activity code or by a localised name.
-function isLunchActivity(activity: { activityCode: string; name: string }): boolean {
-  if (/^[a-z0-9]+-r\d+/.test(activity.activityCode)) return false;
-  return activity.activityCode === 'other-lunch' || LUNCH_NAME_RE.test(activity.name ?? '');
-}
-
-// One room's activity on the schedule tracker, or the round collapsed across every room on
-// the Round Checklist.
-interface RoundSlot {
-  activityCode: string;   // "333-r1"
-  startTime: string;
-  endTime: string;
-  // Codes, not a count: two stages running one logical group share its code, and a later
-  // round synthesizes the same g1..gN per room, so collapsing rooms unions rather than sums.
-  groupCodes: Set<string>;
-}
-
-// One row per round: earliest start, latest end, every room's groups. Round Checklist only.
-function mergeSlots(slots: RoundSlot[]): RoundSlot[] {
-  const byRound = new Map<string, RoundSlot>();
-  for (const slot of slots) {
-    const merged = byRound.get(slot.activityCode);
-    if (!merged) {
-      byRound.set(slot.activityCode, { ...slot, groupCodes: new Set(slot.groupCodes) });
-      continue;
-    }
-    // Parsed, not compared as strings: WCIF times carry UTC offsets.
-    if (Date.parse(slot.startTime) < Date.parse(merged.startTime)) merged.startTime = slot.startTime;
-    if (Date.parse(slot.endTime) > Date.parse(merged.endTime)) merged.endTime = slot.endTime;
-    for (const code of slot.groupCodes) merged.groupCodes.add(code);
-  }
-  return [...byRound.values()].sort((a, b) => Date.parse(a.startTime) - Date.parse(b.startTime));
-}
-
-// One calendar day, one table. No room dimension: a round produces one pile of scorecards
-// however many rooms it runs across, and the pile is what this document tracks.
-export interface CheckingDay {
-  dayLabel: string;
-  rows: CheckingRow[];
-}
-
-// One room's events within a single day.
-export interface ScheduleStage {
-  stageName: string;
-  rows: ScheduleRow[];
-}
-
-// One calendar day; contains one entry per room that has events that day.
-export interface ScheduleDay {
-  dayLabel: string;   // "Day 1 - Saturday"
-  stages: ScheduleStage[];
-}
 
 // One scheduled group, with everyone assigned to it. The inverse of the per-person duty
 // lines on a nametag: this is what gets posted at the stage.
@@ -344,10 +264,11 @@ export function stackQuadrants(items: ScorecardData[]): ScorecardData[] {
   return reorderQuadrants(out);
 }
 
-// Competitor names are the only sort key that needs collation; timeslots, event ids, stage
-// keys and group labels are ASCII and compare faster as plain strings. One shared Collator,
-// because `localeCompare` rebuilds one per call and these comparators run n log n times.
+// Names and stage keys (from room names) need collation; timeslots, event ids and group labels
+// are ASCII and compare as plain strings. Shared Collators, because `localeCompare` rebuilds
+// one per call and these comparators run n log n times.
 const nameCollator = new Intl.Collator(undefined, { sensitivity: 'base' });
+const stageCollator = new Intl.Collator();
 const byName = (a: string, b: string) => nameCollator.compare(a, b);
 
 // Padding covers (added to round a bucket up to a multiple of 4) carry an empty eventId.
@@ -356,7 +277,9 @@ export function realEntries(entries: ScorecardData[]): ScorecardData[] {
   return entries.filter((e) => e.kind === 'scorecard' || e.eventId !== '');
 }
 
-// Sort by timeslot → eventId → stage → group → cover-before-scorecard → name.
+const pileOf = (e: ScorecardData) => (e.kind === 'scorecard' && e.coverGroup) || e.group;
+
+// Sort by timeslot → eventId → stage → group → cover-before-scorecard → station → name.
 // The stage key keeps each stage's cards together on stationary rounds, where `group` is a
 // station number that omits the stage; on rotation rounds it is a no-op.
 // Group before kind puts each cover immediately ahead of its own scorecards, so the
@@ -368,8 +291,10 @@ export function finalizeEntries(entries: ScorecardData[]): ScorecardData[] {
     if (a.eventId !== b.eventId) return a.eventId < b.eventId ? -1 : 1;
     const as = a.stage ?? '', bs = b.stage ?? '';
     if (as !== bs) return as < bs ? -1 : 1;
-    if (a.group !== b.group) return a.group < b.group ? -1 : 1;
+    const ag = pileOf(a), bg = pileOf(b);
+    if (ag !== bg) return ag < bg ? -1 : 1;
     if (a.kind !== b.kind) return a.kind < b.kind ? -1 : 1;
+    if (a.group !== b.group) return a.group < b.group ? -1 : 1;
     const an = a.kind === 'scorecard' ? a.name : '';
     const bn = b.kind === 'scorecard' ? b.name : '';
     return byName(an, bn);
@@ -471,8 +396,8 @@ export function parseWCIF(wcif: WCIF, settings: CompetitionSettings): ParsedWCIF
     for (const room of venue.rooms)
       for (const activity of room.activities)
         if (activity.childActivities.length > 0) {
-          const p = activity.activityCode.split('-');
-          if (p.length >= 2) roundsWithRealGroups.add(`${p[0]}-${p[1]}`);
+          const code = parseActivityCode(activity.activityCode);
+          if (code) roundsWithRealGroups.add(roundIdOf(code));
         }
 
   // Scramble-set count per round id ("333-r2") - used to pick how many implicit groups to
@@ -502,10 +427,9 @@ export function parseWCIF(wcif: WCIF, settings: CompetitionSettings): ParsedWCIF
         id: c.id, name: c.name, activityCode: c.activityCode,
         startTime: c.startTime, endTime: c.endTime, synthetic: false,
       }));
-    const p = activity.activityCode.split('-');
-    if (p.length === 2 && p[1].startsWith('r')) {
-      const roundNum = parseInt(p[1].slice(1), 10);
-      if (roundNum >= 2 && !roundsWithRealGroups.has(activity.activityCode)) {
+    const code = parseActivityCode(activity.activityCode);
+    if (code && code.group === undefined && code.attempt === undefined) {
+      if (code.round >= 2 && !roundsWithRealGroups.has(activity.activityCode)) {
         const n = Math.max(1, roundScrambleSetCount[activity.activityCode] ?? 1);
         const units: GroupUnit[] = [];
         for (let g = 1; g <= n; g++)
@@ -524,18 +448,7 @@ export function parseWCIF(wcif: WCIF, settings: CompetitionSettings): ParsedWCIF
     return [];
   }
 
-  const timezone = wcif.schedule.venues[0]?.timezone ?? 'UTC';
-
-  const formatLocalTime = (isoTime: string): string => {
-    try {
-      return new Intl.DateTimeFormat('en-CA', {
-        hour: '2-digit', minute: '2-digit',
-        timeZone: timezone, hour12: false,
-      }).format(new Date(isoTime));
-    } catch {
-      return isoTime.slice(11, 16);
-    }
-  };
+  const labels = scheduleLabels(wcif, settings.language);
 
   // Scheduled local times per `${roundKey}|${groupNum}|${stage}`, for the cover cards.
   const groupTimes: Record<string, { startTime: string; endTime: string }> = {};
@@ -574,11 +487,11 @@ export function parseWCIF(wcif: WCIF, settings: CompetitionSettings): ParsedWCIF
   allRooms.forEach((room, i) => {
     for (const activity of room.activities) {
       if (groupUnitsOf(activity).length === 0) continue;
-      const parts = activity.activityCode.split('-');
-      if (parts.length < 2) continue;
-      const list = roundRoomIdx.get(`${parts[0]}-${parts[1]}`) ?? [];
+      const code = parseActivityCode(activity.activityCode);
+      if (!code) continue;
+      const list = roundRoomIdx.get(roundIdOf(code)) ?? [];
       if (!list.includes(i)) list.push(i);
-      roundRoomIdx.set(`${parts[0]}-${parts[1]}`, list);
+      roundRoomIdx.set(roundIdOf(code), list);
     }
   });
   const stageKey = new Map<string, string>(); // `${roundKey}|${roomIndex}` → stage key
@@ -589,8 +502,8 @@ export function parseWCIF(wcif: WCIF, settings: CompetitionSettings): ParsedWCIF
 
   allRooms.forEach((room, roomIdx) => {
     for (const activity of room.activities) {
-      const parts = activity.activityCode.split('-');
-      const roundKey = parts.length >= 2 ? `${parts[0]}-${parts[1]}` : '';
+      const code = parseActivityCode(activity.activityCode);
+      const roundKey = code ? roundIdOf(code) : '';
       const color = stageKey.get(`${roundKey}|${roomIdx}`) ?? room.name.trim().toLowerCase();
       // A room that packs several stages names them in its groups instead. Prefixed with the
       // room key only when the round also spans rooms, so two rooms' "Red" stay distinct.
@@ -605,14 +518,13 @@ export function parseWCIF(wcif: WCIF, settings: CompetitionSettings): ParsedWCIF
         if (!startTimes[child.startTime]) startTimes[child.startTime] = [];
         startTimes[child.startTime].push(child.id);
         // Unique codes, so one group split across rooms still counts once.
-        const cParts = child.activityCode.split('-');
-        if (cParts.length >= 3) {
-          const rk = `${cParts[0]}-${cParts[1]}`;
-          groupTimes[`${rk}|${cParts[2].slice(1)}|${stage}`] = {
-            startTime: formatLocalTime(child.startTime), endTime: formatLocalTime(child.endTime),
+        const cCode = parseActivityCode(child.activityCode);
+        if (cCode?.group !== undefined) {
+          const rk = roundIdOf(cCode);
+          groupTimes[`${rk}|${cCode.group}|${stage}`] = {
+            startTime: labels.localTime(child.startTime), endTime: labels.localTime(child.endTime),
           };
-          if (!roundGroupCodes[rk]) roundGroupCodes[rk] = new Set();
-          roundGroupCodes[rk].add(cParts[2]);
+          (roundGroupCodes[rk] ??= new Set()).add(`g${cCode.group}`);
         }
         if (roundKey) {
           if (!roundStages[roundKey]) roundStages[roundKey] = new Set();
@@ -820,13 +732,11 @@ export function parseWCIF(wcif: WCIF, settings: CompetitionSettings): ParsedWCIF
       const code = activityCode[aid];
       if (!code) continue;
 
-      const parts = code.split('-');
-      if (parts.length < 3) continue;
-      const [eventId, roundPart, groupPart] = parts;
+      const parsed = parseActivityCode(code);
+      if (parsed?.group === undefined) continue;
+      const { eventId, round: roundNum } = parsed;
       if (eventId === '333fm' || eventId === '333mbf') continue;
-
-      const roundNum = parseInt(roundPart.slice(1), 10);
-      const rid = `${eventId}-${roundPart}`;
+      const rid = roundIdOf(parsed);
       if (!roundFormat[rid]) continue;
 
       const total = numRounds[eventId] ?? 1;
@@ -856,16 +766,14 @@ export function parseWCIF(wcif: WCIF, settings: CompetitionSettings): ParsedWCIF
         continue;
       }
 
-      const gNum = groupPart.slice(1);
+      const gNum = String(parsed.group);
       const stage = activityStage[aid]?.toLowerCase() ?? 'hall';
       const totalGroups = numGroups[rid] ?? 1;
 
-      let group: string;
-      if (assignment.stationNumber != null) {
-        group = strings.stationLabel(String(assignment.stationNumber).padStart(2, '0'));
-      } else {
-        group = resolveGroupLabel(rid, gNum, stage, totalGroups);
-      }
+      const groupLabel = resolveGroupLabel(rid, gNum, stage, totalGroups);
+      const group = assignment.stationNumber != null
+        ? strings.stationLabel(String(assignment.stationNumber).padStart(2, '0'))
+        : groupLabel;
 
       const entry: ScorecardEntry = {
         kind: 'scorecard',
@@ -875,6 +783,7 @@ export function parseWCIF(wcif: WCIF, settings: CompetitionSettings): ParsedWCIF
         roundLabel: getRoundLabel(eventId, roundNum),
         roundNum,
         group,
+        ...(group !== groupLabel ? { coverGroup: groupLabel } : {}),
         stage,
         name,
         wcaId,
@@ -904,15 +813,14 @@ export function parseWCIF(wcif: WCIF, settings: CompetitionSettings): ParsedWCIF
     const aid = Number(aidStr);
     const code = activityCode[aid];
     if (!code) continue;
-    const parts = code.split('-');
-    if (parts.length < 3) continue;
-    const [eventId, roundPart, groupPart] = parts;
+    const parsed = parseActivityCode(code);
+    if (parsed?.group === undefined) continue;
+    const { eventId, round: roundNum } = parsed;
     if (eventId === '333fm') continue;
 
-    const rid = `${eventId}-${roundPart}`;
-    const roundNum = parseInt(roundPart.slice(1), 10);
+    const rid = roundIdOf(parsed);
     const total = numRounds[eventId] ?? 1;
-    const gNum = groupPart.slice(1);
+    const gNum = String(parsed.group);
     const stage = activityStage[aid]?.toLowerCase() ?? 'hall';
     const totalGroups = numGroups[rid] ?? 1;
 
@@ -952,15 +860,13 @@ export function parseWCIF(wcif: WCIF, settings: CompetitionSettings): ParsedWCIF
     for (const room of venue.rooms) {
       for (const activity of room.activities) {
         for (const child of groupUnitsOf(activity)) {
-          const parts = child.activityCode.split('-');
-          if (parts.length < 3) continue;
-          const [eventId, roundPart, groupPart] = parts;
+          const parsed = parseActivityCode(child.activityCode);
+          if (parsed?.group === undefined) continue;
+          const { eventId, round: roundNum } = parsed;
           if (eventId === '333fm') continue;
-
-          const roundNum = parseInt(roundPart.slice(1), 10);
           if (roundNum === 1) continue;
 
-          const rid = `${eventId}-${roundPart}`;
+          const rid = roundIdOf(parsed);
           if (!roundFormat[rid]) continue;
           // Already emitted as named scorecards; no blank/prefilled duplicates.
           if (liveRounds.has(rid)) continue;
@@ -974,7 +880,7 @@ export function parseWCIF(wcif: WCIF, settings: CompetitionSettings): ParsedWCIF
           if (!isFinal && !isRound2 && !isSemis) continue;
 
           const ts = timeslots[child.id] ?? 'Z99';
-          const gNum = groupPart.slice(1);
+          const gNum = String(parsed.group);
           const stage = activityStage[child.id]?.toLowerCase() ?? 'hall';
           const totalGroups = numGroups[rid] ?? 1;
           const groupInfo: GroupInfo = { gNum, stage, totalGroups, timeslot: ts, roomIdx: activityRoomIdx[child.id] };
@@ -992,7 +898,7 @@ export function parseWCIF(wcif: WCIF, settings: CompetitionSettings): ParsedWCIF
   // numbering has to stay deterministic across them.
   function sortGroups(groups: GroupInfo[]) {
     return [...groups].sort((a, b) => {
-      const s = a.stage.localeCompare(b.stage);
+      const s = stageCollator.compare(a.stage, b.stage);
       return s !== 0 ? s : parseInt(a.gNum, 10) - parseInt(b.gNum, 10);
     });
   }
@@ -1023,7 +929,8 @@ export function parseWCIF(wcif: WCIF, settings: CompetitionSettings): ParsedWCIF
           kind: 'scorecard', timeslot, eventId,
           eventName: getEventName(eventId, language),
           roundLabel: getRoundLabel(eventId, roundNum), roundNum,
-          group: cardGroup, stage: blankStage(stage), name: '', wcaId: '', liveId: '', gender: 'm',
+          group: cardGroup, ...(useStationNumbers ? { coverGroup: coverLabel } : {}),
+          stage: blankStage(stage), name: '', wcaId: '', liveId: '', gender: 'm',
           cutoff: roundCutoff[rid], limit: roundLimit[rid],
           format: roundFormat[rid], isCumulative: roundCumulative[rid],
           scrambleDoubleCheck: wantsDoubleCheck(['finals'], '', eventId),
@@ -1247,9 +1154,9 @@ export function parseWCIF(wcif: WCIF, settings: CompetitionSettings): ParsedWCIF
   // Build minimum timeslot for each round (eventId-rN) from its child activities.
   const roundMinTs: Record<string, string> = {};
   for (const [aidStr, code] of Object.entries(activityCode)) {
-    const parts = code.split('-');
-    if (parts.length < 3) continue;
-    const rk = `${parts[0]}-${parts[1]}`;
+    const parsed = parseActivityCode(code);
+    if (parsed?.group === undefined) continue;
+    const rk = roundIdOf(parsed);
     const ts = timeslots[Number(aidStr)] ?? 'Z99';
     if (!roundMinTs[rk] || ts < roundMinTs[rk]) roundMinTs[rk] = ts;
   }
@@ -1266,7 +1173,7 @@ export function parseWCIF(wcif: WCIF, settings: CompetitionSettings): ParsedWCIF
       extrasRounds.push({ ts, eventId: eid, rid, roundNum: i });
     }
   }
-  extrasRounds.sort((a, b) => a.ts.localeCompare(b.ts) || a.eventId.localeCompare(b.eventId));
+  extrasRounds.sort((a, b) => cmp(a.ts, b.ts) || cmp(a.eventId, b.eventId));
 
   for (const { ts, eventId, rid, roundNum } of extrasRounds) {
     const totalGroups = numGroups[rid] ?? 1;
@@ -1307,162 +1214,9 @@ export function parseWCIF(wcif: WCIF, settings: CompetitionSettings): ParsedWCIF
     extrasEntries.push(...Array<ScorecardEntry>(a6 ? 1 : 4).fill(pureBlank));
   }
 
-  // Schedule tracker
-
-  // Extract local date "YYYY-MM-DD" using formatToParts for timezone safety.
-  const getLocalDate = (isoTime: string): string => {
-    try {
-      const parts = new Intl.DateTimeFormat('en-CA', {
-        year: 'numeric', month: '2-digit', day: '2-digit', timeZone: timezone,
-      }).formatToParts(new Date(isoTime));
-      const y = parts.find(p => p.type === 'year')?.value ?? '';
-      const m = parts.find(p => p.type === 'month')?.value ?? '';
-      const d = parts.find(p => p.type === 'day')?.value ?? '';
-      return `${y}-${m}-${d}`;
-    } catch {
-      return isoTime.slice(0, 10);
-    }
-  };
-
-  // Round count per event including FMC (for schedule label).
-  const allEventRoundCount: Record<string, number> = {};
-  for (const event of wcif.events) allEventRoundCount[event.id] = event.rounds.length;
-
-  // Map each unique local date to its day number (1-based) across the whole competition.
-  const uniqueDates = new Set<string>();
-  for (const venue of wcif.schedule.venues)
-    for (const room of venue.rooms)
-      for (const activity of room.activities)
-        uniqueDates.add(getLocalDate(activity.startTime));
-  const sortedAllDates = [...uniqueDates].sort();
-  const dateToDay: Record<string, number> = {};
-  sortedAllDates.forEach((d, i) => { dateToDay[d] = i + 1; });
-
-  const formatDayLabel = (localDate: string): string => {
-    const dayNum = dateToDay[localDate] ?? 1;
-    const locale = settings.language === 'pt' ? 'pt-BR' : settings.language;
-    const prefix = getScheduleStrings(settings.language).dayPrefix;
-    try {
-      const weekday = new Intl.DateTimeFormat(locale, { weekday: 'long' })
-        .format(new Date(`${localDate}T12:00:00Z`));
-      const capitalized = weekday.charAt(0).toUpperCase() + weekday.slice(1);
-      return `${prefix} ${dayNum} - ${capitalized}`;
-    } catch {
-      return `${prefix} ${dayNum}`;
-    }
-  };
-
-  // Build a (date → roomIndex → activities[]) map, preserving WCIF room order via roomIndex.
-  type RoomActivity = (typeof wcif.schedule.venues)[0]['rooms'][0]['activities'][0];
-  const dayRoomMap = new Map<string, Map<number, RoomActivity[]>>();
-  const roomIndexToName = new Map<number, string>();
-  // Collected across EVERY room: lunch is often scheduled once, in one room, but the rule
-  // belongs on every stage's table that day.
-  const lunchStartsByDate = new Map<string, number[]>();
-  let roomIdx = 0;
-  for (const venue of wcif.schedule.venues) {
-    for (const room of venue.rooms) {
-      roomIndexToName.set(roomIdx, room.name);
-      for (const activity of room.activities) {
-        const date = getLocalDate(activity.startTime);
-        if (!dayRoomMap.has(date)) dayRoomMap.set(date, new Map());
-        const roomMap = dayRoomMap.get(date)!;
-        if (!roomMap.has(roomIdx)) roomMap.set(roomIdx, []);
-        roomMap.get(roomIdx)!.push(activity);
-        if (isLunchActivity(activity)) {
-          if (!lunchStartsByDate.has(date)) lunchStartsByDate.set(date, []);
-          lunchStartsByDate.get(date)!.push(Date.parse(activity.startTime));
-        }
-      }
-      roomIdx++;
-    }
-  }
-
-  const schedStrings = getScheduleStrings(settings.language);
-  // Lunch, awards and events absent from the WCIF are dropped here, so the row builder sees
-  // only rounds.
-  const slotsOf = (activities: RoomActivity[]): RoundSlot[] => {
-    const slots: RoundSlot[] = [];
-    const sorted = [...activities].sort((a, b) => a.startTime.localeCompare(b.startTime));
-    for (const activity of sorted) {
-      const parts = activity.activityCode.split('-');
-      if (parts.length !== 2) continue;
-      const [eid, roundPart] = parts;
-      if (!roundPart.startsWith('r')) continue;
-      if (!isFinite(parseInt(roundPart.slice(1), 10))) continue;
-      if (allEventRoundCount[eid] === undefined) continue;
-      slots.push({
-        activityCode: activity.activityCode,
-        startTime: activity.startTime,
-        endTime: activity.endTime,
-        // groupUnitsOf synthesizes later rounds' missing groups, matching what prints.
-        groupCodes: new Set(groupUnitsOf(activity).map(u => u.activityCode)),
-      });
-    }
-    return slots;
-  };
-
-  // One pass for both documents: same labelling and lunch rules, differing only in the
-  // trailing column (competitor count vs group count).
-  const buildRows = (
-    slots: RoundSlot[],
-    lunchStarts: number[],
-  ): { schedule: ScheduleRow[]; checking: CheckingRow[] } => {
-    const schedule: ScheduleRow[] = [];
-    const checking: CheckingRow[] = [];
-    // Where the previous row's round started, so a lunch can fall between two rows.
-    // Timestamps, not ISO strings: WCIF times carry UTC offsets.
-    let prevStart: number | null = null;
-    for (const slot of slots) {
-      const [eid, roundPart] = slot.activityCode.split('-');
-      const roundNum = parseInt(roundPart.slice(1), 10);
-      const totalRounds = allEventRoundCount[eid];
-      const eventName = getEventName(eid, settings.language);
-      const isLast = roundNum === totalRounds;
-      const roundLabel = totalRounds === 1 || isLast
-        ? schedStrings.finalLabel
-        : schedStrings.roundLabel(roundNum);
-      const startTime = formatLocalTime(slot.startTime);
-      const endTime = formatLocalTime(slot.endTime);
-      const eventRound = `${eventName} ${roundLabel}`;
-      // The first row has only the header border above it.
-      const thisStart = Date.parse(slot.startTime);
-      const breakBefore = prevStart !== null
-        && lunchStarts.some((l) => l >= prevStart! && l < thisStart);
-      prevStart = thisStart;
-
-      schedule.push({ startTime, endTime, eventRound, breakBefore });
-      checking.push({
-        startTime, endTime, eventRound, breakBefore,
-        groupCount: slot.groupCodes.size,
-        preChecked: roundNum === 1,
-      });
-    }
-    return { schedule, checking };
-  };
-
-  // Iterate days chronologically; within each day keep WCIF room order.
-  const scheduleDays: ScheduleDay[] = [];
-  const checkingDays: CheckingDay[] = [];
-  for (const [date, roomMap] of [...dayRoomMap].sort(([a], [b]) => a.localeCompare(b))) {
-    const stages: ScheduleStage[] = [];
-    // Concatenated in room order, so mergeSlots' stable sort leaves rounds starting at the
-    // same minute in WCIF order.
-    const daySlots: RoundSlot[] = [];
-    const lunchStarts = lunchStartsByDate.get(date) ?? [];
-    for (const [ri, activities] of [...roomMap].sort(([a], [b]) => a - b)) {
-      const stageName = roomIndexToName.get(ri) ?? `Room ${ri + 1}`;
-      const slots = slotsOf(activities);
-      // One table per room: the tracker records when each stage runs, which the merge drops.
-      const { schedule } = buildRows(slots, lunchStarts);
-      if (schedule.length > 0) stages.push({ stageName, rows: schedule });
-      daySlots.push(...slots);
-    }
-    const { checking } = buildRows(mergeSlots(daySlots), lunchStarts);
-    const dayLabel = formatDayLabel(date);
-    if (stages.length > 0) scheduleDays.push({ dayLabel, stages });
-    if (checking.length > 0) checkingDays.push({ dayLabel, rows: checking });
-  }
+  const { scheduleDays, checkingDays } = buildScheduleDays(
+    wcif, labels, (activity) => groupUnitsOf(activity).map(u => u.activityCode),
+  );
 
   // Group Overview
   // Everyone assigned to each scheduled group, the inverse of the nametag duty lines.
@@ -1476,17 +1230,15 @@ export function parseWCIF(wcif: WCIF, settings: CompetitionSettings): ParsedWCIF
     judges: string[];
   }
   const overviewBuckets = new Map<number, OverviewBucket>();
-  const overviewUnits: { unit: GroupUnit; roundNum: number; eventId: string }[] = [];
+  const overviewUnits: { unit: GroupUnit; code: ActivityCode & { group: number } }[] = [];
 
   for (const room of allRooms) {
     for (const activity of room.activities) {
       for (const unit of groupUnitsOf(activity)) {
-        const parts = unit.activityCode.split('-');
-        if (parts.length < 3) continue;
-        const roundNum = parseInt(parts[1].slice(1), 10);
-        if (!isFinite(roundNum)) continue;
+        const parsed = parseActivityCode(unit.activityCode);
+        if (parsed?.group === undefined) continue;
         overviewBuckets.set(unit.id, { competitors: [], scramblers: [], runners: [], judges: [] });
-        overviewUnits.push({ unit, roundNum, eventId: parts[0] });
+        overviewUnits.push({ unit, code: { ...parsed, group: parsed.group } });
       }
     }
   }
@@ -1504,11 +1256,10 @@ export function parseWCIF(wcif: WCIF, settings: CompetitionSettings): ParsedWCIF
     }
   }
 
-  const groupNumOf = (code: string) => parseInt(code.split('-')[2].slice(1), 10);
   overviewUnits.sort((a, b) =>
     Date.parse(a.unit.startTime) - Date.parse(b.unit.startTime)
     || (activityRoomIdx[a.unit.id] ?? 0) - (activityRoomIdx[b.unit.id] ?? 0)
-    || groupNumOf(a.unit.activityCode) - groupNumOf(b.unit.activityCode));
+    || a.code.group - b.code.group);
 
   const capitalize = (v: string) => v.charAt(0).toUpperCase() + v.slice(1);
 
@@ -1518,14 +1269,11 @@ export function parseWCIF(wcif: WCIF, settings: CompetitionSettings): ParsedWCIF
 
   const groupOverview: GroupOverviewEntry[] = overviewUnits.filter(
     ({ unit }) => !isEmptyGroup(overviewBuckets.get(unit.id)!),
-  ).map(({ unit, roundNum, eventId }) => {
+  ).map(({ unit, code }) => {
+    const { eventId, round: roundNum, group: groupNum } = code;
     const bucket = overviewBuckets.get(unit.id)!;
-    const rid = `${eventId}-r${roundNum}`;
-    const totalRounds = allEventRoundCount[eventId] ?? 1;
-    const roundLabel = totalRounds === 1 || roundNum === totalRounds
-      ? schedStrings.finalLabel
-      : schedStrings.roundLabel(roundNum);
-    const groupNum = groupNumOf(unit.activityCode);
+    const rid = roundIdOf(code);
+    const roundLabel = labels.roundLabel(eventId, roundNum);
     // Two stages number their groups from 1 each, so the stage has to qualify the label.
     const stage = (roundStages[rid]?.size ?? 1) > 1 ? activityStage[unit.id] : '';
     // Same "Group N" wording as the nametag duty lines, so the two documents agree.
@@ -1541,10 +1289,10 @@ export function parseWCIF(wcif: WCIF, settings: CompetitionSettings): ParsedWCIF
       .map(c => c.name);
 
     return {
-      dayLabel: formatDayLabel(getLocalDate(unit.startTime)),
+      dayLabel: labels.dayLabel(labels.localDate(unit.startTime)),
       heading: `${getEventName(eventId, settings.language)} ${roundLabel} - ${groupLabel}`,
-      startTime: formatLocalTime(unit.startTime),
-      endTime: formatLocalTime(unit.endTime),
+      startTime: labels.localTime(unit.startTime),
+      endTime: labels.localTime(unit.endTime),
       room: activityRoom[unit.id] ?? '',
       eventId,
       roundNum,
@@ -1559,8 +1307,8 @@ export function parseWCIF(wcif: WCIF, settings: CompetitionSettings): ParsedWCIF
   // The prefilled layout's own finalize applies only when no real assignments exist.
   const laterRoundsWithAssignments = [...liveRounds]
     .map((rid) => {
-      const [eventId, roundPart] = rid.split('-');
-      return { eventId, roundNum: parseInt(roundPart.slice(1), 10) };
+      const { eventId, round } = parseActivityCode(rid)!;
+      return { eventId, roundNum: round };
     })
     .sort((a, b) =>
       (WCA_EVENT_ORDER.indexOf(a.eventId as EventId) - WCA_EVENT_ORDER.indexOf(b.eventId as EventId))
