@@ -2,9 +2,9 @@ import type { ParsedWCIF } from './wcif-parser';
 import type { PdfJob } from './pdfJobs';
 import type { CompetitionSettings } from '../types/settings';
 import { customEventCardCount } from './customScorecards';
-import { getFirstTimerSlipStrings } from './i18n';
+import { getFirstTimerSlipStrings, getGroupOverviewStrings } from './i18n';
 import { packSlipPages } from '../pdf/firstTimerSlipLines';
-import { groupBlockRows, visibleColumns } from '../pdf/groupOverviewColumns';
+import { groupBlockRows, overviewTitle, titleHeight, visibleColumns } from '../pdf/groupOverviewColumns';
 import {
   scorecardsPerPage, NAMETAGS_PER_PAGE, estimateGroupOverviewPages,
 } from '../pdf/layoutConstants';
@@ -45,6 +45,7 @@ export function estimateTotalPages(
       withDayLabel: multiDay && e.dayLabel !== all[i - 1]?.dayLabel,
     })),
     settings.paperFormat,
+    titleHeight(overviewTitle(settings.competitionName, getGroupOverviewStrings(settings.language)), settings.paperFormat),
   );
 
   // Exact: the document renders this same packing.

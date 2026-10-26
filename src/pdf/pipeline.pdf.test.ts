@@ -6,7 +6,8 @@ import { runJobs, type WorkerResponse } from './renderBundle';
 import { renderToBuffer } from '@react-pdf/renderer';
 import { GROUP_OVERVIEW, RENDER_PART_PAGES } from './layoutConstants';
 import { jobElement, jobElements } from './jobElement';
-import { groupBlockRows, visibleColumns } from './groupOverviewColumns';
+import { groupBlockRows, overviewTitle, titleHeight, visibleColumns } from './groupOverviewColumns';
+import { getGroupOverviewStrings } from '../lib/i18n';
 import { textWidth } from './nameFit';
 import { parseWCIF, type GroupOverviewEntry } from '../lib/wcif-parser';
 import { buildPdfJobs } from '../lib/pdfJobs';
@@ -56,10 +57,10 @@ const onlyDocument = (doc: keyof DocumentSelection | null): Partial<CompetitionS
 // One settings mix per competition, so A6, merged rounds, stage splits, blank second rounds
 // and OTS each run on a real WCIF. `splits` and `wraps` name what a case is there to cover, and
 // the case checks it still does: a fixture or generator change cannot quietly drop it.
-type Case = { seed: number; splits?: true; wraps?: true };
+type Case = { seed: number; splits?: true; wraps?: true; longTitle?: true };
 const REAL: Record<string, Case> = {
   BCChampionship2026: { seed: 3, splits: true },
-  CuberBrasilSumare2026: { seed: 14 },
+  CuberBrasilSumare2026: { seed: 14, longTitle: true },
   FMCaMontreal2026: { seed: 21 },
   HUNbelievableChallengeBSB2026: { seed: 5 },
   PickeringBlindfolded2026: { seed: 10 },
@@ -71,8 +72,11 @@ const cases: [string, Case, WCIF][] = [
 ];
 
 describe('the download, end to end', () => {
-  it.each(cases)('%s: one file per job, page count as estimated', async (_id, { seed, splits, wraps }, wcif) => {
-    const settings = variedSettings(wcif, seed);
+  it.each(cases)('%s: one file per job, page count as estimated', async (_id, { seed, splits, wraps, longTitle }, wcif) => {
+    const settings = {
+      ...variedSettings(wcif, seed),
+      ...(longTitle ? { competitionName: 'Campeonato Brasileiro de Cubo Mágico 2026 Edição Sumaré' } : {}),
+    };
     const { parsed, jobs, pages } = await generate(wcif, settings);
 
     // unzipSync keys by name, so a duplicate filename would show up as a missing entry.
@@ -88,6 +92,10 @@ describe('the download, end to end', () => {
     if (splits) expect(parted.length).toBeGreaterThan(0);
     for (const j of parted) expect(pages[j.filename]).toBeGreaterThan(RENDER_PART_PAGES);
 
+    if (longTitle) {
+      const title = overviewTitle(settings.competitionName, getGroupOverviewStrings(settings.language));
+      expect(titleHeight(title, settings.paperFormat)).toBeGreaterThan(titleHeight('', settings.paperFormat));
+    }
     if (wraps) {
       const columns = visibleColumns(parsed.groupOverview);
       expect(parsed.groupOverview.some((g) =>

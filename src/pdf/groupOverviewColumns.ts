@@ -31,24 +31,33 @@ export function visibleColumns(entries: Pick<GroupOverviewEntry, ColumnKey>[]) {
 export const cellText = (key: ColumnKey, name: string, i: number) =>
   key === 'competitors' ? `${i + 1}. ${name}` : name;
 
-/** Lines one name prints on, wrapped at spaces the way react-pdf does when it is wider than its cell. */
-function lineCount(text: string, width: number): number {
-  const space = textWidth(' ', G.fontSize, false);
+/**
+ * Lines `text` prints on at `width`. Breaks at spaces, and inside a word too wide for a line.
+ * Hyphen and CJK break points are not modelled, so those can only overcount.
+ */
+export function lineCount(text: string, width: number, fontSize = G.fontSize, bold = false): number {
+  const space = textWidth(' ', fontSize, bold);
   let lines = 1;
   let used = 0;
   for (const word of text.split(' ')) {
-    const w = textWidth(word, G.fontSize, false);
-    if (used > 0 && used + space + w > width) { lines++; used = w; }
-    else used += (used > 0 ? space : 0) + w;
+    let w = textWidth(word, fontSize, bold);
+    if (used > 0 && used + space + w > width) { lines++; used = 0; }
+    for (; w > width; w -= width) lines++;
+    used += (used > 0 ? space : 0) + w;
   }
   return lines;
 }
 
-/**
- * Printed lines in the group's tallest column, the row count its block is sized by. The table's
- * borders come off before the flex split. Measured against react-pdf, this wraps up to 0.1pt
- * early: a name in that band costs the estimate a line it does not print.
- */
+export const TITLE_FS = 18;
+
+export const overviewTitle = (competitionName: string, s: GroupOverviewStrings) => `${competitionName} ${s.title}`;
+
+/** The title's height, margin included: it wraps on a long competition name. */
+export function titleHeight(title: string, paperFormat: PaperFormat): number {
+  return G.titleGap + G.titleLineH * lineCount(title, PAGE_W[paperFormat] - 2 * G.pagePadH, TITLE_FS, true);
+}
+
+/** Printed lines in the group's tallest column. Wraps up to 0.1pt earlier than react-pdf. */
 export function groupBlockRows(
   entry: Pick<GroupOverviewEntry, ColumnKey>, columns: typeof COLUMNS, paperFormat: PaperFormat,
 ): number {

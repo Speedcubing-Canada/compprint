@@ -3,7 +3,7 @@ import { docMeta } from './docMeta';
 import type { CompetitionSettings } from '../types/settings';
 import type { GroupOverviewEntry } from '../lib/wcif-parser';
 import { getGroupOverviewStrings } from '../lib/i18n';
-import { cellText, groupBlockRows, visibleColumns } from './groupOverviewColumns';
+import { TITLE_FS, cellText, groupBlockRows, overviewTitle, visibleColumns } from './groupOverviewColumns';
 import {
   GROUP_OVERVIEW as G, groupBlockFitsPage,
   PDF_FONT as FONT, PDF_FONT_BOLD as FONT_BOLD,
@@ -20,10 +20,10 @@ const styles = StyleSheet.create({
     fontFamily: FONT,
   },
   title: {
-    fontSize: 18,
+    fontSize: TITLE_FS,
     textAlign: 'center',
     fontFamily: FONT_BOLD,
-    marginBottom: 22,
+    marginBottom: G.titleGap,
   },
   dayLabel: {
     fontSize: 13,
@@ -92,7 +92,7 @@ export function GroupOverviewDocument({ entries, settings }: Props) {
   return (
     <Document {...docMeta(settings.competitionName, 'Group Overview')}>
       <Page size={settings.paperFormat} style={styles.page}>
-        <Text style={styles.title}>{settings.competitionName} {strings.title}</Text>
+        <Text style={styles.title}>{overviewTitle(settings.competitionName, strings)}</Text>
 
         {entries.map((entry, ei) => {
           const withDayLabel = multiDay && entry.dayLabel !== entries[ei - 1]?.dayLabel;

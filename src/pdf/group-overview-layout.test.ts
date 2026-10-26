@@ -5,7 +5,8 @@ import {
 } from './layoutConstants';
 import { getGroupOverviewStrings } from '../lib/i18n';
 import type { LocaleCode, PaperFormat } from '../types/settings';
-import { COLUMNS, groupBlockRows, visibleColumns } from './groupOverviewColumns';
+import { COLUMNS, groupBlockRows, lineCount, titleHeight, visibleColumns } from './groupOverviewColumns';
+import { textWidth } from './nameFit';
 
 // Same Helvetica AFM width table as checking-sheet-layout.test.ts. An untabulated glyph
 // measures as the widest one (W, 944), so a new translation errs towards failing.
@@ -95,12 +96,12 @@ describe('Group Overview page estimate', () => {
   });
 
   it('no groups means no pages', () => {
-    expect(estimateGroupOverviewPages([], 'A4')).toBe(0);
+    expect(estimateGroupOverviewPages([], 'A4', titleHeight('Comp', 'A4'))).toBe(0);
   });
 
   it('a handful of small groups stays on one page', () => {
     const blocks = Array.from({ length: 3 }, () => ({ rows: 6, withDayLabel: false }));
-    expect(estimateGroupOverviewPages(blocks, 'A4')).toBe(1);
+    expect(estimateGroupOverviewPages(blocks, 'A4', titleHeight('Comp', 'A4'))).toBe(1);
   });
 
   // The real failure mode: blocks are wrap={false}, so a page holds whole blocks only and
@@ -109,17 +110,23 @@ describe('Group Overview page estimate', () => {
     const blocks = Array.from({ length: 20 }, () => ({ rows: 14, withDayLabel: false }));
     const usable = PAGE_H.A4 - 2 * G.pagePadV;
     const perPage = Math.floor(usable / groupBlockHeight(14, false));
-    const pages = estimateGroupOverviewPages(blocks, 'A4');
+    const pages = estimateGroupOverviewPages(blocks, 'A4', titleHeight('Comp', 'A4'));
     expect(perPage).toBeGreaterThan(0);
     // The title block can cost page one a block, never more than that.
     expect(pages).toBeGreaterThanOrEqual(Math.ceil(20 / perPage));
     expect(pages).toBeLessThanOrEqual(Math.ceil(20 / perPage) + 1);
   });
 
+  // Measured off a render: 41.8pt for one line, 19.8pt more per wrapped line.
+  it('sizes the title by the lines a long competition name wraps to', () => {
+    expect(titleHeight('Comp', 'LETTER')).toBeCloseTo(41.8);
+    expect(titleHeight('Campeonato Brasileiro de Cubo Mágico 2026 - Visão geral dos grupos', 'LETTER')).toBeCloseTo(61.6);
+  });
+
   it('LETTER fits fewer blocks per page than A4', () => {
     const blocks = Array.from({ length: 30 }, () => ({ rows: 10, withDayLabel: false }));
-    expect(estimateGroupOverviewPages(blocks, 'LETTER'))
-      .toBeGreaterThanOrEqual(estimateGroupOverviewPages(blocks, 'A4'));
+    expect(estimateGroupOverviewPages(blocks, 'LETTER', titleHeight('Comp', 'LETTER')))
+      .toBeGreaterThanOrEqual(estimateGroupOverviewPages(blocks, 'A4', titleHeight('Comp', 'A4')));
   });
 });
 
@@ -157,6 +164,12 @@ describe('Group Overview row count', () => {
 
   it('counts a wrapped name as two lines', () => {
     expect(groupBlockRows(group, visibleColumns([group]), 'LETTER')).toBe(4);
+  });
+
+  it('breaks a word wider than its cell inside the word', () => {
+    const cell = textWidth('W'.repeat(10), G.fontSize, false) + 0.01;
+    expect(lineCount('W'.repeat(30), cell)).toBe(3);
+    expect(lineCount(`Ana ${'W'.repeat(30)}`, cell)).toBe(4);
   });
 
   it('does not wrap once the staff columns are gone and the cell is wide', () => {

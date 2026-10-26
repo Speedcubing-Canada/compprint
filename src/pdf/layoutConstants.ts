@@ -220,7 +220,8 @@ export const GROUP_OVERVIEW = {
   cellPadV: 4,
   cellPadH: 5,
   blockGap: 14,
-  titleH: 41.8,   // measured, for a title on one line
+  titleLineH: 19.8, // measured: each extra title line moves the first block down this much
+  titleGap: 22,
 };
 
 export const PAGE_W: Record<PaperFormat, number> = { LETTER: 612, A4: 595.28 };
@@ -254,11 +255,12 @@ export function groupBlockFitsPage(
 export function estimateGroupOverviewPages(
   blocks: { rows: number; withDayLabel: boolean }[],
   paperFormat: PaperFormat,
+  titleH: number,
 ): number {
   if (blocks.length === 0) return 0;
   const usable = (PAGE_H[paperFormat] ?? PAGE_H.LETTER) - 2 * GROUP_OVERVIEW.pagePadV;
   let pages = 1;
-  let used = GROUP_OVERVIEW.titleH;
+  let used = titleH;
   for (const b of blocks) {
     const h = groupBlockHeight(b.rows, b.withDayLabel);
     if (used > 0 && used + h > usable) { pages++; used = 0; }
