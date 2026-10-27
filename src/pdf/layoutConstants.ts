@@ -97,7 +97,7 @@ export const NAMETAGS_PER_PAGE = 4;
 // Same cap, same choice.
 export const MAX_PAGES_PER_NAMETAG_PDF = 250;
 
-// Vertical name tag panel side padding and border.
+// Name tag panel side padding and border.
 export const NAMETAG_PANEL_PAD = 7;
 export const NAMETAG_PANEL_BORDER = 1.5;
 
@@ -115,7 +115,7 @@ export function nametagHPositions(paper: PaperFormat) {
   const { panelW, panelH, gap } = NAMETAG_H;
   const left = (PAGE_W[paper] - 2 * panelW - gap) / 2;
   const top = (PAGE_H[paper] - 4 * panelH - 3 * gap) / 2;
-  return Array.from({ length: 8 }, (_, i) => ({
+  return Array.from({ length: NAMETAGS_PER_PAGE * 2 }, (_, i) => ({
     left: left + (i % 2) * (panelW + gap),
     top: top + Math.floor(i / 2) * (panelH + gap),
   }));
@@ -124,15 +124,21 @@ export function nametagHPositions(paper: PaperFormat) {
 // Horizontal tags budget two 14pt lines, so long names wrap instead of shrinking.
 export const NAMETAG_COMPACT_NAME_H = 2 * 14 * 1.1;
 
-// Horizontal header above the name: comp-name line, or the shrunk logo, plus its 3pt margin.
-const compactHeaderH = (logoMode: NametTagLogoMode) =>
-  (logoMode === 'hidden' ? 8.5 * 1.1 : logoMode === 'with-name' ? 14 : 20) + 3;
+// Horizontal card styles: NametTagDocument draws with them and the QR budget adds them up.
+export const NAMETAG_COMPACT = {
+  padTop: 7, padBottom: 6, gap: 3, compNameFs: 8.5, logoSmall: 14, logoLarge: 20,
+  badgeH: 16, badgeFs: 12, idFs: 9, idClear: 4, labelFs: 7, labelGap: 2, iconMax: 15,
+  qrPitch: 91, // QR centres 45.5pt either side of the card's, as in the original
+} as const;
 
-// What the horizontal card has left for the QR codes: border and padding (7 + 6), header,
-// two-line name (+3), badge (16), the WCA ID line with 4pt clear each side, and the label.
+// What the horizontal card has left for the QR codes under the header, a two-line name, the
+// badge, the WCA ID line and the label. Lines are 1.1em.
 export function nametagCompactQrSize(logoMode: NametTagLogoMode) {
-  const inner = NAMETAG_H.panelH - 2 * NAMETAG_PANEL_BORDER - 7 - 6;
-  return Math.floor(inner - compactHeaderH(logoMode) - NAMETAG_COMPACT_NAME_H - 3 - 16 - (9 * 1.1 + 8) - (2 + 7 * 1.1));
+  const c = NAMETAG_COMPACT;
+  const header = logoMode === 'hidden' ? c.compNameFs * 1.1 : logoMode === 'with-name' ? c.logoSmall : c.logoLarge;
+  const inner = NAMETAG_H.panelH - 2 * NAMETAG_PANEL_BORDER - c.padTop - c.padBottom;
+  return Math.floor(inner - (header + c.gap) - (NAMETAG_COMPACT_NAME_H + c.gap) - c.badgeH
+    - (c.idFs * 1.1 + 2 * c.idClear) - (c.labelGap + c.labelFs * 1.1));
 }
 
 // Vertical top-section height. 'logo-only' adds ~19pt of header (28pt logo vs 8.5pt text).

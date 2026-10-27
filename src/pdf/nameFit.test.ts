@@ -97,14 +97,14 @@ describe('Name tag name', () => {
   const cases = [
     ...Object.entries(NAMETAG_CONFIGS).flatMap(([fmt, { panelW }]) =>
       (['hidden', 'with-name', 'logo-only'] as const).map(mode => ({
-        label: `${fmt} ${mode}`, panelW, h: nametagNameH(mode),
+        label: `${fmt} ${mode}`, panelW, h: nametagNameH(mode), oneLine: [] as string[],
       }))),
-    { label: 'horizontal', panelW: NAMETAG_H.panelW, h: NAMETAG_COMPACT_NAME_H },
+    // Wide enough for these on a single 14pt+ line.
+    { label: 'horizontal', panelW: NAMETAG_H.panelW, h: NAMETAG_COMPACT_NAME_H,
+      oneLine: ['Juan Nicolás Pinzón Martínez', 'Łukasz Żółtowski-Świętochowski'] },
   ];
 
-  it.each(cases)('$label: a long name stays 14pt+, over two lines when it must', ({ label, panelW, h }) => {
-    // The horizontal card is wide enough for these on a single 14pt+ line.
-    const oneLine = label === 'horizontal' ? ['Juan Nicolás Pinzón Martínez', 'Łukasz Żółtowski-Świętochowski'] : [];
+  it.each(cases)('$label: a long name stays 14pt+, over two lines when it must', ({ panelW, h, oneLine }) => {
     for (const name of ['Juan Nicolás Pinzón Martínez', 'Łukasz Żółtowski-Świętochowski', LONG]) {
       const { text, fontSize } = nametagName(name, panelW, h);
       expect(lines(text)).toHaveLength(oneLine.includes(name) ? 1 : 2);

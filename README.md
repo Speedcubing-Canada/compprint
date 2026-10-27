@@ -375,11 +375,12 @@ LoginPage → CompetitionPickerPage → RoundScopePage → SettingsPage → Gene
   defaults for a province, and everything stays editable afterwards.
 - **Live results** exist in two flavours, and name tag QR codes point at whichever the
   competition runs on. The codes are labelled "Schedule" and "Results" (translated), not with
-  domain names, which mean nothing to first-timers. `/settings` preselects it from the competition's `scoretaking_software`
-  field (`internal` means ILR, the WCA's integrated live results) and lets the organizer
-  override. WCA Live needs a numeric competition ID and a person-ID map fetched off its GraphQL
-  API; ILR needs neither, since its URLs are built from the WCA competition ID and each
-  competitor's `registration.wcaRegistrationId`, both already in the WCIF.
+  domain names, which mean nothing to first-timers. `/settings` preselects it from the
+  competition's `scoretaking_software` field (`internal` means ILR, the WCA's integrated live
+  results) and lets the organizer override. WCA Live needs a numeric competition ID and a
+  person-ID map fetched off its GraphQL API; ILR needs neither, since its URLs are built from the
+  WCA competition ID and each competitor's `registration.wcaRegistrationId`, both already in the
+  WCIF.
 - **Scramble double-checking** adds a second scrambler-signature column to the scorecards that
   need it, picked by any of three rules OR'd together: by round; by ranking (world top 50 by
   default, plus an optional national or continental threshold, read from the WCIF personal bests);
