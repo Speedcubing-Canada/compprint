@@ -1,9 +1,9 @@
 # CI + deployment pipeline.
-#   pull request → lint, typecheck, test with coverage, PDF fixture diff (no deploy)
+#   pull request → lint, typecheck, test with coverage, PDF fixture diff, browser journeys (no deploy)
 #   push to main → same → build → deploy to App Engine
 #
-# There is no staging environment, so the test job is the only thing standing
-# between a branch and production. main is protected and requires it, so nothing
+# There is no staging environment, so these three jobs are the only thing standing
+# between a branch and production. main is protected and requires all three, so nothing
 # reaches production without a green run on the merge result.
 #
 # See .github/workflows/README.md for one-time GCP setup instructions.
@@ -106,15 +106,10 @@ jobs:
   # unit tests assert measurements; this catches what they cannot see - a changed colour, a
   # shifted margin, a dropped glyph - on documents that get printed and cut.
   #
-  # continue-on-error while the cross-machine tolerance proves itself: the runner's poppler
-  # and font stack are not the ones a baseline was rendered on. It reports red in the run
-  # without blocking a merge. Promote it to a required check (drop continue-on-error, add it
-  # to `deploy.needs`) once a few PRs show it staying green - a flaky gate on the only thing
-  # between a branch and production is worse than no gate.
+  # Pinned: poppler comes from the image's apt archive, so a new image can shift the rasteriser.
   pdf-fixtures:
     name: PDF output regression
-    runs-on: ubuntu-latest
-    continue-on-error: true
+    runs-on: ubuntu-24.04
 
     steps:
       - uses: actions/checkout@v7
@@ -187,7 +182,7 @@ jobs:
 
   deploy:
     name: Deploy → Production
-    needs: test
+    needs: [test, pdf-fixtures, e2e]
     if: github.ref == 'refs/heads/main'
     runs-on: ubuntu-latest
 
