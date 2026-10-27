@@ -8,6 +8,7 @@ FIXTURES=(
   "scorecards          scorecard-layout-test.pdf                scorecards.pdf"
   "long_names          scorecard-long-names-test.pdf            long_names.pdf"
   "long_nametags       nametag-long-names-test.pdf              long_nametags.pdf"
+  "long_nametags_h     nametag-long-names-horizontal-test.pdf   long_nametags_h.pdf"
   "staff_nametags      nametag-staff-test.pdf                   staff_nametags.pdf"
   "covers              cover-layout-test.pdf                    covers.pdf"
   "schedule            schedule-layout-test.pdf                 schedule.pdf"

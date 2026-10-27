@@ -1,7 +1,7 @@
 import { describe, it, expect } from 'vitest';
 import { getStrings } from '../lib/i18n';
 import {
-  ROW_HEIGHTS, SCORECARD_CONFIGS as CONFIGS, scorecardRowHeight, showLiveIdLine,
+  NAMETAG_H, ROW_HEIGHTS, SCORECARD_CONFIGS as CONFIGS, nametagHPositions, scorecardRowHeight, showLiveIdLine,
 } from './layoutConstants';
 
 // Layout geometry constraints
@@ -191,48 +191,27 @@ describe('Nametag vertical layout geometry', () => {
 const NAMETAG_PORTRAIT_W = { LETTER: 612, A4: 595 };
 const NAMETAG_PORTRAIT_H = { LETTER: 792, A4: 842 };
 
-// 90mm × 55mm interior = 255pt × 156pt. Card leaves ~2mm clearance per edge.
-const HOLDER_INTERIOR_W = 255;  // 90mm in pt
-const HOLDER_INTERIOR_H = 156;  // 55mm in pt
-
-const NAMETAG_H_CONFIGS = {
-  LETTER: { panelW: 244, panelH: 147, margin: 15, gapH: 10, gapV: 10 },
-  A4:     { panelW: 244, panelH: 147, margin: 15, gapH: 10, gapV: 10 },
-} as const;
+// The badge holder takes 90 x 55 mm cards, cut on the border.
+const mm = (v: number) => v * 72 / 25.4;
 
 describe('Nametag horizontal layout geometry', () => {
+  it('the card is 90 x 55 mm, the same on every paper', () => {
+    expect(NAMETAG_H.panelW).toBeCloseTo(mm(90), 0);
+    expect(NAMETAG_H.panelH).toBeCloseTo(mm(55), 0);
+  });
+
   for (const fmt of ['LETTER', 'A4'] as const) {
-    const cfg = NAMETAG_H_CONFIGS[fmt];
-
-    describe(fmt, () => {
-      it('2 slots fit horizontally within portrait page width', () => {
-        const usedW = 2 * cfg.panelW + cfg.gapH + 2 * cfg.margin;
-        expect(usedW).toBeLessThanOrEqual(NAMETAG_PORTRAIT_W[fmt]);
-      });
-
-      it('4 rows fit vertically within portrait page height', () => {
-        const usedH = 4 * cfg.panelH + 3 * cfg.gapV + 2 * cfg.margin;
-        expect(usedH).toBeLessThanOrEqual(NAMETAG_PORTRAIT_H[fmt]);
-      });
-
-      it('at least 2 cols and 4 rows fit per page (8 slots = 4 pairs)', () => {
-        const cols = Math.floor((NAMETAG_PORTRAIT_W[fmt] - 2 * cfg.margin + cfg.gapH) / (cfg.panelW + cfg.gapH));
-        const rows = Math.floor((NAMETAG_PORTRAIT_H[fmt] - 2 * cfg.margin + cfg.gapV) / (cfg.panelH + cfg.gapV));
-        expect(cols).toBeGreaterThanOrEqual(2);
-        expect(rows).toBeGreaterThanOrEqual(4);
-      });
-
-      it('landscape slots are wider than tall', () => {
-        expect(cfg.panelW).toBeGreaterThan(cfg.panelH);
-      });
-
-      it('card width fits inside badge holder interior (90mm = 255pt)', () => {
-        expect(cfg.panelW).toBeLessThan(HOLDER_INTERIOR_W);
-      });
-
-      it('card height fits inside badge holder interior (55mm = 156pt)', () => {
-        expect(cfg.panelH).toBeLessThan(HOLDER_INTERIOR_H);
-      });
+    it(`${fmt}: 2 x 4 cards, centred, with matching outer margins`, () => {
+      const pos = nametagHPositions(fmt);
+      expect(pos).toHaveLength(8);
+      const right = NAMETAG_PORTRAIT_W[fmt] - (pos[1]!.left + NAMETAG_H.panelW);
+      const bottom = NAMETAG_PORTRAIT_H[fmt] - (pos[7]!.top + NAMETAG_H.panelH);
+      expect(pos[0]!.left).toBeCloseTo(right, 0);
+      expect(pos[0]!.top).toBeCloseTo(bottom, 0);
+      expect(pos[0]!.left).toBeGreaterThan(20);
+      expect(pos[0]!.top).toBeGreaterThan(20);
+      expect(pos[1]!.left - pos[0]!.left - NAMETAG_H.panelW).toBe(NAMETAG_H.gap);
+      expect(pos[2]!.top - pos[0]!.top - NAMETAG_H.panelH).toBe(NAMETAG_H.gap);
     });
   }
 });
