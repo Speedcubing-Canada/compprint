@@ -12,6 +12,7 @@ import {
 } from './layoutConstants';
 import './fontSetup';
 import { nameBox, nameLayout, NAME_LINE_HEIGHT } from './nameFit';
+import { resultHeader as buildResultHeader } from './resultHeader';
 
 const BORDER      = `${H.cardBorder}pt solid black`;
 const BORDER_THIN = '1pt solid black';
@@ -163,22 +164,7 @@ function ScorecardCard({
   const doubleCheck = card.scrambleDoubleCheck === true;
   const icon    = card.iconDataUrl ?? EVENT_ICONS[card.eventId];
 
-  // The 6-column layout's result column is narrower, so compact suffixes keep the bilingual
-  // header off a fourth line.
-  const resultSuffix = doubleCheck
-    ? (card.isCumulative ? strings.shortCumulativeSuffix(card.limit)
-       : isMBF           ? strings.mbfSuffix
-       :                   strings.shortDnfSuffix(card.limit))
-    : (card.isCumulative ? strings.cumulativeSuffix(card.limit)
-       : isMBF           ? strings.mbfSuffix
-       :                   strings.dnfSuffix(card.limit));
-
-  // Prefix and suffix each hold two lines; merge per language so each takes exactly one.
-  const prefLines = strings.resultPrefix.split('\n');
-  const sufLines  = resultSuffix.split('\n');
-  const resultHeader = (prefLines.length === sufLines.length && prefLines.length > 1)
-    ? prefLines.map((p, i) => `${p} ${sufLines[i]}`).join('\n')
-    : `${strings.resultPrefix}\n${resultSuffix}`;
+  const resultHeader = buildResultHeader(card, strings);
 
   const preRows  = isMBF                        ? [1, 2]
                  : card.format === 'avg5'       ? [1,2,3,4,5]

@@ -160,6 +160,17 @@ describe.skipIf(!hasPdftotext && !process.env.CI)('the printed text', () => {
     // The fully blank spare card keeps the limit prompt, for the delegate to fill in.
     expect(text(files['WaterlooSpring2026_extras.pdf']!)).toContain(blankPrompt);
   }, SLOW);
+
+  it('a custom event without a time limit prints no limit prompt', async () => {
+    const settings = testSettings({
+      competitionId: waterloo.id, ...onlyDocument('scheduleTracker'),
+      customEvents: [{ name: 'Kilominx', iconDataUrl: null, format: 'avg5', cutoff: '', limit: ' ' }],
+    });
+    const { files } = await generate(waterloo, settings);
+    const custom = Object.entries(files).find(([name]) => name.includes('Kilominx'));
+    expect(text(custom![1])).toContain('Kilominx');
+    expect(text(custom![1])).not.toContain('DNF');
+  }, SLOW);
 });
 
 // Names either side of a cell's edge: past it react-pdf wraps them, and every block on the

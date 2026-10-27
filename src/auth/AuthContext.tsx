@@ -14,6 +14,9 @@ import {
   setOnAuthExpired,
 } from './wca';
 import { buildSessionEvent, send } from '../lib/analytics';
+import { clearFlow } from '../lib/flowState';
+import { clearWcifCache } from '../lib/wcifCache';
+import { clearPresetSettings } from '../presets';
 
 const STORAGE_TOKEN = 'wca_token';
 const STORAGE_USER = 'wca_user';
@@ -160,6 +163,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setUser(null);
     setAuthError(null);
     sessionStorage.removeItem(STORAGE_RENEW_ATTEMPT);
+    clearFlow();
+    clearPresetSettings();
+    clearWcifCache();
   }
 
   return (

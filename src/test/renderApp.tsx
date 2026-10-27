@@ -3,7 +3,7 @@
 // flowState writers before calling it. The network is src/test/fakeWca.ts and
 // the PDF worker src/test/fakeWorker.ts, both installed by routeSetup.ts.
 
-import { useEffect } from 'react';
+import { useLayoutEffect } from 'react';
 import { render } from '@testing-library/react';
 import { MemoryRouter, useLocation } from 'react-router';
 import { AppRoutes } from '../App';
@@ -18,7 +18,8 @@ const probe = { path: '' };
 // eslint-disable-next-line react-refresh/only-export-components -- test helper, never hot-reloaded
 function LocationProbe() {
   const { pathname, search } = useLocation();
-  useEffect(() => { probe.path = pathname + search; }, [pathname, search]);
+  // Layout, not passive: a findBy can resolve on the new DOM before a passive effect has run.
+  useLayoutEffect(() => { probe.path = pathname + search; }, [pathname, search]);
   return null;
 }
 

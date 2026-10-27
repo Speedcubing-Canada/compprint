@@ -55,6 +55,8 @@ describe('security headers', () => {
 
   it('allows the PDF renderer its wasm and the fonts the UI loads', async () => {
     const csp = (await get('/')).headers.get('content-security-policy');
+    // The header avatar: WCA serves uploads and the default from two hosts.
+    expect(csp).toContain('img-src \'self\' data: https://avatars.worldcubeassociation.org https://assets.worldcubeassociation.org');
     // @react-pdf compiles through wasm; without this the download fails in production only.
     expect(csp).toContain("'wasm-unsafe-eval'");
     expect(csp).toContain('https://fonts.googleapis.com');

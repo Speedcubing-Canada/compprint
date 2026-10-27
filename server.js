@@ -7,10 +7,13 @@ import { sanitizeEvent } from './analytics.js';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
-const DIST_DIR = path.join(__dirname, 'dist');
+// The E2E suite serves its own build (playwright.config.ts).
+const DIST_DIR = path.join(__dirname, process.env.DIST_DIR || 'dist');
 const INDEX_PATH = path.join(DIST_DIR, 'index.html');
 const PORT = Number(process.env.PORT || 8080);
 const CANONICAL_ORIGIN = 'https://compprint.net';
+// The E2E suite points this at a local fake (e2e/fakeWcaOrigin.ts).
+const WCA_ORIGIN = process.env.WCA_ORIGIN || 'https://www.worldcubeassociation.org';
 const TYPO_HOSTS = new Set([
   'www.compprint.net', 'comprint.speedcubingcanada.org', 'www.comprint.speedcubingcanada.org',
 ]);
@@ -59,7 +62,11 @@ app.use(
         scriptSrcAttr: ["'none'"],
         styleSrc: ["'self'", "'unsafe-inline'", 'https://fonts.googleapis.com'],
         fontSrc: ["'self'", 'https://fonts.gstatic.com'],
-        imgSrc: ["'self'", 'data:', 'https://www.worldcubeassociation.org'],
+        // Uploaded avatars, and the default one.
+        imgSrc: [
+          "'self'", 'data:',
+          'https://avatars.worldcubeassociation.org', 'https://assets.worldcubeassociation.org',
+        ],
         connectSrc: [
           "'self'",
           'https://www.worldcubeassociation.org',
@@ -94,7 +101,7 @@ app.post('/wca-token', express.urlencoded({ extended: false }), async (req, res)
     const params = new URLSearchParams(req.body);
     if (WCA_CLIENT_SECRET) params.set('client_secret', WCA_CLIENT_SECRET);
 
-    const wcaRes = await fetch('https://www.worldcubeassociation.org/oauth/token', {
+    const wcaRes = await fetch(`${WCA_ORIGIN}/oauth/token`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
       body: params.toString(),

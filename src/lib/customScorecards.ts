@@ -42,7 +42,7 @@ export function buildCustomEntries(custom: CustomEvent, a6 = false): ScorecardDa
     liveId: '',
     gender: '',
     cutoff: hasCutoff ? custom.cutoff.trim() : '',
-    limit: custom.limit.trim(),
+    limit: custom.limit.trim() || null,
     format,
     isCumulative: false,
     iconDataUrl: custom.iconDataUrl ?? undefined,

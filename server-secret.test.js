@@ -12,7 +12,7 @@ vi.mock('@google-cloud/secret-manager', () => ({
 /** The client_secret server.js forwards to WCA, after importing it under `env`. */
 async function forwardedSecret(env) {
   vi.resetModules();
-  for (const k of ['WCA_CLIENT_SECRET', 'GOOGLE_CLOUD_PROJECT', 'GCLOUD_PROJECT']) vi.stubEnv(k, env[k] ?? '');
+  for (const k of ['WCA_CLIENT_SECRET', 'GOOGLE_CLOUD_PROJECT', 'GCLOUD_PROJECT', 'WCA_ORIGIN']) vi.stubEnv(k, env[k] ?? '');
   vi.spyOn(console, 'warn').mockImplementation(() => {});
   const { app } = await import('./server.js');
 

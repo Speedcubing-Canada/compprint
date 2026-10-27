@@ -27,3 +27,8 @@ dist-ssr
 pdf-diff-out/
 coverage/
 walkthrough-shots/
+
+# Playwright
+dist-e2e/
+test-results/
+playwright-report/

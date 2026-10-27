@@ -109,7 +109,8 @@ export interface ScorecardEntry {
   liveId: string;
   gender: string;
   cutoff: string;
-  limit: string;
+  // '' leaves the prompt for the delegate to fill in; null is a custom event with no limit.
+  limit: string | null;
   format: ScorecardFormat;
   isCumulative: boolean;
   // Overrides EVENT_ICONS lookup when set (used for custom events).

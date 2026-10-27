@@ -16,7 +16,7 @@ export default defineConfig({
     // `*.route.test.tsx` mount the whole app at a URL; `*.pdf.test.ts` render real PDFs and
     // are slow enough that running them in parallel with each other starves the pool.
     projects: [
-      { extends: true, test: { name: 'unit', exclude: ['**/node_modules/**', '**/*.route.test.tsx', '**/*.pdf.test.ts'] } },
+      { extends: true, test: { name: 'unit', exclude: ['**/node_modules/**', 'e2e/**', '**/*.route.test.tsx', '**/*.pdf.test.ts'] } },
       {
         extends: true,
         test: {

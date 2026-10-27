@@ -6,7 +6,7 @@ import tseslint from 'typescript-eslint'
 import { defineConfig, globalIgnores } from 'eslint/config'
 
 export default defineConfig([
-  globalIgnores(['dist', 'coverage']),
+  globalIgnores(['dist', 'dist-e2e', 'coverage']),
   // The production server and the build/render tooling are Node, not browser, and were
   // previously unlinted entirely - server.js serves every request in production.
   {
@@ -29,5 +29,11 @@ export default defineConfig([
     languageOptions: {
       globals: globals.browser,
     },
+  },
+  // Playwright fixtures hand the test a `use()` callback the hooks rule mistakes for React's.
+  {
+    files: ['e2e/**', 'playwright.config.ts'],
+    rules: { 'react-hooks/rules-of-hooks': 'off' },
+    languageOptions: { globals: globals.node },
   },
 ])
