@@ -61,6 +61,8 @@ export interface NametTagStrings {
   judge: string;
   run: string;
   dutyGroup: (groupList: string) => string;
+  qrSchedule: string;
+  qrResults: string;
 }
 
 // Bolded values always end their line, so each prefix is stored without its value and the
@@ -501,6 +503,8 @@ const NAMETAG_EN: NametTagStrings = {
   judge: 'Judge:',
   run: 'Run:',
   dutyGroup: (g) => `Group ${g}`,
+  qrSchedule: 'Schedule',
+  qrResults: 'Results',
 };
 
 const NAMETAG_FR: NametTagStrings = {
@@ -509,6 +513,8 @@ const NAMETAG_FR: NametTagStrings = {
   judge: 'Juger:',
   run: 'Courir:',
   dutyGroup: (g) => `Groupe ${g}`,
+  qrSchedule: 'Horaire',
+  qrResults: 'Résultats',
 };
 
 const NAMETAG_ES: NametTagStrings = {
@@ -517,6 +523,8 @@ const NAMETAG_ES: NametTagStrings = {
   judge: 'Juzgar:',
   run: 'Correr:',
   dutyGroup: (g) => `Grupo ${g}`,
+  qrSchedule: 'Horario',
+  qrResults: 'Resultados',
 };
 
 const NAMETAG_PT: NametTagStrings = {
@@ -525,6 +533,8 @@ const NAMETAG_PT: NametTagStrings = {
   judge: 'Julgar:',
   run: 'Correr:',
   dutyGroup: (g) => `Grupo ${g}`,
+  qrSchedule: 'Cronograma',
+  qrResults: 'Resultados',
 };
 
 export function getNametTagStrings(language: LocaleCode): NametTagStrings {

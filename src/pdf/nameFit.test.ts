@@ -6,7 +6,7 @@ import {
   NAME_LINE_HEIGHT, NAME_MAX_FS, NAME_MIN_FS, NAMETAG_NAME_MAX_FS,
 } from './nameFit';
 import {
-  NAMETAG_CONFIGS, PDF_FONT, PDF_FONT_BOLD, PDF_FONT_BOLD_EXT, PDF_FONT_EXT,
+  NAMETAG_COMPACT_NAME_H, NAMETAG_CONFIGS, NAMETAG_H, PDF_FONT, PDF_FONT_BOLD, PDF_FONT_BOLD_EXT, PDF_FONT_EXT,
   SCORECARD_CONFIGS, nametagNameH,
 } from './layoutConstants';
 import { corpus } from '../test/corpus';
@@ -91,35 +91,38 @@ describe('Scorecard name fits the header', () => {
   });
 });
 
-describe('Vertical name tag name', () => {
-  const cases = Object.entries(NAMETAG_CONFIGS).flatMap(([fmt, { panelW }]) =>
-    (['hidden', 'with-name', 'logo-only'] as const).map(mode => ({
-      label: `${fmt} ${mode}`, panelW, h: nametagNameH(mode),
-    })));
+// Horizontal tags follow the same path, so long Brazilian and Latin American names wrap
+// rather than shrink.
+describe('Name tag name', () => {
+  const cases = [
+    ...Object.entries(NAMETAG_CONFIGS).flatMap(([fmt, { panelW }]) =>
+      (['hidden', 'with-name', 'logo-only'] as const).map(mode => ({
+        label: `${fmt} ${mode}`, panelW, h: nametagNameH(mode),
+      }))),
+    { label: 'horizontal', panelW: NAMETAG_H.panelW, h: NAMETAG_COMPACT_NAME_H },
+  ];
 
-  it.each(cases)('$label: a long name splits over two lines that fit above the badge', ({ panelW, h }) => {
+  it.each(cases)('$label: a long name stays 14pt+, over two lines when it must', ({ label, panelW, h }) => {
+    // The horizontal card is wide enough for these on a single 14pt+ line.
+    const oneLine = label === 'horizontal' ? ['Juan Nicolás Pinzón Martínez', 'Łukasz Żółtowski-Świętochowski'] : [];
     for (const name of ['Juan Nicolás Pinzón Martínez', 'Łukasz Żółtowski-Świętochowski', LONG]) {
-      const { text, fontSize } = nametagName(name, panelW, h, false);
-      expect(lines(text)).toHaveLength(2);
+      const { text, fontSize } = nametagName(name, panelW, h);
+      expect(lines(text)).toHaveLength(oneLine.includes(name) ? 1 : 2);
       expect(fontSize).toBeGreaterThanOrEqual(14);
       for (const l of lines(text)) expect(textWidth(l, fontSize, false)).toBeLessThanOrEqual(nametagNameW(panelW));
-      expect(2 * fontSize * NAME_LINE_HEIGHT).toBeLessThanOrEqual(h);
+      expect(lines(text).length * fontSize * NAME_LINE_HEIGHT).toBeLessThanOrEqual(h);
     }
   });
 
   // Wrapping takes a 2pt gain, so a longer name can only out-size a shorter one by less.
   it.each(cases)('$label: one more letter never prints a name noticeably bigger', ({ panelW, h }) => {
-    const short = nametagName('Jean-Philippe Beaulieu-Roy', panelW, h, false);
-    const long = nametagName('Jean-Philippe Beaulieu-Roys', panelW, h, false);
+    const short = nametagName('Jean-Philippe Beaulieu-Roy', panelW, h);
+    const long = nametagName('Jean-Philippe Beaulieu-Roys', panelW, h);
     expect(long.fontSize - short.fontSize).toBeLessThan(2);
   });
 
   it.each(cases)('$label: a short name keeps the original one-line size', ({ panelW, h }) => {
-    expect(nametagName('Ali Hakim', panelW, h, false)).toEqual({ text: 'Ali Hakim', fontSize: NAMETAG_NAME_MAX_FS });
-  });
-
-  it('compact tags stay on one line', () => {
-    expect(nametagName(LONG, 244, 40, true).text).toBe(LONG);
+    expect(nametagName('Ali Hakim', panelW, h)).toEqual({ text: 'Ali Hakim', fontSize: NAMETAG_NAME_MAX_FS });
   });
 });
 
@@ -141,13 +144,16 @@ describe('every real name fits', () => {
     expect(over).toEqual([]);
   });
 
-  it.each(Object.entries(NAMETAG_CONFIGS))('its %s name tag panel', (_paper, cfg) => {
-    const inner = nametagInnerW(cfg.panelW);
-    const over = names.filter((n) => [false, true].some((compact) => {
-      const r = nametagName(n, cfg.panelW, nametagNameH('with-name'), compact);
+  it.each([
+    ...Object.entries(NAMETAG_CONFIGS).map(([paper, { panelW }]) => [paper, panelW, nametagNameH('with-name')] as const),
+    ['horizontal', NAMETAG_H.panelW, NAMETAG_COMPACT_NAME_H] as const,
+  ])('its %s name tag panel', (_layout, panelW, h) => {
+    const inner = nametagInnerW(panelW);
+    const over = names.filter((n) => {
+      const r = nametagName(n, panelW, h);
       // At the floor a name too long for one line wraps, rather than print unreadably small.
-      return r.fontSize > NAME_MIN_FS && widest(r.text, r.fontSize, false) > inner;
-    }));
+      return r.fontSize > NAME_MIN_FS && (widest(r.text, r.fontSize, false) > inner || lines(r.text).length * r.fontSize * NAME_LINE_HEIGHT > h + 0.01);
+    });
     expect(over).toEqual([]);
   });
 });

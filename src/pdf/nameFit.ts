@@ -117,17 +117,16 @@ export function nameLayout(
   return { text: best.text, fontSize: Math.max(NAME_MIN_FS, Math.floor(best.fontSize * 2) / 2) };
 }
 
-// Vertical name tags: the name's size cap and width, 4pt clear of the panel on each side.
+// Name tags: the name's size cap and width, 4pt clear of the panel on each side.
 export const NAMETAG_NAME_MAX_FS = 20;
 export const nametagInnerW = (panelW: number) => panelW - 2 * (NAMETAG_PANEL_PAD + NAMETAG_PANEL_BORDER);
 export const nametagNameW = (panelW: number) => nametagInnerW(panelW) - 2 * 4;
 
 // One line keeps the originals' length-based size; two lines once they are 2pt bigger. The size
 // counts characters, not glyph widths, so it is capped where a wide name would overrun the panel.
-export function nametagName(name: string, panelW: number, availH: number, compact: boolean) {
+export function nametagName(name: string, panelW: number, availH: number) {
   const fits = Math.max(NAME_MIN_FS, Math.floor((nametagInnerW(panelW) / Math.max(textWidth(name, 1, false), 1)) * 2) / 2);
   const byLength = Math.max(9, Math.floor((panelW - 14) / Math.max(name.length * 0.55, 1)));
   const legacy = Math.min(fits, NAMETAG_NAME_MAX_FS, byLength);
-  if (compact) return { text: name, fontSize: Math.min(14, legacy) };
   return nameLayout(name, nametagNameW(panelW), availH, { bold: false, maxFs: NAMETAG_NAME_MAX_FS, wrapGainFs: 2, oneLineFs: legacy });
 }

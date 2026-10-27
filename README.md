@@ -66,9 +66,10 @@ it in small type above the competitor's name. The line shrinks to fit long names
 
 Scorecard names are measured with real Helvetica-Bold widths and sized up to 18pt. A name splits
 over two lines, at a space or after a hyphen, when one line would drop under 11pt or two lines
-print at least 3pt bigger; the originals keep 13pt+ names on one line. Vertical name tags keep
-the originals' length-based size on one line and split once two lines print at least 2pt bigger
-(up to 20pt), within the height left above the badge in each logo mode.
+print at least 3pt bigger; the originals keep 13pt+ names on one line. Name tags, vertical and
+horizontal, keep the originals' length-based size on one line and split once two lines print at
+least 2pt bigger (up to 20pt), within the height left above the badge (horizontal tags budget two
+14pt lines), so long Brazilian and Latin American names wrap rather than shrink.
 
 The PDFs use the built-in Helvetica, which only covers Western European letters. Any other Latin
 or Greek letter (Polish `Ł`, Vietnamese `ư`, Czech `ř`...) falls back, letter by letter, to
@@ -373,7 +374,8 @@ LoginPage → CompetitionPickerPage → RoundScopePage → SettingsPage → Gene
 - `/scope` picks which documents and which rounds to generate; regional presets there seed
   defaults for a province, and everything stays editable afterwards.
 - **Live results** exist in two flavours, and name tag QR codes point at whichever the
-  competition runs on. `/settings` preselects it from the competition's `scoretaking_software`
+  competition runs on. The codes are labelled "Schedule" and "Results" (translated), not with
+  domain names, which mean nothing to first-timers. `/settings` preselects it from the competition's `scoretaking_software`
   field (`internal` means ILR, the WCA's integrated live results) and lets the organizer
   override. WCA Live needs a numeric competition ID and a person-ID map fetched off its GraphQL
   API; ILR needs neither, since its URLs are built from the WCA competition ID and each
@@ -406,8 +408,9 @@ Non-obvious constraints that look arbitrary in the code but break real output if
   non-breaking block instead of paginating it, collapsing every tick box into a sliver. The Group
   Overview pins its blocks for the same "never split a group" reason, but only after
   `groupBlockFitsPage` says the block fits a page at all.
-- **Horizontal name tags are sized to 90×55 mm badge holders**, so A4 and LETTER use the same
-  card. Not a per-paper-size number, do not "optimise" it.
+- **Horizontal name tags are cut to exactly 90×55 mm** (`NAMETAG_H`), the card the badge holder
+  takes, and centred on the page, so A4 and LETTER use the same card. Not a per-paper-size
+  number, do not "optimise" it.
 - **Never filter scorecard entries after `finalizeEntries`.** It sorts, pads to a multiple of 4
   and quadrant-reorders; removing entries downstream corrupts the printed pile order. Cover
   cards are gated at emission time in `pushCover` for exactly this reason.

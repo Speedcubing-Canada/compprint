@@ -371,6 +371,16 @@ async function main() {
     }),
   );
 
+  // Horizontal, same tight header: long Brazilian and Latin American names wrap, never shrink.
+  await write(
+    'nametag-long-names-horizontal-test.pdf',
+    e(NametTagDocument, {
+      nametags: [...LONG_TAG_NAMES, 'André Rodrigo César Pinheiro Monte Amado', 'Matheus de Souza Macêdo']
+        .map((name, i) => ({ ...nt.entries[i % nt.entries.length], name })),
+      settings: { ...ntSettings, useDefaultLogo: true, nametagLogoMode: 'with-name', nametagLayout: 'horizontal' },
+    }),
+  );
+
   // Non-competing staff: QR codes on both sides, no events, competition-level links.
   const [d, v, ...rest] = nt.entries;
   await write(

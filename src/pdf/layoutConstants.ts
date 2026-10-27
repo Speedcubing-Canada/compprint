@@ -107,14 +107,40 @@ export const NAMETAG_CONFIGS = {
   A4:     { panelW: 201, panelH: 283, margin: 12, gapH: 4, gapV: 4 },
 } as const;
 
-// Empirical top-section height, for the duty font-size estimate. 'logo-only' adds ~19pt of
-// header (28pt logo vs 8.5pt text); compact compresses it to fit the 147pt card.
-export function nametagTopSectionH(logoMode: NametTagLogoMode, compact = false) {
-  if (compact) return logoMode === 'logo-only' ? 75 : 65;
+// Horizontal name tags are cut to the 90x55mm card the badge holder takes, whatever the paper.
+export const NAMETAG_H = { panelW: 255, panelH: 156, gap: 10 } as const;
+
+// 2 cols x 4 rows, centred so every outer cut margin matches.
+export function nametagHPositions(paper: PaperFormat) {
+  const { panelW, panelH, gap } = NAMETAG_H;
+  const left = (PAGE_W[paper] - 2 * panelW - gap) / 2;
+  const top = (PAGE_H[paper] - 4 * panelH - 3 * gap) / 2;
+  return Array.from({ length: 8 }, (_, i) => ({
+    left: left + (i % 2) * (panelW + gap),
+    top: top + Math.floor(i / 2) * (panelH + gap),
+  }));
+}
+
+// Horizontal tags budget two 14pt lines, so long names wrap instead of shrinking.
+export const NAMETAG_COMPACT_NAME_H = 2 * 14 * 1.1;
+
+// Horizontal header above the name: comp-name line, or the shrunk logo, plus its 3pt margin.
+const compactHeaderH = (logoMode: NametTagLogoMode) =>
+  (logoMode === 'hidden' ? 8.5 * 1.1 : logoMode === 'with-name' ? 14 : 20) + 3;
+
+// What the horizontal card has left for the QR codes: border and padding (7 + 6), header,
+// two-line name (+3), badge (16), the WCA ID line with 4pt clear each side, and the label.
+export function nametagCompactQrSize(logoMode: NametTagLogoMode) {
+  const inner = NAMETAG_H.panelH - 2 * NAMETAG_PANEL_BORDER - 7 - 6;
+  return Math.floor(inner - compactHeaderH(logoMode) - NAMETAG_COMPACT_NAME_H - 3 - 16 - (9 * 1.1 + 8) - (2 + 7 * 1.1));
+}
+
+// Vertical top-section height. 'logo-only' adds ~19pt of header (28pt logo vs 8.5pt text).
+export function nametagTopSectionH(logoMode: NametTagLogoMode) {
   return logoMode === 'logo-only' ? 146 : 127;
 }
 
-// Vertical top section minus all but the name: header, badge (22 + 4), icons (6 + 12 + 4),
+// Vertical top section minus all but the name: header, badge (22 + 4), icons (5 + 14 + 3),
 // WCA ID (13pt line + 4) and the name's own 6pt margin. More and the badge drops.
 export function nametagNameH(logoMode: NametTagLogoMode) {
   const header = logoMode === 'hidden' ? 8.5 * 1.1 + 4 : logoMode === 'with-name' ? 20 + 3 : 28 + 4;
@@ -176,25 +202,19 @@ export function liveQrTarget(
     wcaLivePersonIds: Record<number, string> | null;
   },
   entry: { registrantId: number; registrationId: number; blank?: boolean; staff?: boolean },
-): { url: string; label: string } {
+): string {
   const toComp = entry.blank || entry.staff;
   if (cfg.mode === 'ilr') {
     const live = `https://www.worldcubeassociation.org/competitions/${cfg.competitionId}/live`;
-    return {
-      url: toComp ? live : `${live}/competitors/${entry.registrationId}`,
-      label: 'worldcubeassociation.org',
-    };
+    return toComp ? live : `${live}/competitors/${entry.registrationId}`;
   }
   const personId = cfg.wcaLivePersonIds?.[entry.registrantId] ?? null;
   const home = 'https://live.worldcubeassociation.org';
   const comp = `${home}/competitions/${cfg.wcaLiveId}`;
-  return {
-    url: !cfg.wcaLiveId ? home
-      : toComp ? comp
-      : personId ? `${comp}/competitors/${personId}`
-      : home,
-    label: 'live.worldcubeassociation.org',
-  };
+  return !cfg.wcaLiveId ? home
+    : toComp ? comp
+    : personId ? `${comp}/competitors/${personId}`
+    : home;
 }
 
 // Group Overview. Flex units, not points: the table fills the page width. Competitor
@@ -225,7 +245,7 @@ export const GROUP_OVERVIEW = {
 };
 
 export const PAGE_W: Record<PaperFormat, number> = { LETTER: 612, A4: 595.28 };
-const PAGE_H: Record<PaperFormat, number> = { LETTER: 792, A4: 842 };
+export const PAGE_H: Record<PaperFormat, number> = { LETTER: 792, A4: 842 };
 
 /** One group's block, including the gap below it. Shared so the estimator cannot drift. */
 export function groupBlockHeight(maxColumnRows: number, withDayLabel: boolean): number {
