@@ -14,8 +14,10 @@ export const PDF_FONT_BOLD = ['Helvetica-Bold', PDF_FONT_BOLD_EXT];
 
 // Schedule tracker and Round Checklist share a clipboard, so they share their chrome.
 // Row tint stays light enough to photocopy.
-export const TABLE_BORDER = '0.75pt solid #888';
-export const TABLE_BORDER_INNER = '0.5pt solid #bbb';
+export const TABLE_BORDER_W = 0.75;
+export const TABLE_BORDER = `${TABLE_BORDER_W}pt solid #888`;
+export const TABLE_BORDER_INNER_W = 0.5;
+export const TABLE_BORDER_INNER = `${TABLE_BORDER_INNER_W}pt solid #bbb`;
 export const TABLE_ROW_ALT = '#f2f2f2';
 export const TABLE_HEADER_BG = '#d8d8d8';
 
@@ -210,15 +212,19 @@ export const GROUP_OVERVIEW = {
   pagePadV: 36,
   fontSize: 9,
   lineH: 12,
-  headerH: 18,
+  headerH: 19.15, // measured off a render: the table's borders included
   headingH: 17,   // "3x3x3 Cube Round 1 - Group 2"
   subHeadH: 14,   // "09:00 - 09:25   Room: Salon"
   dayLabelH: 19,
+  headerPadV: 5,
   cellPadV: 4,
+  cellPadH: 5,
   blockGap: 14,
-  titleH: 40,
+  titleLineH: 19.8, // measured: each extra title line moves the first block down this much
+  titleGap: 22,
 };
 
+export const PAGE_W: Record<PaperFormat, number> = { LETTER: 612, A4: 595.28 };
 const PAGE_H: Record<PaperFormat, number> = { LETTER: 792, A4: 842 };
 
 /** One group's block, including the gap below it. Shared so the estimator cannot drift. */
@@ -249,11 +255,12 @@ export function groupBlockFitsPage(
 export function estimateGroupOverviewPages(
   blocks: { rows: number; withDayLabel: boolean }[],
   paperFormat: PaperFormat,
+  titleH: number,
 ): number {
   if (blocks.length === 0) return 0;
   const usable = (PAGE_H[paperFormat] ?? PAGE_H.LETTER) - 2 * GROUP_OVERVIEW.pagePadV;
   let pages = 1;
-  let used = GROUP_OVERVIEW.titleH;
+  let used = titleH;
   for (const b of blocks) {
     const h = groupBlockHeight(b.rows, b.withDayLabel);
     if (used > 0 && used + h > usable) { pages++; used = 0; }

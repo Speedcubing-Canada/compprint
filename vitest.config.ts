@@ -45,7 +45,7 @@ export default defineConfig({
       // coverage, so CI only ever fails on a drop. Never lower them by hand.
       // Exception, 2026-09-10: coverage-v8 5.x stopped counting two lines 4.x
       // counted as coverable. Denominator shrank, nothing lost coverage.
-      thresholds: { autoUpdate: true, lines: 92.8, functions: 90.7, branches: 85.1, statements: 91.4 },
+      thresholds: { autoUpdate: true, lines: 95.6, functions: 92.5, branches: 88, statements: 94.2 },
     },
   },
 });

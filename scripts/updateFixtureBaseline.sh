@@ -12,20 +12,14 @@ TMP="$(mktemp -d)"
 trap 'rm -rf "$TMP"' EXIT
 
 cd "$APP"
+source "$HERE/fixtureBaselines.sh"
 mkdir -p "$OUT"
+copy() { cp "$TMP/$2" "$OUT/$3"; }
+
 FIXTURE_OUT_DIR="$TMP" npm run --silent render:fixtures >/dev/null
-cp "$TMP/GrosJouetsaMontreal2026_nametags.pdf"     "$OUT/nametags_vertical.pdf"
-cp "$TMP/GrosJouetsaMontreal2026_first_timers.pdf" "$OUT/first_timers.pdf"
-cp "$TMP/scorecard-layout-test.pdf"                "$OUT/scorecards.pdf"
-cp "$TMP/scorecard-long-names-test.pdf"            "$OUT/long_names.pdf"
-cp "$TMP/nametag-long-names-test.pdf"              "$OUT/long_nametags.pdf"
-cp "$TMP/nametag-staff-test.pdf"                   "$OUT/staff_nametags.pdf"
-cp "$TMP/cover-layout-test.pdf"                    "$OUT/covers.pdf"
-cp "$TMP/schedule-layout-test.pdf"                 "$OUT/schedule.pdf"
-cp "$TMP/checklist-layout-test.pdf"                "$OUT/checklist.pdf"
-cp "$TMP/group-overview-layout-test.pdf"           "$OUT/group_overview.pdf"
+for f in "${FIXTURES[@]}"; do copy $f; done
 
 FIXTURE_OUT_DIR="$TMP" npm run --silent render:fixtures -- --horizontal >/dev/null
-cp "$TMP/GrosJouetsaMontreal2026_nametags.pdf" "$OUT/nametags_horizontal.pdf"
+for f in "${HORIZONTAL_FIXTURES[@]}"; do copy $f; done
 
 echo "Baseline refreshed in $OUT - review the diff before committing."

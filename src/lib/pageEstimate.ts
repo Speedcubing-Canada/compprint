@@ -2,8 +2,9 @@ import type { ParsedWCIF } from './wcif-parser';
 import type { PdfJob } from './pdfJobs';
 import type { CompetitionSettings } from '../types/settings';
 import { customEventCardCount } from './customScorecards';
-import { getFirstTimerSlipStrings } from './i18n';
+import { getFirstTimerSlipStrings, getGroupOverviewStrings } from './i18n';
 import { packSlipPages } from '../pdf/firstTimerSlipLines';
+import { groupBlockRows, overviewTitle, titleHeight, visibleColumns } from '../pdf/groupOverviewColumns';
 import {
   scorecardsPerPage, NAMETAGS_PER_PAGE, estimateGroupOverviewPages,
 } from '../pdf/layoutConstants';
@@ -35,14 +36,16 @@ export function estimateTotalPages(
   // `checkingDays` is already empty when the checklist wasn't selected.
   if (parsed.checkingDays.length > 0) pages += 1;
 
-  // Exact-ish: the document packs the same wrap={false} blocks from the same constants.
+  // Exact: the document packs the same wrap={false} blocks from the same constants and row count.
   const multiDay = new Set(parsed.groupOverview.map(e => e.dayLabel)).size > 1;
+  const columns = visibleColumns(parsed.groupOverview);
   pages += estimateGroupOverviewPages(
     parsed.groupOverview.map((e, i, all) => ({
-      rows: Math.max(e.competitors.length, e.scramblers.length, e.runners.length, e.judges.length),
+      rows: groupBlockRows(e, columns, settings.paperFormat),
       withDayLabel: multiDay && e.dayLabel !== all[i - 1]?.dayLabel,
     })),
     settings.paperFormat,
+    titleHeight(overviewTitle(settings.competitionName, getGroupOverviewStrings(settings.language)), settings.paperFormat),
   );
 
   // Exact: the document renders this same packing.

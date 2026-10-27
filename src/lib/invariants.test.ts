@@ -9,7 +9,7 @@ import { buildPdfJobs, type PdfJob } from './pdfJobs';
 import { SCORECARD_BUCKETS, filterParsedByScope } from './generationScope';
 import { parseActivityCode } from './activityCode';
 import { scorecardsPerPage } from '../pdf/layoutConstants';
-import { testSettings } from '../test/fixtures';
+import { testSettings, variedSettings } from '../test/fixtures';
 import { randomWcif } from '../test/wcifGen';
 import { corpus } from '../test/corpus';
 
@@ -18,21 +18,6 @@ import { corpus } from '../test/corpus';
 // More seeds: `SEEDS=2000 npx vitest run src/lib/invariants.test.ts`.
 
 const SEEDS = Number(process.env.SEEDS ?? 200);
-
-/** Settings vary with the seed too, so every combination gets exercised somewhere. */
-function settingsFor(wcif: WCIF, seed: number): CompetitionSettings {
-  const bit = (n: number) => ((seed >> n) & 1) === 1;
-  return testSettings({
-    competitionId: wcif.id,
-    competitionName: wcif.name,
-    scorecardsA6: bit(0),
-    mergeScorecardRounds: bit(1),
-    splitPdfsByStage: bit(2),
-    secondRoundMode: bit(3) ? 'blanks' : 'prefilled',
-    otsBlanks: bit(4),
-    language: (['en', 'fr', 'es', 'pt'] as const)[seed % 4],
-  });
-}
 
 const cases: [string, () => WCIF, number][] = [
   ...Array.from({ length: SEEDS }, (_, i): [string, () => WCIF, number] => {
@@ -146,7 +131,7 @@ const PROPERTIES: Record<string, (c: Case, soft: Soft) => void> = {
 // One test per competition; soft expects, so one run reports every property that broke.
 it.each(cases)('%s holds every property', (_label, build, seed) => {
   const wcif = build();
-  const settings = settingsFor(wcif, seed);
+  const settings = variedSettings(wcif, seed);
   const parsed = parseWCIF(structuredClone(wcif), settings);
   const c: Case = { wcif, settings, parsed, jobs: buildPdfJobs(parsed, settings), perPage: scorecardsPerPage(settings.scorecardsA6) };
   for (const [name, check] of Object.entries(PROPERTIES)) check(c, (v) => expect.soft(v, name));
