@@ -55,6 +55,21 @@ export interface GroupOverviewStrings {
   room: string;
 }
 
+export interface VenueScheduleStrings {
+  schedule: string;
+  events: string;
+  start: string;
+  end: string;
+  activity: string;
+  event: string;
+  round: string;
+  format: string;
+  timeLimit: string;
+  proceed: string;
+  cutoff: (time: string) => string;
+  cumulative: (limit: string) => string;
+}
+
 export interface NametTagStrings {
   compete: string;
   scramble: string;
@@ -497,6 +512,34 @@ export function getGroupOverviewStrings(language: LocaleCode): GroupOverviewStri
   return LOCALES[language].groupOverview;
 }
 
+const VENUE_SCHEDULE_EN: VenueScheduleStrings = {
+  schedule: 'Schedule', events: 'Events', start: 'Start', end: 'End', activity: 'Activity',
+  event: 'Event', round: 'Round', format: 'Format', timeLimit: 'Time limit', proceed: 'Proceed',
+  cutoff: (t) => `Cutoff: ${t}`, cumulative: (l) => `${l} cumulative`,
+};
+
+const VENUE_SCHEDULE_FR: VenueScheduleStrings = {
+  schedule: 'Horaire', events: 'Épreuves', start: 'Début', end: 'Fin', activity: 'Activité',
+  event: 'Épreuve', round: 'Tour', format: 'Format', timeLimit: 'Temps limite', proceed: 'Qualifiés',
+  cutoff: (t) => `Seuil\u00a0: ${t}`, cumulative: (l) => `${l} cumulatif`,
+};
+
+const VENUE_SCHEDULE_ES: VenueScheduleStrings = {
+  schedule: 'Horario', events: 'Eventos', start: 'Inicio', end: 'Fin', activity: 'Actividad',
+  event: 'Evento', round: 'Ronda', format: 'Formato', timeLimit: 'Tiempo límite', proceed: 'Clasifican',
+  cutoff: (t) => `Corte: ${t}`, cumulative: (l) => `${l} acumulado`,
+};
+
+const VENUE_SCHEDULE_PT: VenueScheduleStrings = {
+  schedule: 'Cronograma', events: 'Eventos', start: 'Início', end: 'Término', activity: 'Atividade',
+  event: 'Evento', round: 'Rodada', format: 'Formato', timeLimit: 'Limite de tempo', proceed: 'Classificam',
+  cutoff: (t) => `Corte: ${t}`, cumulative: (l) => `${l} acumulado`,
+};
+
+export function getVenueScheduleStrings(language: LocaleCode): VenueScheduleStrings {
+  return LOCALES[language].venueSchedule;
+}
+
 const NAMETAG_EN: NametTagStrings = {
   compete: 'Compete:',
   scramble: 'Scramble:',
@@ -772,6 +815,7 @@ interface LocaleBundle {
   schedule: ScheduleStrings;
   checking: CheckingSheetStrings;
   groupOverview: GroupOverviewStrings;
+  venueSchedule: VenueScheduleStrings;
   nametag: NametTagStrings;
   firstTimer: FirstTimerSlipStrings;
   title: NametTagTitleStrings;
@@ -781,8 +825,8 @@ interface LocaleBundle {
 }
 
 const LOCALES: Record<LocaleCode, LocaleBundle> = {
-  en: { scorecard: EN, schedule: SCHEDULE_EN, checking: CHECKING_EN, groupOverview: GROUP_OVERVIEW_EN, nametag: NAMETAG_EN, firstTimer: FIRST_TIMER_EN, title: NAMETAG_TITLE_EN, shortNames: SHORT_NAMETAG_NAMES_EN, eventNames: EVENT_NAMES_EN, worker: WORKER_EN },
-  fr: { scorecard: FR, schedule: SCHEDULE_FR, checking: CHECKING_FR, groupOverview: GROUP_OVERVIEW_FR, nametag: NAMETAG_FR, firstTimer: FIRST_TIMER_FR, title: NAMETAG_TITLE_FR, shortNames: SHORT_NAMETAG_NAMES_FR, eventNames: EVENT_NAMES_FR, worker: WORKER_FR },
-  es: { scorecard: ES, schedule: SCHEDULE_ES, checking: CHECKING_ES, groupOverview: GROUP_OVERVIEW_ES, nametag: NAMETAG_ES, firstTimer: FIRST_TIMER_ES, title: NAMETAG_TITLE_ES, shortNames: SHORT_NAMETAG_NAMES_ES, eventNames: EVENT_NAMES_ES, worker: WORKER_ES },
-  pt: { scorecard: PT, schedule: SCHEDULE_PT, checking: CHECKING_PT, groupOverview: GROUP_OVERVIEW_PT, nametag: NAMETAG_PT, firstTimer: FIRST_TIMER_PT, title: NAMETAG_TITLE_PT, shortNames: SHORT_NAMETAG_NAMES_PT, eventNames: EVENT_NAMES_PT, worker: WORKER_PT },
+  en: { scorecard: EN, schedule: SCHEDULE_EN, checking: CHECKING_EN, groupOverview: GROUP_OVERVIEW_EN, venueSchedule: VENUE_SCHEDULE_EN, nametag: NAMETAG_EN, firstTimer: FIRST_TIMER_EN, title: NAMETAG_TITLE_EN, shortNames: SHORT_NAMETAG_NAMES_EN, eventNames: EVENT_NAMES_EN, worker: WORKER_EN },
+  fr: { scorecard: FR, schedule: SCHEDULE_FR, checking: CHECKING_FR, groupOverview: GROUP_OVERVIEW_FR, venueSchedule: VENUE_SCHEDULE_FR, nametag: NAMETAG_FR, firstTimer: FIRST_TIMER_FR, title: NAMETAG_TITLE_FR, shortNames: SHORT_NAMETAG_NAMES_FR, eventNames: EVENT_NAMES_FR, worker: WORKER_FR },
+  es: { scorecard: ES, schedule: SCHEDULE_ES, checking: CHECKING_ES, groupOverview: GROUP_OVERVIEW_ES, venueSchedule: VENUE_SCHEDULE_ES, nametag: NAMETAG_ES, firstTimer: FIRST_TIMER_ES, title: NAMETAG_TITLE_ES, shortNames: SHORT_NAMETAG_NAMES_ES, eventNames: EVENT_NAMES_ES, worker: WORKER_ES },
+  pt: { scorecard: PT, schedule: SCHEDULE_PT, checking: CHECKING_PT, groupOverview: GROUP_OVERVIEW_PT, venueSchedule: VENUE_SCHEDULE_PT, nametag: NAMETAG_PT, firstTimer: FIRST_TIMER_PT, title: NAMETAG_TITLE_PT, shortNames: SHORT_NAMETAG_NAMES_PT, eventNames: EVENT_NAMES_PT, worker: WORKER_PT },
 };

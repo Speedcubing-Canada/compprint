@@ -226,6 +226,7 @@
       "schedule": "Seguimiento del horario: se imprime tal cual, una página por día. Colócalo en el escenario o entrégalo al equipo de sala.",
       "checking": "Lista de rondas: se imprime tal cual, una tabla por día. Marca cada ronda a medida que vuelven sus hojas de puntuación.",
       "group_overview": "Resumen de grupos: se imprime tal cual, un bloque por grupo. Colócalo en el escenario para que cada persona encuentre su grupo, su estación y su tarea.",
+      "venue_schedule": "Horario para el lugar: se imprime tal cual, la tabla de eventos y luego una página por día. Colócalo en el lugar de la competencia.",
       "nametags": "Etiquetas de nombre: cuatro personas por página, anverso y reverso lado a lado. Recorta cada par y dóblalo por la mitad antes de meterlo en el portacredenciales.",
       "first_timers": "Comprobantes de debutantes: los comprobantes van uno tras otro en la página. Recorta entre ellos y entrega cada uno al delegado para que lo firme tras el primer intento del debutante."
     }
@@ -245,6 +246,7 @@
     "doc_nametags": "Etiquetas con nombre",
     "doc_round_checklist": "Lista de verificación",
     "doc_group_overview": "Resumen de grupos",
+    "doc_venue_schedule": "Horario para el lugar",
     "doc_first_timers": "Fichas de primera vez",
     "checking": "Comprobando la competición…",
     "needs_document": "Elige al menos un documento para imprimir.",

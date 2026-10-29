@@ -26,6 +26,7 @@ export type PdfJob =
   | { kind: 'checking';     filename: string; label: string }
   | { kind: 'first-timers'; filename: string; label: string }
   | { kind: 'group-overview'; filename: string; label: string }
+  | { kind: 'venue-schedule'; filename: string; label: string }
   | { kind: 'custom';       filename: string; label: string; custom: CustomEvent };
 
 /**
@@ -214,6 +215,8 @@ export function buildPdfJobs(parsed: ParsedWCIF, settings: CompetitionSettings):
   // Already emptied by filterParsedByScope unless the Group Overview was selected.
   if (parsed.groupOverview.length > 0)
     jobs.push({ kind: 'group-overview', filename: `${id}_group_overview.pdf`, label: 'Group Overview' });
+  if (parsed.venueSchedule)
+    jobs.push({ kind: 'venue-schedule', filename: `${id}_venue_schedule.pdf`, label: 'Venue Schedule' });
   jobs.push(...nametagJobs(parsed.nametags, id, splitLarge));
   if (parsed.firstTimers.length > 0)
     jobs.push({ kind: 'first-timers', filename: `${id}_first_timers.pdf`, label: 'First-Timer Slips' });
@@ -235,7 +238,7 @@ export function buildPdfJobs(parsed: ParsedWCIF, settings: CompetitionSettings):
  * scorecards. Custom-event cards print alongside ordinary ones, so they fold in.
  */
 export type GuideSection =
-  | 'scorecards' | 'schedule' | 'checking' | 'group-overview' | 'nametags' | 'first-timers';
+  | 'scorecards' | 'schedule' | 'checking' | 'group-overview' | 'venue-schedule' | 'nametags' | 'first-timers';
 
 export function guideSections(jobs: PdfJob[]): GuideSection[] {
   const kinds = new Set(jobs.map(j => j.kind));
@@ -244,6 +247,7 @@ export function guideSections(jobs: PdfJob[]): GuideSection[] {
   if (kinds.has('schedule')) out.push('schedule');
   if (kinds.has('checking')) out.push('checking');
   if (kinds.has('group-overview')) out.push('group-overview');
+  if (kinds.has('venue-schedule')) out.push('venue-schedule');
   if (kinds.has('nametags')) out.push('nametags');
   if (kinds.has('first-timers')) out.push('first-timers');
   return out;

@@ -30,7 +30,7 @@ function mkParsed(over: Partial<ParsedWCIF> = {}): ParsedWCIF {
   return {
     firstRound: [], intermediate: [], semis: [], finals: [],
     nametags: [], firstTimers: [], extras: [], scheduleDays: [], checkingDays: [],
-    groupOverview: [],
+    groupOverview: [], venueSchedule: null,
     laterRoundsWithAssignments: [], hasGroups: true, stageCount: 1, stations: null,
     ...over,
   };
@@ -45,7 +45,7 @@ function mkSettings(over: Partial<CompetitionSettings> = {}): CompetitionSetting
     nametagLogoMode: 'with-name', nametagQrMode: 'back-only', nametagLayout: 'vertical',
     customEvents: [], scorecardCheckMode: 'per-group-card',
     scrambleDoubleCheck: false, scrambleDoubleCheckRounds: [], scrambleDoubleCheckOverrides: {},
-    generationScope: { mode: 'everything', documents: { scorecards: true, scheduleTracker: true, nametags: true, roundChecklist: false, firstTimerSlips: false, groupOverview: false } },
+    generationScope: { mode: 'everything', documents: { scorecards: true, scheduleTracker: true, nametags: true, roundChecklist: false, firstTimerSlips: false, groupOverview: false, venueSchedule: false } },
     ...over,
   } as CompetitionSettings;
 }

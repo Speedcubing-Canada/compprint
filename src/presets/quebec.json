@@ -3,7 +3,8 @@
   "name": "Québec",
   "region": "Canada",
   "documents": {
-    "groupOverview": true
+    "groupOverview": true,
+    "venueSchedule": true
   },
   "settings": {
     "language": "fr",

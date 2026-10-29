@@ -33,6 +33,9 @@ export function estimateTotalPages(
   // A single flowing page, estimated.
   if (parsed.scheduleDays.length > 0) pages += 1;
 
+  // The events page and one per day, estimated: a long day spills onto a second page.
+  if (parsed.venueSchedule) pages += 1 + parsed.venueSchedule.days.length;
+
   // `checkingDays` is already empty when the checklist wasn't selected.
   if (parsed.checkingDays.length > 0) pages += 1;
 

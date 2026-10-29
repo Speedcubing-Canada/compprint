@@ -44,7 +44,7 @@ export default function CustomCompetitionPage() {
     writeScope(
       {
         mode: 'everything',
-        documents: { scorecards: true, scheduleTracker: false, nametags: false, roundChecklist: false, firstTimerSlips: false, groupOverview: false },
+        documents: { scorecards: true, scheduleTracker: false, nametags: false, roundChecklist: false, firstTimerSlips: false, groupOverview: false, venueSchedule: false },
       },
       { showSecondRoundMode: false, multiStage: false, detectedStations: null },
     );

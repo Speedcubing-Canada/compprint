@@ -60,7 +60,7 @@ describe('generation scope', () => {
     rounds: [{ eventId: '333', roundNum: 2 }],
     documents: {
       scorecards: true, scheduleTracker: false, nametags: false,
-      roundChecklist: true, firstTimerSlips: false, groupOverview: false,
+      roundChecklist: true, firstTimerSlips: false, groupOverview: false, venueSchedule: false,
     },
   };
 
@@ -258,7 +258,7 @@ describe('settings restore', () => {
 
   it('backfills roundChecklist into an earlier four-key document selection', () => {
     stored({ generationScope: { mode: 'latest', documents: {
-      scorecards: true, scheduleTracker: false, nametags: false, firstTimerSlips: false, groupOverview: false,
+      scorecards: true, scheduleTracker: false, nametags: false, firstTimerSlips: false, groupOverview: false, venueSchedule: false,
     } } });
     expect(readSettings()?.generationScope.documents.roundChecklist).toBe(false);
   });

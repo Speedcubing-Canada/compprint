@@ -37,6 +37,7 @@ we can see which competitions the tool is used on and which settings people pick
 | `{id}_checklist.pdf` | Round Checklist: one table per day tracking each round's data flow |
 | `{id}_schedule.pdf` | Schedule tracker: estimated times, blank columns for actuals |
 | `{id}_group_overview.pdf` | Group Overview: one table per group, listing everyone assigned to it |
+| `{id}_venue_schedule.pdf` | Venue Schedule: the WCA competition PDF's events table and daily schedule, to post around the venue |
 | `{id}_nametags.pdf` | Competitor name tags with duty assignments and QR codes, plus non-competing Delegates, organizers and volunteers (badge "Staff", QR codes on both sides, toggle in name tag settings) |
 | `{id}_first_timers.pdf` | Confirmation slips for competitors with no WCA ID |
 | `{id}_custom_{name}.pdf` | One file per custom/bonus event |
@@ -102,6 +103,15 @@ A group nobody is assigned to produces no entry. Finals are scheduled with real 
 long before anyone qualifies for them, and a round scheduled as a bare time block has its groups
 synthesized so its scorecards still generate; either would otherwise print four empty columns. A
 final that *has* been assigned is kept, and so is a group with staff but no competitors yet.
+
+### Venue Schedule
+
+Our take on the WCA's `competitions/<id>.pdf`, so organizers no longer print it separately: an
+events table (format, cutoff, time limit, who proceeds), then one page per day listing every
+activity in start order, lunch and check-in included. Landscape, without the WCA's cover page.
+Headings are bilingual when a secondary language is set; activity names use the primary one, and
+times use the venue's timezone (12h in English, 24h otherwise). A round running on several stages
+at once is one row listing its rooms. Unchecked by default; the Québec preset turns it on.
 
 ### A6 scorecards
 

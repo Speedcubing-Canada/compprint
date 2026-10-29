@@ -27,7 +27,7 @@ export type PresetSettings = Partial<Pick<CompetitionSettings,
 
 const DOCUMENT_KEYS: (keyof DocumentSelection)[] = [
   'scorecards', 'scheduleTracker', 'nametags', 'roundChecklist', 'firstTimerSlips',
-  'groupOverview',
+  'groupOverview', 'venueSchedule',
 ];
 
 // Filename -> asset URL, so the image stays out of the JS bundle.

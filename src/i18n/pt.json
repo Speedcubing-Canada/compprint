@@ -226,6 +226,7 @@
       "schedule": "Acompanhamento do cronograma: imprima como está, uma folha por dia. Fixe no palco ou entregue à equipe do palco.",
       "checking": "Checklist de rodadas: imprima como está, uma tabela por dia. Marque cada rodada conforme as súmulas voltam.",
       "group_overview": "Visão geral dos grupos: imprima como está, um bloco por grupo. Fixe no palco para que todos encontrem seu grupo, sua estação e sua função.",
+      "venue_schedule": "Cronograma do local: imprima como está, a tabela de eventos e depois uma página por dia. Fixe pelo local da competição.",
       "nametags": "Crachás: quatro pessoas por página, frente e verso lado a lado. Recorte cada par e dobre ao meio antes de colocar no porta-crachá.",
       "first_timers": "Comprovantes de estreantes: os comprovantes seguem um após o outro na página. Recorte entre eles e entregue cada um ao delegado para assinar após a primeira tentativa do estreante."
     }
@@ -245,6 +246,7 @@
     "doc_nametags": "Crachás",
     "doc_round_checklist": "Checklist de rodada",
     "doc_group_overview": "Visão geral dos grupos",
+    "doc_venue_schedule": "Cronograma do local",
     "doc_first_timers": "Fichas de novato",
     "checking": "Verificando a competição…",
     "needs_document": "Escolha pelo menos um documento para imprimir.",
