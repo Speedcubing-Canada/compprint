@@ -67,4 +67,21 @@ describe('buildVenueSchedule', () => {
     expect(fr.days[0].rows[2]).toMatchObject({ start: '10:30', end: '11:40', name: 'Cube 6x6x6 Tour 1' });
     expect(fr.events[0].rounds[0].cutoff).toBe('Seuil : 1:30.00');
   });
+
+  // A reader with no English reads the whole page: lunch and the tutorial come from their
+  // activity code, and "finale" is the noun ("final" is the masculine adjective).
+  it('French: no English left on the page', () => {
+    const fr = build(corpusWcif('GrosJouetsaMontreal2025'), 'fr');
+    const names = fr.days[0].rows.map(r => r.name);
+    expect(names).toEqual(expect.arrayContaining([
+      'Accueil des compétiteurs', 'Tutoriel pour les nouveaux compétiteurs', 'Repas du midi', 'Cube 6x6x6 Finale',
+    ]));
+    expect(names.join(' ')).not.toMatch(/\b(Lunch|Tutorial|Check-in|Final)\b/);
+    expect(fr.events[0].rounds[0]).toMatchObject({ format: 'Meilleur\u00a0de\u00a02 / Moyenne\u00a0de\u00a05', proceed: '50 % meilleurs' });
+    expect(fr.events[0].rounds[1].proceed).toBe('10 premiers');
+    // Agrees with "minutes", which is feminine.
+    expect(fr.events.find(e => e.eventId === '666')!.rounds[0].timeLimit).toBe('12:00.00 cumulative');
+    // Free text the organizer typed has no code to translate.
+    expect(names.at(-1)).toBe('Surprise Event');
+  });
 });

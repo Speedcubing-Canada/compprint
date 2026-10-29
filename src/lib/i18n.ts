@@ -68,6 +68,12 @@ export interface VenueScheduleStrings {
   proceed: string;
   cutoff: (time: string) => string;
   cumulative: (limit: string) => string;
+  // Keyed by WCIF round format: '1'..'5' best of N, 'a' average of 5, 'm' mean of 3.
+  formats: Record<'1' | '2' | '3' | '5' | 'a' | 'm' | 'h', string>;
+  top: (n: number) => string;
+  topPercent: (n: number) => string;
+  // Keyed by the `other-*` activity code; `other-misc` and unknown codes print the WCIF name.
+  activities: Record<string, string>;
 }
 
 export interface NametTagStrings {
@@ -388,7 +394,7 @@ const SCHEDULE_FR: ScheduleStrings = {
   dayPrefix: 'Jour',
   attemptLabel: (n) => `Essai ${n}`,
   roundLabel: (n) => `Tour ${n}`,
-  finalLabel: 'Final',
+  finalLabel: 'Finale',
 };
 
 const SCHEDULE_ES: ScheduleStrings = {
@@ -516,24 +522,64 @@ const VENUE_SCHEDULE_EN: VenueScheduleStrings = {
   schedule: 'Schedule', events: 'Events', start: 'Start', end: 'End', activity: 'Activity',
   event: 'Event', round: 'Round', format: 'Format', timeLimit: 'Time limit', proceed: 'Proceed',
   cutoff: (t) => `Cutoff: ${t}`, cumulative: (l) => `${l} cumulative`,
+  // The WCA's own abbreviations.
+  formats: { '1': 'Bo1', '2': 'Bo2', '3': 'Bo3', '5': 'Bo5', a: 'Ao5', m: 'Mo3', h: 'H2H' },
+  top: (n) => `Top ${n}`, topPercent: (n) => `Top ${n}%`,
+  activities: {
+    registration: 'Registration', checkin: 'Check-in', tutorial: 'Tutorial for new competitors',
+    multi: 'Multi-Blind cube submission', breakfast: 'Breakfast', lunch: 'Lunch', dinner: 'Dinner',
+    awards: 'Awards', setup: 'Setup', teardown: 'Teardown',
+  },
 };
 
 const VENUE_SCHEDULE_FR: VenueScheduleStrings = {
   schedule: 'Horaire', events: 'Épreuves', start: 'Début', end: 'Fin', activity: 'Activité',
   event: 'Épreuve', round: 'Tour', format: 'Format', timeLimit: 'Temps limite', proceed: 'Qualifiés',
-  cutoff: (t) => `Seuil\u00a0: ${t}`, cumulative: (l) => `${l} cumulatif`,
+  // Agrees with minutes and heures, both feminine.
+  cutoff: (t) => `Seuil\u00a0: ${t}`, cumulative: (l) => `${l} cumulative`,
+  formats: {
+    '1': 'Meilleur de 1', '2': 'Meilleur de 2', '3': 'Meilleur de 3', '5': 'Meilleur de 5',
+    a: 'Moyenne de 5', m: 'Moyenne de 3', h: 'Face-à-face',
+  },
+  top: (n) => `${n} premiers`, topPercent: (n) => `${n}\u00a0% meilleurs`,
+  // Déjeuner and dîner mean different meals in Québec and France, so the meals are spelled out.
+  activities: {
+    registration: 'Inscription', checkin: 'Accueil des compétiteurs', tutorial: 'Tutoriel pour les nouveaux compétiteurs',
+    multi: 'Remise des cubes du Multi-BLD', breakfast: 'Petit-déjeuner', lunch: 'Repas du midi', dinner: 'Repas du soir',
+    awards: 'Remise des prix', setup: 'Installation', teardown: 'Démontage',
+  },
 };
 
 const VENUE_SCHEDULE_ES: VenueScheduleStrings = {
   schedule: 'Horario', events: 'Eventos', start: 'Inicio', end: 'Fin', activity: 'Actividad',
   event: 'Evento', round: 'Ronda', format: 'Formato', timeLimit: 'Tiempo límite', proceed: 'Clasifican',
   cutoff: (t) => `Corte: ${t}`, cumulative: (l) => `${l} acumulado`,
+  formats: {
+    '1': 'Mejor de 1', '2': 'Mejor de 2', '3': 'Mejor de 3', '5': 'Mejor de 5',
+    a: 'Media de 5', m: 'Media de 3', h: 'Cara a cara',
+  },
+  top: (n) => `Los ${n} mejores`, topPercent: (n) => `El ${n}% mejor`,
+  activities: {
+    registration: 'Inscripción', checkin: 'Acreditación', tutorial: 'Tutorial para nuevos competidores',
+    multi: 'Entrega de cubos de Multi-BLD', breakfast: 'Desayuno', lunch: 'Almuerzo', dinner: 'Cena',
+    awards: 'Premiación', setup: 'Montaje', teardown: 'Desmontaje',
+  },
 };
 
 const VENUE_SCHEDULE_PT: VenueScheduleStrings = {
   schedule: 'Cronograma', events: 'Eventos', start: 'Início', end: 'Término', activity: 'Atividade',
   event: 'Evento', round: 'Rodada', format: 'Formato', timeLimit: 'Limite de tempo', proceed: 'Classificam',
   cutoff: (t) => `Corte: ${t}`, cumulative: (l) => `${l} acumulado`,
+  formats: {
+    '1': 'Melhor de 1', '2': 'Melhor de 2', '3': 'Melhor de 3', '5': 'Melhor de 5',
+    a: 'Média de 5', m: 'Média de 3', h: 'Mano a mano',
+  },
+  top: (n) => `Os ${n} melhores`, topPercent: (n) => `Os ${n}% melhores`,
+  activities: {
+    registration: 'Inscrição', checkin: 'Credenciamento', tutorial: 'Tutorial para novos competidores',
+    multi: 'Entrega dos cubos do Multi-BLD', breakfast: 'Café da manhã', lunch: 'Almoço', dinner: 'Jantar',
+    awards: 'Premiação', setup: 'Montagem', teardown: 'Desmontagem',
+  },
 };
 
 export function getVenueScheduleStrings(language: LocaleCode): VenueScheduleStrings {

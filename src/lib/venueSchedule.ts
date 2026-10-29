@@ -1,4 +1,4 @@
-import type { Round, WCIF } from '../types/wcif';
+import type { WCIF } from '../types/wcif';
 import type { LocaleCode } from '../types/settings';
 import { getEventName, getVenueScheduleStrings } from './i18n';
 import { parseActivityCode, roundIdOf } from './activityCode';
@@ -42,10 +42,6 @@ export interface VenueSchedule {
   days: VenueDay[];
 }
 
-const FORMAT_LABEL: Record<Round['format'], string> = {
-  '1': 'Bo1', '2': 'Bo2', '3': 'Bo3', '5': 'Bo5', a: 'Ao5', m: 'Mo3', h: 'H2H',
-};
-
 /** WCA notation: `45.00`, `1:30.00`, `1:00:00.00`. */
 export function resultTime(cs: number): string {
   const h = Math.floor(cs / 360000);
@@ -76,12 +72,14 @@ export function buildVenueSchedule(wcif: WCIF, labels: ScheduleLabels): VenueSch
       if (!src || src.type === 'registrations') continue;
       const { type, value } = src.resultCondition;
       if (value == null) continue;
-      const text = type === 'ranking' ? `Top ${value}`
-        : type === 'percent' ? `Top ${value}%`
+      const text = type === 'ranking' ? strings.top(value)
+        : type === 'percent' ? strings.topPercent(value)
         : `< ${resultTime(value)}`;
       for (const id of src.type === 'round' ? [src.roundId] : src.roundIds) proceedOf[id] = text;
     }
 
+  // Non-breaking inside each format, so "Moyenne de 5" never splits: a narrow cell breaks at the slash.
+  const formatOf = (f: keyof typeof strings.formats) => strings.formats[f].replace(/ /g, '\u00a0');
   const roundInfo: Record<string, VenueRound> = {};
   const events: VenueEvent[] = wcif.events.map(event => ({
     eventId: event.id,
@@ -93,7 +91,9 @@ export function buildVenueSchedule(wcif: WCIF, labels: ScheduleLabels): VenueSch
       const limit = round.timeLimit && event.id !== '333mbf' ? resultTime(round.timeLimit.centiseconds) : '';
       const info: VenueRound = {
         label: roundLabel(event.id, i + 1),
-        format: round.cutoff ? `Bo${round.cutoff.numberOfAttempts} / ${FORMAT_LABEL[round.format]}` : FORMAT_LABEL[round.format],
+        format: round.cutoff
+          ? `${formatOf(String(round.cutoff.numberOfAttempts) as '1')} / ${formatOf(round.format)}`
+          : formatOf(round.format),
         cutoff: cutoffValue && strings.cutoff(cutoffValue),
         timeLimit: limit && round.timeLimit!.cumulativeRoundIds.length > 0 ? strings.cumulative(limit) : limit,
         proceed: proceedOf[round.id] ?? '',
@@ -115,7 +115,7 @@ export function buildVenueSchedule(wcif: WCIF, labels: ScheduleLabels): VenueSch
         const name = code && round
           ? `${getEventName(code.eventId, language)} ${round.label}`
             + (code.attempt === undefined ? '' : ` (${labels.strings.attemptLabel(code.attempt)})`)
-          : activity.name;
+          : strings.activities[activity.activityCode.replace(/^other-/, '')] ?? activity.name;
         const key = `${activity.activityCode}|${activity.name}|${activity.startTime}|${activity.endTime}`;
         const twin = seen.get(key);
         if (twin) { if (!twin.rooms.includes(room.name)) twin.rooms.push(room.name); continue; }
