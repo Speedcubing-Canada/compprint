@@ -111,7 +111,9 @@ events table (format, cutoff, time limit, who proceeds), then one page per day l
 activity in start order, lunch and check-in included. Landscape, without the WCA's cover page.
 Headings are bilingual when a secondary language is set; activity names use the primary one, and
 times use the venue's timezone (12h in English, 24h otherwise). A round running on several stages
-at once is one row listing its rooms. Unchecked by default; the Québec preset turns it on.
+at once is one row listing its rooms, and a time limit split across rounds names the rounds it is
+shared with. Rows have fixed heights, so the page count shown before generating is exact.
+Unchecked by default; the Québec preset turns it on.
 
 ### A6 scorecards
 

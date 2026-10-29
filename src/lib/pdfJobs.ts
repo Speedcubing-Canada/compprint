@@ -4,6 +4,7 @@ import {
 } from './wcif-parser';
 import { cmp } from './sort';
 import type { CompetitionSettings, CustomEvent } from '../types/settings';
+import type { VenueSchedule } from './venueSchedule';
 import {
   scorecardsPerPage, MAX_PAGES_PER_SCORECARD_PDF,
   NAMETAGS_PER_PAGE, MAX_PAGES_PER_NAMETAG_PDF,
@@ -26,7 +27,7 @@ export type PdfJob =
   | { kind: 'checking';     filename: string; label: string }
   | { kind: 'first-timers'; filename: string; label: string }
   | { kind: 'group-overview'; filename: string; label: string }
-  | { kind: 'venue-schedule'; filename: string; label: string }
+  | { kind: 'venue-schedule'; filename: string; label: string; schedule: VenueSchedule }
   | { kind: 'custom';       filename: string; label: string; custom: CustomEvent };
 
 /**
@@ -216,7 +217,7 @@ export function buildPdfJobs(parsed: ParsedWCIF, settings: CompetitionSettings):
   if (parsed.groupOverview.length > 0)
     jobs.push({ kind: 'group-overview', filename: `${id}_group_overview.pdf`, label: 'Group Overview' });
   if (parsed.venueSchedule)
-    jobs.push({ kind: 'venue-schedule', filename: `${id}_venue_schedule.pdf`, label: 'Venue Schedule' });
+    jobs.push({ kind: 'venue-schedule', filename: `${id}_venue_schedule.pdf`, label: 'Venue Schedule', schedule: parsed.venueSchedule });
   jobs.push(...nametagJobs(parsed.nametags, id, splitLarge));
   if (parsed.firstTimers.length > 0)
     jobs.push({ kind: 'first-timers', filename: `${id}_first_timers.pdf`, label: 'First-Timer Slips' });

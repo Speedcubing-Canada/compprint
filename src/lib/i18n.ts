@@ -1,4 +1,5 @@
 import type { LocaleCode } from '../types/settings';
+import type { RoundFormat } from '../types/wcif';
 
 export interface CoverCardStrings {
   forDelegate: string;
@@ -68,13 +69,18 @@ export interface VenueScheduleStrings {
   proceed: string;
   cutoff: (time: string) => string;
   cumulative: (limit: string) => string;
+  sharedWith: (rounds: string) => string;
+  moves: (n: number) => string;
   // Keyed by WCIF round format: '1'..'5' best of N, 'a' average of 5, 'm' mean of 3.
-  formats: Record<'1' | '2' | '3' | '5' | 'a' | 'm' | 'h', string>;
+  formats: Record<RoundFormat, string>;
   top: (n: number) => string;
   topPercent: (n: number) => string;
   // Keyed by the `other-*` activity code; `other-misc` and unknown codes print the WCIF name.
-  activities: Record<string, string>;
+  activities: Record<OtherActivity, string>;
 }
+
+type OtherActivity =
+  'registration' | 'checkin' | 'tutorial' | 'multi' | 'breakfast' | 'lunch' | 'dinner' | 'awards' | 'setup' | 'teardown';
 
 export interface NametTagStrings {
   compete: string;
@@ -522,6 +528,7 @@ const VENUE_SCHEDULE_EN: VenueScheduleStrings = {
   schedule: 'Schedule', events: 'Events', start: 'Start', end: 'End', activity: 'Activity',
   event: 'Event', round: 'Round', format: 'Format', timeLimit: 'Time limit', proceed: 'Proceed',
   cutoff: (t) => `Cutoff: ${t}`, cumulative: (l) => `${l} cumulative`,
+  sharedWith: (r) => `Shared with ${r}`, moves: (n) => `${n} moves`,
   // The WCA's own abbreviations.
   formats: { '1': 'Bo1', '2': 'Bo2', '3': 'Bo3', '5': 'Bo5', a: 'Ao5', m: 'Mo3', h: 'H2H' },
   top: (n) => `Top ${n}`, topPercent: (n) => `Top ${n}%`,
@@ -537,11 +544,12 @@ const VENUE_SCHEDULE_FR: VenueScheduleStrings = {
   event: 'Épreuve', round: 'Tour', format: 'Format', timeLimit: 'Temps limite', proceed: 'Qualifiés',
   // Agrees with minutes and heures, both feminine.
   cutoff: (t) => `Seuil\u00a0: ${t}`, cumulative: (l) => `${l} cumulative`,
+  sharedWith: (r) => `Partagée avec ${r}`, moves: (n) => `${n} coups`,
   formats: {
     '1': 'Meilleur de 1', '2': 'Meilleur de 2', '3': 'Meilleur de 3', '5': 'Meilleur de 5',
     a: 'Moyenne de 5', m: 'Moyenne de 3', h: 'Face-à-face',
   },
-  top: (n) => `${n} premiers`, topPercent: (n) => `${n}\u00a0% meilleurs`,
+  top: (n) => `${n} premiers`, topPercent: (n) => `Les ${n}\u00a0% meilleurs`,
   // Déjeuner and dîner mean different meals in Québec and France, so the meals are spelled out.
   activities: {
     registration: 'Inscription', checkin: 'Accueil des compétiteurs', tutorial: 'Tutoriel pour les nouveaux compétiteurs',
@@ -554,6 +562,7 @@ const VENUE_SCHEDULE_ES: VenueScheduleStrings = {
   schedule: 'Horario', events: 'Eventos', start: 'Inicio', end: 'Fin', activity: 'Actividad',
   event: 'Evento', round: 'Ronda', format: 'Formato', timeLimit: 'Tiempo límite', proceed: 'Clasifican',
   cutoff: (t) => `Corte: ${t}`, cumulative: (l) => `${l} acumulado`,
+  sharedWith: (r) => `Compartido con ${r}`, moves: (n) => `${n} movimientos`,
   formats: {
     '1': 'Mejor de 1', '2': 'Mejor de 2', '3': 'Mejor de 3', '5': 'Mejor de 5',
     a: 'Media de 5', m: 'Media de 3', h: 'Cara a cara',
@@ -570,6 +579,7 @@ const VENUE_SCHEDULE_PT: VenueScheduleStrings = {
   schedule: 'Cronograma', events: 'Eventos', start: 'Início', end: 'Término', activity: 'Atividade',
   event: 'Evento', round: 'Rodada', format: 'Formato', timeLimit: 'Limite de tempo', proceed: 'Classificam',
   cutoff: (t) => `Corte: ${t}`, cumulative: (l) => `${l} acumulado`,
+  sharedWith: (r) => `Compartilhado com ${r}`, moves: (n) => `${n} movimentos`,
   formats: {
     '1': 'Melhor de 1', '2': 'Melhor de 2', '3': 'Melhor de 3', '5': 'Melhor de 5',
     a: 'Média de 5', m: 'Média de 3', h: 'Mano a mano',

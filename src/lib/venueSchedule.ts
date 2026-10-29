@@ -1,6 +1,6 @@
-import type { WCIF } from '../types/wcif';
+import type { RoundFormat, WCIF } from '../types/wcif';
 import type { LocaleCode } from '../types/settings';
-import { getEventName, getVenueScheduleStrings } from './i18n';
+import { getEventName, getVenueScheduleStrings, type VenueScheduleStrings } from './i18n';
 import { parseActivityCode, roundIdOf } from './activityCode';
 import { cmp } from './sort';
 import type { ScheduleLabels } from './scheduleRows';
@@ -12,6 +12,8 @@ export interface VenueRound {
   format: string;
   cutoff: string;
   timeLimit: string;
+  // The other rounds a cumulative limit is split with.
+  shared: string;
   proceed: string;
 }
 
@@ -60,49 +62,76 @@ function clock(hhmm: string, language: LocaleCode): string {
   return `${h % 12 || 12}:${String(m).padStart(2, '0')} ${h < 12 ? 'AM' : 'PM'}`;
 }
 
-export function buildVenueSchedule(wcif: WCIF, labels: ScheduleLabels): VenueSchedule {
-  const { language, localDate, localTime, roundLabel } = labels;
+/** A record lookup by untrusted key: no prototype hits, undefined when missing. */
+function lookup<K extends string>(rec: Record<K, string>, key: string): string | undefined {
+  return Object.hasOwn(rec, key) ? rec[key as K] : undefined;
+}
+
+/** Null for multi-blind: its results encode points, not a bar to beat. */
+function resultText(strings: VenueScheduleStrings, eventId: string, value: number, average: boolean): string | null {
+  if (eventId === '333mbf') return null;
+  // FMC singles count moves; its averages are moves times 100.
+  if (eventId === '333fm') return strings.moves(average ? value / 100 : value);
+  return resultTime(value);
+}
+
+/** Null when there is nothing to print: no events and no schedule. */
+export function buildVenueSchedule(wcif: WCIF, labels: ScheduleLabels): VenueSchedule | null {
+  const { language, localDate, localTime, roundLabel, roundName, fullDateLabel } = labels;
   const strings = getVenueScheduleStrings(language);
 
-  // Who advances out of a round is written on the round it feeds.
+  // Who advances out of a round is written on the round it feeds. Linked rounds advance on
+  // their combined result, printed on the last one.
   const proceedOf: Record<string, string> = {};
+  const eventOf: Record<string, string> = {};
+  for (const event of wcif.events) for (const round of event.rounds) eventOf[round.id] = event.id;
   for (const event of wcif.events)
     for (const round of event.rounds) {
       const src = round.participationRuleset?.participationSource;
       if (!src || src.type === 'registrations') continue;
-      const { type, value } = src.resultCondition;
+      const { type, scope, value } = src.resultCondition;
       if (value == null) continue;
+      const from = src.type === 'round' ? src.roundId : src.roundIds.at(-1)!;
+      const bar = type === 'ranking' || type === 'percent' ? null
+        : resultText(strings, eventOf[from] ?? event.id, value, scope === 'average');
       const text = type === 'ranking' ? strings.top(value)
         : type === 'percent' ? strings.topPercent(value)
-        : `< ${resultTime(value)}`;
-      for (const id of src.type === 'round' ? [src.roundId] : src.roundIds) proceedOf[id] = text;
+        : bar === null ? '' : `< ${bar}`;
+      if (text) proceedOf[from] = text;
     }
 
   // Non-breaking inside each format, so "Moyenne de 5" never splits: a narrow cell breaks at the slash.
-  const formatOf = (f: keyof typeof strings.formats) => strings.formats[f].replace(/ /g, '\u00a0');
+  // An unknown format prints raw rather than failing the whole parse.
+  const formatOf = (f: string) => (lookup<RoundFormat>(strings.formats, f) ?? f).replace(/ /g, '\u00a0');
+  const nameOf = (roundId: string) => {
+    const code = parseActivityCode(roundId);
+    return code ? roundName(code) : roundId;
+  };
   const roundInfo: Record<string, VenueRound> = {};
   const events: VenueEvent[] = wcif.events.map(event => ({
     eventId: event.id,
     name: getEventName(event.id, language),
     rounds: event.rounds.map((round, i) => {
-      // FMC cutoffs count moves; multi-blind's encode points and its limit is per cube (H1b).
+      // Multi-blind cutoffs encode points and its limit is per cube (H1b).
       const cutoffValue = !round.cutoff || event.id === '333mbf' ? ''
-        : event.id === '333fm' ? String(round.cutoff.resultValue) : resultTime(round.cutoff.resultValue);
+        : resultText(strings, event.id, round.cutoff.resultValue, false) ?? '';
       const limit = round.timeLimit && event.id !== '333mbf' ? resultTime(round.timeLimit.centiseconds) : '';
+      const cumulative = round.timeLimit?.cumulativeRoundIds ?? [];
+      const others = cumulative.filter(id => id !== round.id);
       const info: VenueRound = {
         label: roundLabel(event.id, i + 1),
         format: round.cutoff
-          ? `${formatOf(String(round.cutoff.numberOfAttempts) as '1')} / ${formatOf(round.format)}`
+          ? `${formatOf(String(round.cutoff.numberOfAttempts))} / ${formatOf(round.format)}`
           : formatOf(round.format),
         cutoff: cutoffValue && strings.cutoff(cutoffValue),
-        timeLimit: limit && round.timeLimit!.cumulativeRoundIds.length > 0 ? strings.cumulative(limit) : limit,
+        timeLimit: limit && cumulative.length > 0 ? strings.cumulative(limit) : limit,
+        shared: limit && others.length > 0 ? strings.sharedWith(others.map(nameOf).join(', ')) : '',
         proceed: proceedOf[round.id] ?? '',
       };
       roundInfo[round.id] = info;
       return info;
     }),
   }));
-
   const byDate = new Map<string, { at: number; row: VenueRow }[]>();
   const seen = new Map<string, VenueRow>();
   for (const venue of wcif.schedule.venues)
@@ -112,11 +141,10 @@ export function buildVenueSchedule(wcif: WCIF, labels: ScheduleLabels): VenueSch
         const round = code ? roundInfo[roundIdOf(code)] : undefined;
         // A round of an event no longer in the WCIF has nothing to print.
         if (code && !round) continue;
-        const name = code && round
-          ? `${getEventName(code.eventId, language)} ${round.label}`
-            + (code.attempt === undefined ? '' : ` (${labels.strings.attemptLabel(code.attempt)})`)
-          : strings.activities[activity.activityCode.replace(/^other-/, '')] ?? activity.name;
-        const key = `${activity.activityCode}|${activity.name}|${activity.startTime}|${activity.endTime}`;
+        const name = code ? roundName(code)
+          : lookup(strings.activities, activity.activityCode.replace(/^other-/, '')) ?? activity.name;
+        // By printed name: two rooms' "Lunch" and "Dîner" under one code are one row.
+        const key = `${activity.activityCode}|${name}|${activity.startTime}|${activity.endTime}`;
         const twin = seen.get(key);
         if (twin) { if (!twin.rooms.includes(room.name)) twin.rooms.push(room.name); continue; }
         const date = localDate(activity.startTime);
@@ -133,17 +161,12 @@ export function buildVenueSchedule(wcif: WCIF, labels: ScheduleLabels): VenueSch
         byDate.get(date)!.push({ at: Date.parse(activity.startTime), row });
       }
 
-  const dateFormat = new Intl.DateTimeFormat(language === 'pt' ? 'pt-BR' : language, {
-    weekday: 'long', year: 'numeric', month: 'long', day: 'numeric', timeZone: 'UTC',
-  });
-  const days = [...byDate].sort(([a], [b]) => cmp(a, b)).map(([date, rows]) => {
-    const full = dateFormat.format(new Date(`${date}T12:00:00Z`));
-    return {
-      dateLabel: full.charAt(0).toUpperCase() + full.slice(1),
-      // Stable: rooms starting at the same minute keep WCIF room order.
-      rows: rows.sort((a, b) => a.at - b.at).map(r => r.row),
-    };
-  });
+  if (events.length === 0 && byDate.size === 0) return null;
+  const days = [...byDate].sort(([a], [b]) => cmp(a, b)).map(([date, rows]) => ({
+    dateLabel: fullDateLabel(date),
+    // Stable: rooms starting at the same minute keep WCIF room order.
+    rows: rows.sort((a, b) => a.at - b.at).map(r => r.row),
+  }));
 
   return { events, days };
 }

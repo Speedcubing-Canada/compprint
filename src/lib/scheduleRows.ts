@@ -139,8 +139,20 @@ export function scheduleLabels(wcif: WCIF, language: LocaleCode) {
   };
   const roundLabel = (eventId: string, round: number): string =>
     round === (roundCount[eventId] ?? 1) ? strings.finalLabel : strings.roundLabel(round);
+  // "6x6x6 Cube Final (Attempt 2)"
+  const roundName = (code: ActivityCode): string =>
+    `${getEventName(code.eventId, language)} ${roundLabel(code.eventId, code.round)}`
+    + (code.attempt === undefined ? '' : ` (${strings.attemptLabel(code.attempt)})`);
+  const fullDateFormat = new Intl.DateTimeFormat(language === 'pt' ? 'pt-BR' : language, {
+    weekday: 'long', year: 'numeric', month: 'long', day: 'numeric', timeZone: 'UTC',
+  });
+  // "Saturday, April 19, 2025"
+  const fullDateLabel = (date: string): string => {
+    const full = fullDateFormat.format(new Date(`${date}T12:00:00Z`));
+    return full.charAt(0).toUpperCase() + full.slice(1);
+  };
 
-  return { language, strings, roundCount, localDate, localTime, dayLabel, roundLabel };
+  return { language, strings, roundCount, localDate, localTime, dayLabel, roundLabel, roundName, fullDateLabel };
 }
 
 /** The schedule tracker and the Round Checklist, one table per day. */
@@ -150,7 +162,7 @@ export function buildScheduleDays(
   // The group codes that print for a round activity, synthesized ones included.
   groupCodesOf: (activity: Activity) => string[],
 ): { scheduleDays: ScheduleDay[]; checkingDays: CheckingDay[] } {
-  const { language, strings, roundCount, localDate, localTime, dayLabel, roundLabel } = labels;
+  const { roundCount, localDate, localTime, dayLabel, roundName } = labels;
 
   // Build a (date → roomIndex → activities[]) map, preserving WCIF room order via roomIndex.
   const dayRoomMap = new Map<string, Map<number, Activity[]>>();
@@ -203,7 +215,6 @@ export function buildScheduleDays(
     // Timestamps, not ISO strings: WCIF times carry UTC offsets.
     let prevStart: number | null = null;
     for (const { code, startTime, endTime, groupCodes } of slots) {
-      const eventRound = `${getEventName(code.eventId, language)} ${roundLabel(code.eventId, code.round)}`;
       // The first row has only the header border above it.
       const thisStart = Date.parse(startTime);
       const breakBefore = prevStart !== null
@@ -212,7 +223,7 @@ export function buildScheduleDays(
       rows.push({
         startTime: localTime(startTime),
         endTime: localTime(endTime),
-        eventRound: code.attempt === undefined ? eventRound : `${eventRound} (${strings.attemptLabel(code.attempt)})`,
+        eventRound: roundName(code),
         breakBefore,
         groupCount: groupCodes.size,
         preChecked: code.round === 1,

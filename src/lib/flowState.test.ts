@@ -263,6 +263,13 @@ describe('settings restore', () => {
     expect(readSettings()?.generationScope.documents.roundChecklist).toBe(false);
   });
 
+  it('backfills the venue schedule, off, into a selection saved before it existed', () => {
+    stored({ generationScope: { mode: 'latest', documents: {
+      scorecards: true, scheduleTracker: true, nametags: true, roundChecklist: false, firstTimerSlips: false, groupOverview: true,
+    } } });
+    expect(readSettings()?.generationScope.documents).toMatchObject({ venueSchedule: false, groupOverview: true });
+  });
+
   // The checking sheet is its own document, so only the cover-card half survives.
   it('maps the retired checking-sheet mode onto none', () => {
     stored({ scorecardCheckMode: 'checking-sheet' });

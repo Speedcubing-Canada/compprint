@@ -80,12 +80,11 @@ describe('the download, end to end', () => {
     // unzipSync keys by name, so a duplicate filename would show up as a missing entry.
     expect(Object.keys(pages).sort()).toEqual(jobs.map((j) => j.filename).sort());
 
-    // The schedule documents flow and are estimated; everything else is exact.
-    const flowing = jobs.filter((j) => j.kind === 'schedule' || j.kind === 'checking' || j.kind === 'venue-schedule');
-    const flowingEstimate = flowing.length + (parsed.venueSchedule?.days.length ?? 0);
+    // The schedule tracker and checklist flow and are estimated at a page each; everything else is exact.
+    const flowing = jobs.filter((j) => j.kind === 'schedule' || j.kind === 'checking');
     const flowingPages = flowing.reduce((n, j) => n + pages[j.filename], 0);
     const total = Object.values(pages).reduce((a, b) => a + b, 0);
-    expect(total - flowingPages).toBe(estimateTotalPages(parsed, settings, jobs) - flowingEstimate);
+    expect(total - flowingPages).toBe(estimateTotalPages(parsed, settings, jobs) - flowing.length);
 
     const parted = jobs.filter((j) => jobElements(j, parsed, settings).length > 1);
     if (splits) expect(parted.length).toBeGreaterThan(0);

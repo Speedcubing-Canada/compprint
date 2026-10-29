@@ -70,18 +70,64 @@ describe('buildVenueSchedule', () => {
 
   // A reader with no English reads the whole page: lunch and the tutorial come from their
   // activity code, and "finale" is the noun ("final" is the masculine adjective).
-  it('French: no English left on the page', () => {
-    const fr = build(corpusWcif('GrosJouetsaMontreal2025'), 'fr');
-    const names = fr.days[0].rows.map(r => r.name);
-    expect(names).toEqual(expect.arrayContaining([
-      'Accueil des compétiteurs', 'Tutoriel pour les nouveaux compétiteurs', 'Repas du midi', 'Cube 6x6x6 Finale',
-    ]));
-    expect(names.join(' ')).not.toMatch(/\b(Lunch|Tutorial|Check-in|Final)\b/);
-    expect(fr.events[0].rounds[0]).toMatchObject({ format: 'Meilleur\u00a0de\u00a02 / Moyenne\u00a0de\u00a05', proceed: '50 % meilleurs' });
-    expect(fr.events[0].rounds[1].proceed).toBe('10 premiers');
-    // Agrees with "minutes", which is feminine.
-    expect(fr.events.find(e => e.eventId === '666')!.rounds[0].timeLimit).toBe('12:00.00 cumulative');
-    // Free text the organizer typed has no code to translate.
-    expect(names.at(-1)).toBe('Surprise Event');
+  describe('French: no English left on the page', () => {
+    const fr = () => build(corpusWcif('GrosJouetsaMontreal2025'), 'fr');
+
+    it('activities and round names', () => {
+      const names = fr().days[0].rows.map(r => r.name);
+      expect(names).toEqual(expect.arrayContaining([
+        'Accueil des compétiteurs', 'Tutoriel pour les nouveaux compétiteurs', 'Repas du midi', 'Cube 6x6x6 Finale',
+      ]));
+      expect(names.join(' ')).not.toMatch(/\b(Lunch|Tutorial|Check-in|Final)\b/);
+      // Free text the organizer typed has no code to translate.
+      expect(names.at(-1)).toBe('Surprise Event');
+    });
+
+    it('formats and who proceeds', () => {
+      const [r1, r2] = fr().events[0].rounds;
+      expect(r1).toMatchObject({ format: 'Meilleur\u00a0de\u00a02 / Moyenne\u00a0de\u00a05', proceed: 'Les 50\u00a0% meilleurs' });
+      expect(r2.proceed).toBe('10 premiers');
+    });
+
+    it('cumulative agrees with "minutes", which is feminine', () => {
+      expect(fr().events.find(e => e.eventId === '666')!.rounds[0].timeLimit).toBe('12:00.00 cumulative');
+    });
+  });
+
+  // Pickering: 4BLD and 5BLD split one 1:15:00 between them, not 1:15:00 each.
+  it('a limit shared across events names the other rounds', () => {
+    const pk = corpusWcif('PickeringBlindfolded2026');
+    expect(round(pk, '444bf', 0)).toMatchObject({ timeLimit: '1:15:00.00 cumulative', shared: 'Shared with 5x5x5 Blindfolded Final' });
+    expect(round(pk, '555bf', 0, 'fr').shared).toBe("Partagée avec 4x4x4 à L'aveugle Finale");
+    expect(round(pk, '333bf', 0)).toMatchObject({ timeLimit: '20:00.00 cumulative', shared: '' });
+  });
+
+  it('FMC cutoffs count moves', () => {
+    const fmc = corpusWcif('FMCaMontreal2026');
+    fmc.events[0].rounds[0].cutoff = { numberOfAttempts: 1, resultValue: 40 };
+    expect(round(fmc, '333fm', 0).cutoff).toBe('Cutoff: 40 moves');
+  });
+
+  // Dual rounds: r1 feeds r2 on its own, then r1 and r2 together feed r3.
+  it('linked rounds print their combined bar on the last one only', () => {
+    const wcif = corpusWcif('GrosJouetsaMontreal2025');
+    const rounds = wcif.events.find(e => e.id === '666')!.rounds;
+    rounds.push({ ...rounds[1], id: '666-r3', participationRuleset: { reservedPlaces: null, participationSource:
+      { type: 'linkedRounds', roundIds: ['666-r1', '666-r2'], resultCondition: { type: 'ranking', scope: 'average', value: 4 } } } });
+    expect(round(wcif, '666', 0).proceed).toBe('Top 50%');
+    expect(round(wcif, '666', 1).proceed).toBe('Top 4');
+  });
+
+  it('an unknown round format prints raw instead of failing the parse', () => {
+    const wcif = corpusWcif('GrosJouetsaMontreal2025');
+    wcif.events[0].rounds[0].format = 'x' as never;
+    expect(round(wcif, wcif.events[0].id, 0).format).toMatch(/^x$|\/ x$/);
+  });
+
+  it('is null with no events and no schedule', () => {
+    const wcif = corpusWcif('GrosJouetsaMontreal2025');
+    wcif.events = [];
+    wcif.schedule.venues = [];
+    expect(parseWCIF(wcif, testSettings()).venueSchedule).toBeNull();
   });
 });
