@@ -36,6 +36,7 @@ All booleans. App defaults in brackets.
 | `roundChecklist` | `false` | Round Checklist |
 | `firstTimerSlips` | `false` | First-timer slips |
 | `groupOverview` | `false` | Group Overview |
+| `venueSchedule` | `false` | Venue schedule (events table and daily schedule to post) |
 
 Note: mid-competition, `scheduleTracker` and `nametags` default to `false` instead.
 

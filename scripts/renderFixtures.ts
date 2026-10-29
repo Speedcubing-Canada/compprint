@@ -21,6 +21,7 @@ import { ScorecardDocument } from '../src/pdf/ScorecardDocument';
 import { ScheduleTrackerDocument } from '../src/pdf/ScheduleTrackerDocument';
 import { CheckingSheetDocument } from '../src/pdf/CheckingSheetDocument';
 import { GroupOverviewDocument } from '../src/pdf/GroupOverviewDocument';
+import { VenueScheduleDocument } from '../src/pdf/VenueScheduleDocument';
 import type {
   NametTagEntry, FirstTimerEntry, ScorecardData, ScheduleDay, CheckingDay, GroupOverviewEntry,
 } from '../src/lib/wcif-parser';
@@ -445,6 +446,13 @@ async function main() {
     'group-overview-layout-test.pdf',
     e(GroupOverviewDocument, { entries: GROUP_OVERVIEW, settings: settings() }),
   );
+
+  // Québec's preset: French first, English below. Same competition as the WCA's own PDF of it.
+  const gj = corpusWcif('GrosJouetsaMontreal2025');
+  const gjSettings = settings({ language: 'fr', secondaryLanguage: 'en', competitionName: gj.name });
+  await write('venue-schedule-test.pdf', e(VenueScheduleDocument, {
+    schedule: parseWCIF(gj, gjSettings).venueSchedule!, settings: gjSettings,
+  }));
 
   console.log('Done.');
 }

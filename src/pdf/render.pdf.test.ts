@@ -23,7 +23,7 @@ const jobs = buildPdfJobs(parsed, settings);
 describe('PDF rendering', () => {
   it('emits one job of every kind', () => {
     expect(new Set(jobs.map(j => j.kind))).toEqual(
-      new Set(['scorecards', 'schedule', 'checking', 'group-overview', 'nametags', 'first-timers', 'custom']),
+      new Set(['scorecards', 'schedule', 'checking', 'group-overview', 'venue-schedule', 'nametags', 'first-timers', 'custom']),
     );
   });
 

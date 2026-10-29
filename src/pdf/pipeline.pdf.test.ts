@@ -46,7 +46,7 @@ const onlyDocument = (doc: keyof DocumentSelection | null): Partial<CompetitionS
     mode: 'everything',
     documents: {
       scorecards: false, scheduleTracker: false, nametags: false,
-      roundChecklist: false, firstTimerSlips: false, groupOverview: false,
+      roundChecklist: false, firstTimerSlips: false, groupOverview: false, venueSchedule: false,
       ...(doc ? { [doc]: true } : {}),
     },
   },
@@ -80,7 +80,7 @@ describe('the download, end to end', () => {
     // unzipSync keys by name, so a duplicate filename would show up as a missing entry.
     expect(Object.keys(pages).sort()).toEqual(jobs.map((j) => j.filename).sort());
 
-    // The schedule and checklist flow and are counted as one page each; everything else is exact.
+    // The schedule tracker and checklist flow and are estimated at a page each; everything else is exact.
     const flowing = jobs.filter((j) => j.kind === 'schedule' || j.kind === 'checking');
     const flowingPages = flowing.reduce((n, j) => n + pages[j.filename], 0);
     const total = Object.values(pages).reduce((a, b) => a + b, 0);
@@ -188,7 +188,7 @@ describe('the group overview estimate at a cell edge', () => {
       startTime: '09:00', endTime: '09:30', room: 'Hall',
       competitors: ['Ali Hakim'], scramblers: ['Bo'], runners: ['Cy'], judges: Array(9).fill(judge),
     }));
-    const parsed = { ...parseWCIF(sampleWcif(), settings), scheduleDays: [], checkingDays: [], firstTimers: [], groupOverview: groups };
+    const parsed = { ...parseWCIF(sampleWcif(), settings), scheduleDays: [], checkingDays: [], firstTimers: [], venueSchedule: null, groupOverview: groups };
     const pdf = await renderToBuffer(jobElement({ kind: 'group-overview', filename: 'x.pdf', label: 'x' }, parsed, settings));
     expect(await pageCount(pdf)).toBe(estimateTotalPages(parsed, settings, []));
   });

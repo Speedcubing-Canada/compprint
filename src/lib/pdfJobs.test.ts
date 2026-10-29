@@ -25,7 +25,7 @@ function mkParsed(over: Partial<ParsedWCIF> = {}): ParsedWCIF {
   return {
     firstRound: [], intermediate: [], semis: [], finals: [],
     nametags: [], firstTimers: [], extras: [], scheduleDays: [], checkingDays: [],
-    groupOverview: [],
+    groupOverview: [], venueSchedule: null,
     laterRoundsWithAssignments: [], hasGroups: true, stageCount: 1, stations: null,
     ...over,
   };
@@ -49,11 +49,11 @@ const customEvent = (name: string): CustomEvent =>
 
 const allDocs = {
   scorecards: true, scheduleTracker: true, nametags: true,
-  roundChecklist: true, firstTimerSlips: true, groupOverview: false,
+  roundChecklist: true, firstTimerSlips: true, groupOverview: false, venueSchedule: false,
 };
 const noDocs = {
   scorecards: false, scheduleTracker: false, nametags: false,
-  roundChecklist: false, firstTimerSlips: false, groupOverview: false,
+  roundChecklist: false, firstTimerSlips: false, groupOverview: false, venueSchedule: false,
 };
 
 /** A parse with every bucket populated - the full pre-competition case. */
@@ -90,6 +90,13 @@ describe('buildPdfJobs', () => {
       'scorecards', 'scorecards', 'scorecards', 'scorecards', 'scorecards',
       'schedule', 'checking', 'nametags', 'first-timers', 'custom',
     ]);
+  });
+
+  // Not `_schedule.pdf`: that name already belongs to the schedule tracker.
+  it('ships the venue schedule as its own file with its own guide note', () => {
+    const jobs = buildPdfJobs(mkParsed({ venueSchedule: { events: [], days: [] } }), mkSettings());
+    expect(jobs.map(j => [j.kind, j.filename])).toEqual([['venue-schedule', 'Test2026_venue_schedule.pdf']]);
+    expect(guideSections(jobs)).toEqual(['venue-schedule']);
   });
 
   it('skips empty buckets', () => {

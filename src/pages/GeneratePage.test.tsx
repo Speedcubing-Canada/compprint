@@ -1,6 +1,6 @@
 // @vitest-environment jsdom
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { act, cleanup, fireEvent, screen } from '@testing-library/react';
+import { act, cleanup, fireEvent, screen, within } from '@testing-library/react';
 
 vi.mock('../auth/wca', async (importOriginal) => ({
   ...(await importOriginal<typeof import('../auth/wca')>()),
@@ -72,7 +72,7 @@ describe('GeneratePage', () => {
     renderWithProviders(<GeneratePage />, { auth: signedInAuth });
 
     expect(await downloadButton()).toBeTruthy();
-    expect(screen.getByText(String(jobs.length))).toBeTruthy();
+    expect(within(screen.getByRole('group', { name: 'PDFs' })).getByText(String(jobs.length))).toBeTruthy();
   });
 
   it('shows the WCIF fetch failure rather than an empty download step', async () => {

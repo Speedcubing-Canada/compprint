@@ -1,4 +1,5 @@
 import type { LocaleCode } from '../types/settings';
+import type { RoundFormat } from '../types/wcif';
 
 export interface CoverCardStrings {
   forDelegate: string;
@@ -54,6 +55,32 @@ export interface GroupOverviewStrings {
   judges: string;
   room: string;
 }
+
+export interface VenueScheduleStrings {
+  schedule: string;
+  events: string;
+  start: string;
+  end: string;
+  activity: string;
+  event: string;
+  round: string;
+  format: string;
+  timeLimit: string;
+  proceed: string;
+  cutoff: (time: string) => string;
+  cumulative: (limit: string) => string;
+  sharedWith: (rounds: string) => string;
+  moves: (n: number) => string;
+  // Keyed by WCIF round format: '1'..'5' best of N, 'a' average of 5, 'm' mean of 3.
+  formats: Record<RoundFormat, string>;
+  top: (n: number) => string;
+  topPercent: (n: number) => string;
+  // Keyed by the `other-*` activity code; `other-misc` and unknown codes print the WCIF name.
+  activities: Record<OtherActivity, string>;
+}
+
+type OtherActivity =
+  'registration' | 'checkin' | 'tutorial' | 'multi' | 'breakfast' | 'lunch' | 'dinner' | 'awards' | 'setup' | 'teardown';
 
 export interface NametTagStrings {
   compete: string;
@@ -373,7 +400,7 @@ const SCHEDULE_FR: ScheduleStrings = {
   dayPrefix: 'Jour',
   attemptLabel: (n) => `Essai ${n}`,
   roundLabel: (n) => `Tour ${n}`,
-  finalLabel: 'Final',
+  finalLabel: 'Finale',
 };
 
 const SCHEDULE_ES: ScheduleStrings = {
@@ -495,6 +522,78 @@ const GROUP_OVERVIEW_PT: GroupOverviewStrings = {
 
 export function getGroupOverviewStrings(language: LocaleCode): GroupOverviewStrings {
   return LOCALES[language].groupOverview;
+}
+
+const VENUE_SCHEDULE_EN: VenueScheduleStrings = {
+  schedule: 'Schedule', events: 'Events', start: 'Start', end: 'End', activity: 'Activity',
+  event: 'Event', round: 'Round', format: 'Format', timeLimit: 'Time limit', proceed: 'Proceed',
+  cutoff: (t) => `Cutoff: ${t}`, cumulative: (l) => `${l} cumulative`,
+  sharedWith: (r) => `Shared with ${r}`, moves: (n) => `${n} moves`,
+  // The WCA's own abbreviations.
+  formats: { '1': 'Bo1', '2': 'Bo2', '3': 'Bo3', '5': 'Bo5', a: 'Ao5', m: 'Mo3', h: 'H2H' },
+  top: (n) => `Top ${n}`, topPercent: (n) => `Top ${n}%`,
+  activities: {
+    registration: 'Registration', checkin: 'Check-in', tutorial: 'Tutorial for new competitors',
+    multi: 'Multi-Blind cube submission', breakfast: 'Breakfast', lunch: 'Lunch', dinner: 'Dinner',
+    awards: 'Awards', setup: 'Setup', teardown: 'Teardown',
+  },
+};
+
+const VENUE_SCHEDULE_FR: VenueScheduleStrings = {
+  schedule: 'Horaire', events: 'Épreuves', start: 'Début', end: 'Fin', activity: 'Activité',
+  event: 'Épreuve', round: 'Tour', format: 'Format', timeLimit: 'Temps limite', proceed: 'Qualifiés',
+  // Agrees with minutes and heures, both feminine.
+  cutoff: (t) => `Seuil\u00a0: ${t}`, cumulative: (l) => `${l} cumulative`,
+  sharedWith: (r) => `Partagée avec ${r}`, moves: (n) => `${n} coups`,
+  formats: {
+    '1': 'Meilleur de 1', '2': 'Meilleur de 2', '3': 'Meilleur de 3', '5': 'Meilleur de 5',
+    a: 'Moyenne de 5', m: 'Moyenne de 3', h: 'Face-à-face',
+  },
+  top: (n) => `${n} premiers`, topPercent: (n) => `Les ${n}\u00a0% meilleurs`,
+  // Déjeuner and dîner mean different meals in Québec and France, so the meals are spelled out.
+  activities: {
+    registration: 'Inscription', checkin: 'Accueil des compétiteurs', tutorial: 'Tutoriel pour les nouveaux compétiteurs',
+    multi: 'Remise des cubes du Multi-BLD', breakfast: 'Petit-déjeuner', lunch: 'Repas du midi', dinner: 'Repas du soir',
+    awards: 'Remise des prix', setup: 'Installation', teardown: 'Démontage',
+  },
+};
+
+const VENUE_SCHEDULE_ES: VenueScheduleStrings = {
+  schedule: 'Horario', events: 'Eventos', start: 'Inicio', end: 'Fin', activity: 'Actividad',
+  event: 'Evento', round: 'Ronda', format: 'Formato', timeLimit: 'Tiempo límite', proceed: 'Clasifican',
+  cutoff: (t) => `Corte: ${t}`, cumulative: (l) => `${l} acumulado`,
+  sharedWith: (r) => `Compartido con ${r}`, moves: (n) => `${n} movimientos`,
+  formats: {
+    '1': 'Mejor de 1', '2': 'Mejor de 2', '3': 'Mejor de 3', '5': 'Mejor de 5',
+    a: 'Media de 5', m: 'Media de 3', h: 'Cara a cara',
+  },
+  top: (n) => `Los ${n} mejores`, topPercent: (n) => `El ${n}% mejor`,
+  activities: {
+    registration: 'Inscripción', checkin: 'Acreditación', tutorial: 'Tutorial para nuevos competidores',
+    multi: 'Entrega de cubos de Multi-BLD', breakfast: 'Desayuno', lunch: 'Almuerzo', dinner: 'Cena',
+    awards: 'Premiación', setup: 'Montaje', teardown: 'Desmontaje',
+  },
+};
+
+const VENUE_SCHEDULE_PT: VenueScheduleStrings = {
+  schedule: 'Cronograma', events: 'Eventos', start: 'Início', end: 'Término', activity: 'Atividade',
+  event: 'Evento', round: 'Rodada', format: 'Formato', timeLimit: 'Limite de tempo', proceed: 'Classificam',
+  cutoff: (t) => `Corte: ${t}`, cumulative: (l) => `${l} acumulado`,
+  sharedWith: (r) => `Compartilhado com ${r}`, moves: (n) => `${n} movimentos`,
+  formats: {
+    '1': 'Melhor de 1', '2': 'Melhor de 2', '3': 'Melhor de 3', '5': 'Melhor de 5',
+    a: 'Média de 5', m: 'Média de 3', h: 'Mano a mano',
+  },
+  top: (n) => `Os ${n} melhores`, topPercent: (n) => `Os ${n}% melhores`,
+  activities: {
+    registration: 'Inscrição', checkin: 'Credenciamento', tutorial: 'Tutorial para novos competidores',
+    multi: 'Entrega dos cubos do Multi-BLD', breakfast: 'Café da manhã', lunch: 'Almoço', dinner: 'Jantar',
+    awards: 'Premiação', setup: 'Montagem', teardown: 'Desmontagem',
+  },
+};
+
+export function getVenueScheduleStrings(language: LocaleCode): VenueScheduleStrings {
+  return LOCALES[language].venueSchedule;
 }
 
 const NAMETAG_EN: NametTagStrings = {
@@ -772,6 +871,7 @@ interface LocaleBundle {
   schedule: ScheduleStrings;
   checking: CheckingSheetStrings;
   groupOverview: GroupOverviewStrings;
+  venueSchedule: VenueScheduleStrings;
   nametag: NametTagStrings;
   firstTimer: FirstTimerSlipStrings;
   title: NametTagTitleStrings;
@@ -781,8 +881,8 @@ interface LocaleBundle {
 }
 
 const LOCALES: Record<LocaleCode, LocaleBundle> = {
-  en: { scorecard: EN, schedule: SCHEDULE_EN, checking: CHECKING_EN, groupOverview: GROUP_OVERVIEW_EN, nametag: NAMETAG_EN, firstTimer: FIRST_TIMER_EN, title: NAMETAG_TITLE_EN, shortNames: SHORT_NAMETAG_NAMES_EN, eventNames: EVENT_NAMES_EN, worker: WORKER_EN },
-  fr: { scorecard: FR, schedule: SCHEDULE_FR, checking: CHECKING_FR, groupOverview: GROUP_OVERVIEW_FR, nametag: NAMETAG_FR, firstTimer: FIRST_TIMER_FR, title: NAMETAG_TITLE_FR, shortNames: SHORT_NAMETAG_NAMES_FR, eventNames: EVENT_NAMES_FR, worker: WORKER_FR },
-  es: { scorecard: ES, schedule: SCHEDULE_ES, checking: CHECKING_ES, groupOverview: GROUP_OVERVIEW_ES, nametag: NAMETAG_ES, firstTimer: FIRST_TIMER_ES, title: NAMETAG_TITLE_ES, shortNames: SHORT_NAMETAG_NAMES_ES, eventNames: EVENT_NAMES_ES, worker: WORKER_ES },
-  pt: { scorecard: PT, schedule: SCHEDULE_PT, checking: CHECKING_PT, groupOverview: GROUP_OVERVIEW_PT, nametag: NAMETAG_PT, firstTimer: FIRST_TIMER_PT, title: NAMETAG_TITLE_PT, shortNames: SHORT_NAMETAG_NAMES_PT, eventNames: EVENT_NAMES_PT, worker: WORKER_PT },
+  en: { scorecard: EN, schedule: SCHEDULE_EN, checking: CHECKING_EN, groupOverview: GROUP_OVERVIEW_EN, venueSchedule: VENUE_SCHEDULE_EN, nametag: NAMETAG_EN, firstTimer: FIRST_TIMER_EN, title: NAMETAG_TITLE_EN, shortNames: SHORT_NAMETAG_NAMES_EN, eventNames: EVENT_NAMES_EN, worker: WORKER_EN },
+  fr: { scorecard: FR, schedule: SCHEDULE_FR, checking: CHECKING_FR, groupOverview: GROUP_OVERVIEW_FR, venueSchedule: VENUE_SCHEDULE_FR, nametag: NAMETAG_FR, firstTimer: FIRST_TIMER_FR, title: NAMETAG_TITLE_FR, shortNames: SHORT_NAMETAG_NAMES_FR, eventNames: EVENT_NAMES_FR, worker: WORKER_FR },
+  es: { scorecard: ES, schedule: SCHEDULE_ES, checking: CHECKING_ES, groupOverview: GROUP_OVERVIEW_ES, venueSchedule: VENUE_SCHEDULE_ES, nametag: NAMETAG_ES, firstTimer: FIRST_TIMER_ES, title: NAMETAG_TITLE_ES, shortNames: SHORT_NAMETAG_NAMES_ES, eventNames: EVENT_NAMES_ES, worker: WORKER_ES },
+  pt: { scorecard: PT, schedule: SCHEDULE_PT, checking: CHECKING_PT, groupOverview: GROUP_OVERVIEW_PT, venueSchedule: VENUE_SCHEDULE_PT, nametag: NAMETAG_PT, firstTimer: FIRST_TIMER_PT, title: NAMETAG_TITLE_PT, shortNames: SHORT_NAMETAG_NAMES_PT, eventNames: EVENT_NAMES_PT, worker: WORKER_PT },
 };

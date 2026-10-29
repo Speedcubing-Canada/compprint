@@ -16,6 +16,15 @@ export interface ChangelogEntry {
 /** Newest first. See "Contributing" in the README before adding an entry. */
 export const CHANGELOG: ChangelogEntry[] = [
   {
+    id: '2026-10-29',
+    items: {
+      en: ['New Venue Schedule PDF: the events table and daily schedule to post around the venue.'],
+      fr: ['Nouveau PDF Horaire : le tableau des épreuves et l\'horaire de chaque jour, à afficher dans la salle.'],
+      es: ['Nuevo PDF Horario para el lugar: la tabla de eventos y el horario de cada día para colocar en el lugar.'],
+      pt: ['Novo PDF Cronograma do local: a tabela de eventos e o cronograma de cada dia para fixar no local.'],
+    },
+  },
+  {
     id: '2026-10-17',
     items: {
       en: ['Non-competing Delegates, organizers and volunteers now get name tags too.'],

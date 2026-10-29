@@ -7,6 +7,7 @@ import { packSlipPages } from '../pdf/firstTimerSlipLines';
 import { groupBlockRows, overviewTitle, titleHeight, visibleColumns } from '../pdf/groupOverviewColumns';
 import {
   scorecardsPerPage, NAMETAGS_PER_PAGE, estimateGroupOverviewPages,
+  VENUE_SCHEDULE, venueTablePages, TABLE_BORDER_INNER_W,
 } from '../pdf/layoutConstants';
 
 /**
@@ -32,6 +33,14 @@ export function estimateTotalPages(
 
   // A single flowing page, estimated.
   if (parsed.scheduleDays.length > 0) pages += 1;
+
+  // Exact: the rows have fixed heights, so this is the document's own pagination.
+  if (parsed.venueSchedule) {
+    const { events, days } = parsed.venueSchedule;
+    const { rowH } = VENUE_SCHEDULE;
+    pages += venueTablePages(events.map(e => e.rounds.length * rowH + TABLE_BORDER_INNER_W), settings.paperFormat);
+    for (const day of days) pages += venueTablePages(day.rows.map(() => rowH), settings.paperFormat);
+  }
 
   // `checkingDays` is already empty when the checklist wasn't selected.
   if (parsed.checkingDays.length > 0) pages += 1;
