@@ -84,6 +84,8 @@ function DutyLines({ duties, fontSize }: { duties: string[]; fontSize: number })
 //   'hidden'    → comp name text only
 //   'with-name' → small logo + comp name text side-by-side
 //   'logo-only' → large logo centred, no comp name text
+const ICON_GAP = 1;
+
 function PanelTop({ entry, panelW, compName, titleText, logoMode, logoDataUrl, compact = false, showEvents = true }: {
   entry: NametTagEntry; panelW: number; compName: string; titleText: string;
   logoMode: NametTagLogoMode; logoDataUrl: string | null;
@@ -95,8 +97,8 @@ function PanelTop({ entry, panelW, compName, titleText, logoMode, logoDataUrl, c
     ? nametagName(entry.name, panelW, NAMETAG_COMPACT_NAME_H, NAMETAG_COMPACT_NAME_FS)
     : nametagName(entry.name, panelW, nametagNameH(logoMode));
   const icons = entry.events.filter(evId => EVENT_ICONS[evId]);
-  // Spread like the originals, shrunk only when a full-event competitor would overrun the row.
-  const iconSz = Math.min(compact ? C.iconMax : 14, nametagInnerW(panelW) / Math.max(icons.length, 1) - 1);
+  // Packed in the centre (Sarah prefers them close), shrunk only when a full-event competitor would overrun the row.
+  const iconSz = Math.min(compact ? C.iconMax : 14, nametagInnerW(panelW) / Math.max(icons.length, 1) - 2 * ICON_GAP);
 
   // Compact tags top-pack and never shrink, so the role badge lands at the same Y on front and
   // back and the two align across the pair. Event icons follow the badge, so hiding them on the
@@ -120,7 +122,7 @@ function PanelTop({ entry, panelW, compName, titleText, logoMode, logoDataUrl, c
       </View>
       {showEvents && (
         <View style={[s.iconsRow, c.iconsRow]}>
-          {icons.map(evId => <Image key={evId} src={EVENT_ICONS[evId]} style={{ width: iconSz, height: iconSz }} />)}
+          {icons.map(evId => <Image key={evId} src={EVENT_ICONS[evId]} style={{ width: iconSz, height: iconSz, marginHorizontal: ICON_GAP }} />)}
         </View>
       )}
       {!compact && <Text style={s.wcaId}>{entry.wcaId || ' '}</Text>}
@@ -257,7 +259,7 @@ const s = StyleSheet.create({
   name:       { textAlign: 'center', fontFamily: FONT, marginBottom: 6 },
   badge:      { borderRadius: 2, height: 22, justifyContent: 'center', marginBottom: 4 },
   badgeText:  { fontSize: 13, textAlign: 'center', fontFamily: FONT_BOLD },
-  iconsRow:   { flexDirection: 'row', justifyContent: 'space-around', alignItems: 'center', marginTop: 5, marginBottom: 3 },
+  iconsRow:   { flexDirection: 'row', justifyContent: 'center', alignItems: 'center', marginTop: 5, marginBottom: 3 },
   wcaId:      { fontSize: 13, textAlign: 'center', marginBottom: 4, color: '#222', fontFamily: FONT },
   dutiesSection: { flexDirection: 'column', flex: 1 },
   dutyRow:    { flexDirection: 'row', alignItems: 'flex-start' },
