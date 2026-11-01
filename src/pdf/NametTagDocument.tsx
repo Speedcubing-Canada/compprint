@@ -8,7 +8,7 @@ import { getNametTagStrings, type NametTagStrings } from '../lib/i18n';
 import { resolveLogo } from '../lib/logo';
 import { qrPathData } from './qrPath';
 import {
-  NAMETAGS_PER_PAGE, NAMETAG_COMPACT as C, NAMETAG_COMPACT_NAME_H, NAMETAG_CONFIGS, NAMETAG_H, NAMETAG_PANEL_BORDER,
+  NAMETAGS_PER_PAGE, NAMETAG_COMPACT as C, NAMETAG_COMPACT_NAME_FS, NAMETAG_COMPACT_NAME_H, NAMETAG_CONFIGS, NAMETAG_H, NAMETAG_PANEL_BORDER,
   NAMETAG_PANEL_PAD, eventIconsVisible, liveQrTarget, nametagCompactQrSize, nametagHPositions, nametagNameH,
   nametagTopSectionH,
   PDF_FONT as FONT, PDF_FONT_BOLD as FONT_BOLD,
@@ -28,7 +28,7 @@ import { nametagInnerW, nametagName, NAME_LINE_HEIGHT, textWidth } from './nameF
 //     row 1: [Front_B] [Back_B]
 //     row 2: [Front_C] [Back_C]
 //     row 3: [Front_D] [Back_D]
-//   Cards are landscape 90x55mm (NAMETAG_H), centred on the page, no rotation.
+//   Cards are landscape 86x55mm (NAMETAG_H), centred on the page, no rotation.
 
 function panelPositions(cfg: { panelW: number; panelH: number; margin: number; gapH: number; gapV: number }) {
   const { panelW, panelH, margin, gapH, gapV } = cfg;
@@ -91,7 +91,9 @@ function PanelTop({ entry, panelW, compName, titleText, logoMode, logoDataUrl, c
 }) {
   const { bg, fg } = badgeColors(entry.role);
   const c: Partial<typeof sc> = compact ? sc : {};
-  const name = nametagName(entry.name, panelW, compact ? NAMETAG_COMPACT_NAME_H : nametagNameH(logoMode));
+  const name = compact
+    ? nametagName(entry.name, panelW, NAMETAG_COMPACT_NAME_H, NAMETAG_COMPACT_NAME_FS)
+    : nametagName(entry.name, panelW, nametagNameH(logoMode));
   const icons = entry.events.filter(evId => EVENT_ICONS[evId]);
   // Spread like the originals, shrunk only when a full-event competitor would overrun the row.
   const iconSz = Math.min(compact ? C.iconMax : 14, nametagInnerW(panelW) / Math.max(icons.length, 1) - 1);

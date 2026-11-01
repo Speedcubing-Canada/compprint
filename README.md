@@ -421,8 +421,8 @@ Non-obvious constraints that look arbitrary in the code but break real output if
   non-breaking block instead of paginating it, collapsing every tick box into a sliver. The Group
   Overview pins its blocks for the same "never split a group" reason, but only after
   `groupBlockFitsPage` says the block fits a page at all.
-- **Horizontal name tags are cut to exactly 90×55 mm** (`NAMETAG_H`), the card the badge holder
-  takes, and centred on the page, so A4 and LETTER use the same card. Not a per-paper-size
+- **Horizontal name tags are cut to exactly 86×55 mm** (`NAMETAG_H`): 90 mm cards barely fit the
+  badge holder. Centred on the page, so A4 and LETTER use the same card. Not a per-paper-size
   number, do not "optimise" it.
 - **Never filter scorecard entries after `finalizeEntries`.** It sorts, pads to a multiple of 4
   and quadrant-reorders; removing entries downstream corrupts the printed pile order. Cover
