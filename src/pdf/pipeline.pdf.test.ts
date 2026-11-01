@@ -152,9 +152,17 @@ describe.skipIf(!hasPdftotext && !process.env.CI)('the printed text', () => {
     const { files } = await generate(waterloo, settings);
     const round1 = text(files['WaterlooSpring2026_round1.pdf']!);
     expect(round1).toContain('Avery Lam\n2026LAMA01 WCA Live: 79\n');
+    expect(round1).toMatch(/(Actual|Réel) _____/);
     for (const line of lines) expect(round1).toContain(line);
     // The fully blank spare card keeps the limit prompt, for the delegate to fill in.
     expect(text(files['WaterlooSpring2026_extras.pdf']!)).toContain(blankPrompt);
+  }, SLOW);
+
+  it('cover cards drop the timing line when it is off', async () => {
+    const settings = testSettings({ competitionId: waterloo.id, ...onlyDocument('scorecards'), coverTiming: false });
+    const round1 = text((await generate(waterloo, settings)).files['WaterlooSpring2026_round1.pdf']!);
+    expect(round1).toContain('FOR DATA ENTRY');
+    expect(round1).not.toContain('Actual _____');
   }, SLOW);
 
   it('a custom event without a time limit prints no limit prompt', async () => {

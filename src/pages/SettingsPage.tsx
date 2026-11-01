@@ -86,6 +86,7 @@ export default function SettingsPage() {
     nametagQrMode: preset.nametagQrMode ?? 'back-only',
     nametagLayout: preset.nametagLayout ?? 'vertical',
     scorecardCheckMode: preset.scorecardCheckMode ?? 'per-group-card',
+    coverTiming: preset.coverTiming,
     splitPdfsByStage: false,
     mergeScorecardRounds: preset.mergeScorecardRounds ?? false,
     scorecardsA6: false,
@@ -125,6 +126,7 @@ export default function SettingsPage() {
     scrambleDoubleCheckRegionScope, otsBlanks, staffNametags, finalStationNumbers, stationsPerStage, scorecardsA6,
   } = draft;
   const merged = mergesRounds(draft);
+  const coverTiming = draft.coverTiming ?? !docs?.scheduleTracker;
 
   // Not part of the draft, but stored so a restored upload isn't nameless.
   const [logoName, setLogoName] = useState<string | null>(() => readFileName('logo') ?? preset.logo ?? null);
@@ -477,6 +479,20 @@ export default function SettingsPage() {
               </label>
             ))}
           </fieldset>
+          {scorecardCheckMode !== 'none' && (
+            <label className={`${ui.toggleCard} ${s.checkboxCard} ${coverTiming ? ui.toggleCardActive : ''}`}>
+              <input
+                type="checkbox"
+                checked={coverTiming}
+                onChange={e => patch({ coverTiming: e.target.checked })}
+                className={ui.radio}
+              />
+              <div>
+                <div className={ui.optionLabel}>{t('settings.check_mode.timing_label')}</div>
+                <div className={ui.optionDesc}>{t('settings.check_mode.timing_desc')}</div>
+              </div>
+            </label>
+          )}
         </section>
         )}
 

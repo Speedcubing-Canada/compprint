@@ -38,3 +38,20 @@ describe('submittedSettings', () => {
     expect(restorableSettings({ ...saved, wcaLiveId: null }).wcaLiveId).toBe('');
   });
 });
+
+describe('coverTiming', () => {
+  const withTracker = (scheduleTracker: boolean) => ({
+    ...flow(false), generationScope: { mode: 'everything' as const, documents: { ...scope.documents, scheduleTracker } },
+  });
+
+  it('resolves an untouched draft from the tracker and keeps a click', () => {
+    expect(submittedSettings(draftOf(), withTracker(true)).coverTiming).toBe(false);
+    expect(submittedSettings(draftOf(), withTracker(false)).coverTiming).toBe(true);
+    expect(submittedSettings({ ...draftOf(), coverTiming: true }, withTracker(true)).coverTiming).toBe(true);
+  });
+
+  it('restores only a value the tracker did not imply', () => {
+    expect(restorableSettings(submittedSettings(draftOf(), withTracker(true)))).not.toHaveProperty('coverTiming');
+    expect(restorableSettings(submittedSettings({ ...draftOf(), coverTiming: true }, withTracker(true))).coverTiming).toBe(true);
+  });
+});

@@ -73,7 +73,9 @@
       "per_round": "Capa por rodada",
       "per_round_desc": "Uma capa de verificação por rodada de evento em vez de por grupo - menos capas para imprimir.",
       "none": "Nenhuma",
-      "none_desc": "Sem capas."
+      "none_desc": "Sem capas.",
+      "timing_label": "Mostrar horários previstos e reais",
+      "timing_desc": "A linha Previsto, Real e Set abaixo do grupo. Desativada por padrão se você imprimir o Acompanhamento de horário, que já registra esses horários."
     },
     "double_check": {
       "title": "Verificação dupla de embaralhamentos",

@@ -21,6 +21,8 @@ export function restorableSettings(previous: CompetitionSettings | null): Partia
   delete rest.isCustomCompetition;
   // Older blobs carry `false` and no control is left to undo that.
   delete rest.scrambleDoubleCheck;
+  // Submit stores the resolved value; one equal to what the tracker implied was no choice, so it keeps following.
+  if (rest.coverTiming === !previous.generationScope.documents.scheduleTracker) delete rest.coverTiming;
   return { ...rest, wcaLiveId: rest.wcaLiveId ?? '' };
 }
 
@@ -40,5 +42,6 @@ export function submittedSettings(
     hideWcaLiveId: isCustom ? true : draft.hideWcaLiveId,
     otsBlanks: !isCustom && draft.otsBlanks,
     scrambleDoubleCheck: !isCustom,
+    coverTiming: draft.coverTiming ?? !flow.generationScope.documents.scheduleTracker,
   };
 }

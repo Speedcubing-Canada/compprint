@@ -73,7 +73,9 @@
       "per_round": "Carátula por ronda",
       "per_round_desc": "Una hoja de portada por ronda de evento en lugar de por grupo - menos hojas que imprimir.",
       "none": "Ninguna",
-      "none_desc": "Sin carátulas."
+      "none_desc": "Sin carátulas.",
+      "timing_label": "Mostrar horas previstas y reales",
+      "timing_desc": "La línea Previsto, Real y Set bajo el grupo. Desactivada por defecto si imprimes el Seguimiento de horario, que ya las registra."
     },
     "double_check": {
       "title": "Doble verificación de mezclas",

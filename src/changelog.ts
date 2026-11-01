@@ -16,6 +16,15 @@ export interface ChangelogEntry {
 /** Newest first. See "Contributing" in the README before adding an entry. */
 export const CHANGELOG: ChangelogEntry[] = [
   {
+    id: '2026-11-01',
+    items: {
+      en: ['Cover cards can now hide the planned and actual times line.'],
+      fr: ['Les feuilles de couverture peuvent maintenant masquer la ligne des heures prévues et réelles.'],
+      es: ['Las carátulas ahora pueden ocultar la línea de horas previstas y reales.'],
+      pt: ['As capas agora podem ocultar a linha de horários previstos e reais.'],
+    },
+  },
+  {
     id: '2026-10-29',
     items: {
       en: ['New Venue Schedule PDF: the events table and daily schedule to post around the venue.'],
