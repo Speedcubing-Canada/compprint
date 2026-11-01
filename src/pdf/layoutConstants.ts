@@ -107,8 +107,8 @@ export const NAMETAG_CONFIGS = {
   A4:     { panelW: 201, panelH: 283, margin: 12, gapH: 4, gapV: 4 },
 } as const;
 
-// Horizontal name tags are cut to the 90x55mm card the badge holder takes, whatever the paper.
-export const NAMETAG_H = { panelW: 255, panelH: 156, gap: 10 } as const;
+// Horizontal name tags are cut to 86x55mm, whatever the paper: 90mm cards barely fit the badge holder.
+export const NAMETAG_H = { panelW: 244, panelH: 156, gap: 10 } as const;
 
 // 2 cols x 4 rows, centred so every outer cut margin matches.
 export function nametagHPositions(paper: PaperFormat) {
@@ -122,7 +122,8 @@ export function nametagHPositions(paper: PaperFormat) {
 }
 
 // Horizontal tags budget two 14pt lines, so long names wrap instead of shrinking.
-export const NAMETAG_COMPACT_NAME_H = 2 * 14 * 1.1;
+export const NAMETAG_COMPACT_NAME_FS = 14;
+export const NAMETAG_COMPACT_NAME_H = 2 * NAMETAG_COMPACT_NAME_FS * 1.1;
 
 // Horizontal card styles: NametTagDocument draws with them and the QR budget adds them up.
 export const NAMETAG_COMPACT = {

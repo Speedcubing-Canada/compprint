@@ -185,18 +185,18 @@ describe('Nametag vertical layout geometry', () => {
   }
 });
 
-// Portrait page, 2 cols x 4 rows = 4 nametag pairs. Slots sized for 90x55mm badge holders
-// with ~2mm clearance. Both paper formats share them: the holder dictates the card size.
+// Portrait page, 2 cols x 4 rows = 4 nametag pairs. Slots sized for 86x55mm so the cards
+// slide into the badge holders. Both paper formats share them: the holder dictates the card size.
 
 const NAMETAG_PORTRAIT_W = { LETTER: 612, A4: 595 };
 const NAMETAG_PORTRAIT_H = { LETTER: 792, A4: 842 };
 
-// The badge holder takes 90 x 55 mm cards, cut on the border.
+// 90 mm cards barely fit the badge holder, so they are cut to 86 x 55 mm, on the border.
 const mm = (v: number) => v * 72 / 25.4;
 
 describe('Nametag horizontal layout geometry', () => {
-  it('the card is 90 x 55 mm, the same on every paper', () => {
-    expect(NAMETAG_H.panelW).toBeCloseTo(mm(90), 0);
+  it('the card is 86 x 55 mm, the same on every paper', () => {
+    expect(NAMETAG_H.panelW).toBeCloseTo(mm(86), 0);
     expect(NAMETAG_H.panelH).toBeCloseTo(mm(55), 0);
   });
 
