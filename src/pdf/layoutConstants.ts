@@ -294,3 +294,39 @@ export function estimateGroupOverviewPages(
   }
   return pages;
 }
+
+// Every line height is fixed and every row a minimum height its content fits, so the
+// estimator below paginates exactly what the document renders.
+const VS_LINE = 1.2;
+const VS_HEADER_H = 30; // two 8pt header lines, primary over secondary
+export const VENUE_SCHEDULE = {
+  pagePadH: 30,
+  pagePadV: 28,
+  lineHeight: VS_LINE,
+  headerH: VS_HEADER_H,
+  rowH: 28, // a bold name over a 7.5pt sub line, 3pt padding
+  // Kicker, title, header row: repeated on every page a table spills onto.
+  headingH: 10 * VS_LINE + 2 + 18 * VS_LINE + 10 + VS_HEADER_H,
+};
+
+// Column flex weights, converted to percent widths by the document.
+export const VENUE_ROUND_COLS = { round: 1.4, format: 1.4, timeLimit: 1.6, proceed: 1 };
+export const VENUE_EVENT_COLS = { event: 2.4, ...VENUE_ROUND_COLS };
+// Sized so the longest French label fits on one line: a wrapped row breaks the page estimate.
+export const VENUE_DAY_COLS = { start: 0.7, end: 0.7, activity: 3.3, format: 1.8, timeLimit: 1.5, proceed: 1.3 };
+export const VENUE_ICON = 14;
+
+/** One table's pages: wrap={false} rows that do not fit what the heading leaves start a new page. */
+export function venueTablePages(rowHeights: number[], paperFormat: PaperFormat): number {
+  if (rowHeights.length === 0) return 0;
+  const V = VENUE_SCHEDULE;
+  // Landscape: the page's width is its height.
+  const usable = (PAGE_W[paperFormat] ?? PAGE_W.LETTER) - 2 * V.pagePadV - V.headingH;
+  let pages = 1;
+  let used = 0;
+  for (const h of rowHeights) {
+    if (used > 0 && used + h > usable) { pages++; used = 0; }
+    used += h;
+  }
+  return pages;
+}

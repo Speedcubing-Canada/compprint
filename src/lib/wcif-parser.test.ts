@@ -23,7 +23,7 @@ const BASE: CompetitionSettings = {
   customEvents: [], scorecardCheckMode: 'per-group-card',
   scrambleDoubleCheck: false, scrambleDoubleCheckRounds: ['finals'], scrambleDoubleCheckOverrides: {},
   scrambleDoubleCheckWorldTop: 50, scrambleDoubleCheckRegionTop: null, scrambleDoubleCheckRegionScope: 'national',
-  generationScope: { mode: 'everything', documents: { scorecards: true, scheduleTracker: true, nametags: true, roundChecklist: false, firstTimerSlips: false, groupOverview: false } },
+  generationScope: { mode: 'everything', documents: { scorecards: true, scheduleTracker: true, nametags: true, roundChecklist: false, firstTimerSlips: false, groupOverview: false, venueSchedule: false } },
   isCustomCompetition: false,
 };
 const cfg = (o: Partial<CompetitionSettings> = {}): CompetitionSettings => ({ ...BASE, ...o });
@@ -1317,7 +1317,7 @@ describe('schedule tracker', () => {
     expect(result.scheduleDays[0]?.stages[0]?.rows[0]?.eventRound).toContain('Final');
   });
 
-  it('French: eventRound uses "Tour N" for intermediate and "Final" for last', () => {
+  it('French: eventRound uses "Tour N" for intermediate and "Finale" (the noun) for last', () => {
     const e = evt('333', [rSpec('a'), rSpec('a'), rSpec('a')]);
     const r = room('Stage', [
       act('333', 1, [ch(100, '333', 1, 1)]),
@@ -1328,7 +1328,7 @@ describe('schedule tracker', () => {
     const rows = result.scheduleDays[0]?.stages[0]?.rows ?? [];
     expect(rows[0]?.eventRound).toBe('Cube 3x3x3 Tour 1');
     expect(rows[1]?.eventRound).toBe('Cube 3x3x3 Tour 2');
-    expect(rows[2]?.eventRound).toBe('Cube 3x3x3 Final');
+    expect(rows[2]?.eventRound).toBe('Cube 3x3x3 Finale');
   });
 
   it('single-round event uses "Final" label in eventRound', () => {

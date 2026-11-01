@@ -4,6 +4,7 @@ import { getStrings, getEventName, getFirstTimerSlipStrings, getNametTagTitleStr
 import { packSlipPages } from '../pdf/firstTimerSlipLines';
 import { buildScheduleDays, scheduleLabels, type CheckingDay, type ScheduleDay } from './scheduleRows';
 import { cmp } from './sort';
+import { buildVenueSchedule, type VenueSchedule } from './venueSchedule';
 import { parseActivityCode, roundIdOf, type ActivityCode } from './activityCode';
 
 export type ScorecardFormat = 'avg5' | 'bo2-avg5' | 'mo3' | 'bo1-mo3' | 'bo2' | 'bo1';
@@ -181,6 +182,8 @@ export interface ParsedWCIF {
   // One entry per scheduled group, chronological. Emptied by filterParsedByScope unless the
   // Group Overview was selected.
   groupOverview: GroupOverviewEntry[];
+  // The WCA-style events table and daily schedule. Nulled by filterParsedByScope unless selected.
+  venueSchedule: VenueSchedule | null;
   // True once the schedule has group child-activities. False for a fresh pre-competition
   // WCIF, which is why scorecard counts read 0.
   hasGroups: boolean;
@@ -207,6 +210,7 @@ export function emptyParsedWcif(): ParsedWCIF {
     scheduleDays: [],
     checkingDays: [],
     groupOverview: [],
+    venueSchedule: null,
     hasGroups: true,
     laterRoundsWithAssignments: [],
     stageCount: 1,
@@ -1329,6 +1333,7 @@ export function parseWCIF(wcif: WCIF, settings: CompetitionSettings): ParsedWCIF
     scheduleDays,
     groupOverview,
     checkingDays,
+    venueSchedule: buildVenueSchedule(wcif, labels),
     laterRoundsWithAssignments,
     // Real groups only, so a fresh WCIF with synthesized ones still reports "no groups yet".
     hasGroups: roundsWithRealGroups.size > 0,

@@ -182,6 +182,7 @@ describe('shipped presets', () => {
       hideWcaLiveId: true, nametagLogoMode: 'hidden', nametagLayout: 'horizontal',
     });
     expect(byId.quebec.settings).toMatchObject({ language: 'fr', secondaryLanguage: 'en' });
+    expect(byId.quebec.documents).toEqual({ groupOverview: true, venueSchedule: true });
     expect(byId['british-columbia'].documents).toEqual({
       scheduleTracker: false, nametags: false, roundChecklist: true, groupOverview: true,
     });

@@ -9,6 +9,7 @@ import { ScheduleTrackerDocument } from './ScheduleTrackerDocument';
 import { CheckingSheetDocument } from './CheckingSheetDocument';
 import { FirstTimerSlipDocument } from './FirstTimerSlipDocument';
 import { GroupOverviewDocument } from './GroupOverviewDocument';
+import { VenueScheduleDocument } from './VenueScheduleDocument';
 import { RENDER_PART_PAGES, NAMETAGS_PER_PAGE, scorecardsPerPage } from './layoutConstants';
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -33,6 +34,7 @@ export function jobElement(
     case 'checking':     return e(CheckingSheetDocument,   { days: parsed.checkingDays, settings });
     case 'first-timers': return e(FirstTimerSlipDocument,  { entries: parsed.firstTimers, settings });
     case 'group-overview': return e(GroupOverviewDocument, { entries: parsed.groupOverview, settings });
+    case 'venue-schedule': return e(VenueScheduleDocument, { schedule: job.schedule, settings });
     case 'custom':       return e(ScorecardDocument,       { entries: buildCustomEntries(job.custom, settings.scorecardsA6), settings });
     case 'scorecards':   return e(ScorecardDocument,       { entries: job.entries, settings });
     // Element is `any`, so a missing case would compile and hand the worker `undefined`.

@@ -22,6 +22,7 @@ FIXTURES=(
   "checklist_fr        checklist-layout-test-fr.pdf             checklist_fr.pdf"
   "checklist_es        checklist-layout-test-es.pdf             checklist_es.pdf"
   "checklist_pt        checklist-layout-test-pt.pdf             checklist_pt.pdf"
+  "venue_schedule      venue-schedule-test.pdf                  venue_schedule.pdf"
 )
 
 HORIZONTAL_FIXTURES=(

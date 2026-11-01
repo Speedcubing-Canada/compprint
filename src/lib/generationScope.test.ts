@@ -21,7 +21,7 @@ function mkParsed(over: Partial<ParsedWCIF> = {}): ParsedWCIF {
   return {
     firstRound: [], intermediate: [], semis: [], finals: [],
     nametags: [], firstTimers: [], extras: [], scheduleDays: [], checkingDays: [],
-    groupOverview: [],
+    groupOverview: [], venueSchedule: null,
     laterRoundsWithAssignments: [], hasGroups: true, stageCount: 1, stations: null,
     ...over,
   };
@@ -96,7 +96,7 @@ describe('hasUnassignedIntermediate', () => {
 describe('filterParsedByScope', () => {
   const allDocs = {
     scorecards: true, scheduleTracker: true, nametags: true,
-    roundChecklist: true, firstTimerSlips: true, groupOverview: true,
+    roundChecklist: true, firstTimerSlips: true, groupOverview: true, venueSchedule: true,
   };
   const base = mkParsed({
     firstRound: [sc('333', 1, 'A'), sc('333', 1, 'B')],
@@ -165,7 +165,7 @@ describe('filterParsedByScope', () => {
       mode: 'everything',
       documents: {
         scorecards: false, scheduleTracker: false, nametags: false,
-        roundChecklist: true, firstTimerSlips: false, groupOverview: false,
+        roundChecklist: true, firstTimerSlips: false, groupOverview: false, venueSchedule: false,
       },
     });
     expect(out.checkingDays).toHaveLength(1);
@@ -225,6 +225,14 @@ describe('filterParsedByScope', () => {
     expect(out.checkingDays).toHaveLength(1);
   });
 
+  // Whole-competition by nature: no round filter touches it, only its checkbox.
+  it('venueSchedule gates the venue schedule alone', () => {
+    const withSchedule = mkParsed({ ...base, venueSchedule: { events: [], days: [] } });
+    const docs = (venueSchedule: boolean) => ({ ...allDocs, venueSchedule });
+    expect(filterParsedByScope(withSchedule, { mode: 'everything', documents: docs(false) }).venueSchedule).toBeNull();
+    expect(filterParsedByScope(withSchedule, { mode: 'latest', documents: docs(true) }).venueSchedule).toEqual({ events: [], days: [] });
+  });
+
   // The round filter reaches the overview too: a mid-competition "round 2 only" run should
   // not reprint day one's groups alongside the round it was asked for.
   it('latest → the group overview keeps only the latest assigned round', () => {
@@ -244,7 +252,7 @@ describe('filterParsedByScope', () => {
   it('latest + only schedule → clears scorecards but keeps schedule', () => {
     const out = filterParsedByScope(base, {
       mode: 'latest',
-      documents: { scorecards: false, scheduleTracker: true, nametags: false, roundChecklist: false, firstTimerSlips: false, groupOverview: false },
+      documents: { scorecards: false, scheduleTracker: true, nametags: false, roundChecklist: false, firstTimerSlips: false, groupOverview: false, venueSchedule: false },
     });
     expect(out.firstRound).toHaveLength(0);
     expect(out.intermediate).toHaveLength(0);

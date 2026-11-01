@@ -13,6 +13,8 @@ export interface DocumentSelection {
   // Who competes, scrambles, runs and judges in each group. Opt-in: only useful once the
   // WCIF has groups, and most organizers print it separately from the scorecard pile.
   groupOverview: boolean;
+  // The WCA competition PDF's events table and daily schedule, posted around the venue. Opt-in.
+  venueSchedule: boolean;
 }
 
 // What the user chose to generate.
@@ -123,5 +125,6 @@ export function filterParsedByScope(parsed: ParsedWCIF, scope: GenerationScope):
     checkingDays: documents.roundChecklist ? result.checkingDays : [],
     firstTimers:  documents.firstTimerSlips ? result.firstTimers  : [],
     groupOverview: documents.groupOverview  ? result.groupOverview : [],
+    venueSchedule: documents.venueSchedule ? result.venueSchedule : null,
   };
 }

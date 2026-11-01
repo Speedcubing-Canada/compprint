@@ -27,6 +27,7 @@ const baseDocuments = (isMidComp: boolean): DocumentSelection => ({
   roundChecklist: false,
   firstTimerSlips: false,
   groupOverview: false,
+  venueSchedule: false,
 });
 
 export default function RoundScopePage() {
@@ -57,6 +58,7 @@ export default function RoundScopePage() {
   const [docRoundChecklist, setDocRoundChecklist] = useState(restored?.documents.roundChecklist ?? false);
   const [docFirstTimers, setDocFirstTimers] = useState(restored?.documents.firstTimerSlips ?? false);
   const [docGroupOverview, setDocGroupOverview] = useState(restored?.documents.groupOverview ?? false);
+  const [docVenueSchedule, setDocVenueSchedule] = useState(restored?.documents.venueSchedule ?? false);
 
   // `null` means Default. A preset seeds the options below and the /settings step; nothing
   // is locked.
@@ -79,7 +81,7 @@ export default function RoundScopePage() {
       scrambleDoubleCheck: false, scrambleDoubleCheckRounds: [], scrambleDoubleCheckOverrides: {},
       scrambleDoubleCheckWorldTop: null, scrambleDoubleCheckRegionTop: null,
       scrambleDoubleCheckRegionScope: 'national',
-      generationScope: { mode: 'everything', documents: { scorecards: true, scheduleTracker: true, nametags: true, roundChecklist: false, firstTimerSlips: false, groupOverview: false } },
+      generationScope: { mode: 'everything', documents: { scorecards: true, scheduleTracker: true, nametags: true, roundChecklist: false, firstTimerSlips: false, groupOverview: false, venueSchedule: false } },
       isCustomCompetition: false,
     };
     return parseWCIF(wcif, detectionSettings);
@@ -126,6 +128,7 @@ export default function RoundScopePage() {
     setDocRoundChecklist(docs.roundChecklist);
     setDocFirstTimers(docs.firstTimerSlips);
     setDocGroupOverview(docs.groupOverview);
+    setDocVenueSchedule(docs.venueSchedule);
   }
 
   function toggleRound(key: string) {
@@ -146,6 +149,7 @@ export default function RoundScopePage() {
       roundChecklist: docRoundChecklist,
       firstTimerSlips: docFirstTimers,
       groupOverview: docGroupOverview,
+      venueSchedule: docVenueSchedule,
     };
 
     const scope: GenerationScope = isMidComp
@@ -180,7 +184,7 @@ export default function RoundScopePage() {
 
   const noDocsSelected =
     !docScorecards && !docSchedule && !docNametags && !docRoundChecklist && !docFirstTimers
-    && !docGroupOverview;
+    && !docGroupOverview && !docVenueSchedule;
   const noRoundsSelected = isMidComp && scopeMode === 'selected' && effectiveSelected.size === 0;
   // A greyed-out button with nothing saying why is a dead end; the reason is shown next to it.
   const blockedReason = noDocsSelected
@@ -193,6 +197,7 @@ export default function RoundScopePage() {
     { key: 'nametags',        label: t('scope.doc_nametags'),    checked: docNametags,    set: setDocNametags },
     { key: 'roundChecklist',  label: t('scope.doc_round_checklist'), checked: docRoundChecklist, set: setDocRoundChecklist },
     { key: 'groupOverview',   label: t('scope.doc_group_overview'), checked: docGroupOverview, set: setDocGroupOverview },
+    { key: 'venueSchedule',   label: t('scope.doc_venue_schedule'), checked: docVenueSchedule, set: setDocVenueSchedule },
     { key: 'firstTimerSlips', label: t('scope.doc_first_timers'),checked: docFirstTimers, set: setDocFirstTimers },
   ];
 

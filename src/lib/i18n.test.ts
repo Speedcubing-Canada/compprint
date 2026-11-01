@@ -2,7 +2,7 @@ import { describe, it, expect } from 'vitest';
 import {
   getStrings, getScheduleStrings, getCheckingSheetStrings, getNametTagStrings,
   getFirstTimerSlipStrings, getNametTagTitleStrings, getShortNametTagNames,
-  getEventName, getWorkerStrings, splitLabelTotal, EVENT_NAMES_EN,
+  getEventName, getWorkerStrings, getVenueScheduleStrings, splitLabelTotal, EVENT_NAMES_EN,
   type ScorecardStrings,
 } from './i18n';
 import { WCA_EVENT_ORDER } from './wcif-parser';
@@ -27,6 +27,7 @@ function bundle(lc: LocaleCode) {
     scorecard: getStrings(lc),
     schedule: getScheduleStrings(lc),
     checking: getCheckingSheetStrings(lc),
+    venueSchedule: getVenueScheduleStrings(lc),
     nametag: getNametTagStrings(lc),
     firstTimer: getFirstTimerSlipStrings(lc),
     title: getNametTagTitleStrings(lc).front,
@@ -98,7 +99,7 @@ describe('PDF locale bundle parity', () => {
   // Real prose: still reading as English in fr/es/pt means a copy-pasted locale.
   it('no English leaking through on the headline fields', () => {
     const sample = ['checking.title', 'schedule.title', 'scorecard.scrambler',
-      'firstTimer.confirmIntro1', 'nametag.compete'];
+      'firstTimer.confirmIntro1', 'nametag.compete', 'venueSchedule.schedule'];
     const en = bundle('en');
     for (const lc of TRANSLATIONS) {
       const b = bundle(lc);

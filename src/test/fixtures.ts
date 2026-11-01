@@ -56,7 +56,7 @@ export function testSettings(over: Partial<CompetitionSettings> = {}): Competiti
       mode: 'everything',
       documents: {
         scorecards: true, scheduleTracker: true, nametags: true,
-        roundChecklist: true, firstTimerSlips: true, groupOverview: true,
+        roundChecklist: true, firstTimerSlips: true, groupOverview: true, venueSchedule: true,
       },
     },
     isCustomCompetition: false,

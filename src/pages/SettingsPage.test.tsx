@@ -168,7 +168,7 @@ describe('scramble double-check ranking rules', () => {
   it('stays reachable when only some documents are generated', async () => {
     writeScope({
       mode: 'latest',
-      documents: { scorecards: true, scheduleTracker: false, nametags: false, roundChecklist: false, firstTimerSlips: false, groupOverview: false },
+      documents: { scorecards: true, scheduleTracker: false, nametags: false, roundChecklist: false, firstTimerSlips: false, groupOverview: false, venueSchedule: false },
     }, { showSecondRoundMode: false, multiStage: false });
     await openDoubleCheck();
 
@@ -323,7 +323,7 @@ describe('live results mode', () => {
   it('is reachable when name tags are generated without scorecards', async () => {
     writeScope({
       mode: 'latest',
-      documents: { scorecards: false, scheduleTracker: false, nametags: true, roundChecklist: false, firstTimerSlips: false, groupOverview: false },
+      documents: { scorecards: false, scheduleTracker: false, nametags: true, roundChecklist: false, firstTimerSlips: false, groupOverview: false, venueSchedule: false },
     }, { showSecondRoundMode: false, multiStage: false });
     await renderSettings();
 

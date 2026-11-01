@@ -1,5 +1,5 @@
 import { useTranslation } from 'react-i18next';
-import { ArrowDown, ArrowRight, CalendarDays, ClipboardCheck, IdCard, Scissors, UserPlus, Users } from 'lucide-react';
+import { ArrowDown, ArrowRight, CalendarClock, CalendarDays, ClipboardCheck, IdCard, Scissors, UserPlus, Users } from 'lucide-react';
 import { guideSections, type GuideSection, type PdfJob } from '../lib/pdfJobs';
 import { useIsMobile } from '../lib/useIsMobile';
 import s from './PrintGuide.module.css';
@@ -15,6 +15,7 @@ const NOTES = {
   checking:       { icon: <ClipboardCheck size={16} strokeWidth={2} aria-hidden className={s.noteIcon} />, key: 'generate.guide.checking' },
   nametags:       { icon: <IdCard size={16} strokeWidth={2} aria-hidden className={s.noteIcon} />,         key: 'generate.guide.nametags' },
   'group-overview': { icon: <Users size={16} strokeWidth={2} aria-hidden className={s.noteIcon} />,       key: 'generate.guide.group_overview' },
+  'venue-schedule': { icon: <CalendarClock size={16} strokeWidth={2} aria-hidden className={s.noteIcon} />, key: 'generate.guide.venue_schedule' },
   'first-timers': { icon: <UserPlus size={16} strokeWidth={2} aria-hidden className={s.noteIcon} />,       key: 'generate.guide.first_timers' },
 } as const satisfies Record<NoteSection, { icon: React.ReactNode; key: string }>;
 

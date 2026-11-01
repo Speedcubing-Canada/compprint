@@ -76,6 +76,7 @@ export const DEFAULT_SCOPE: GenerationScope = {
     roundChecklist: false,
     groupOverview: false,
     firstTimerSlips: false,
+    venueSchedule: false,
   },
 };
 
@@ -159,11 +160,12 @@ export function readSettings(): CompetitionSettings | null {
   const gs = s.generationScope as Record<string, unknown>;
   if (gs.documents === undefined) gs.documents = {
     scorecards: true, scheduleTracker: true, nametags: true,
-    roundChecklist: false, firstTimerSlips: false, groupOverview: false,
+    roundChecklist: false, firstTimerSlips: false, groupOverview: false, venueSchedule: false,
   };
   const gsDocs = gs.documents as Record<string, unknown>;
   if (gsDocs.roundChecklist === undefined) gsDocs.roundChecklist = false;
   if (gsDocs.groupOverview === undefined) gsDocs.groupOverview = false;
+  if (gsDocs.venueSchedule === undefined) gsDocs.venueSchedule = false;
   if (s.hideWcaLiveId === undefined) s.hideWcaLiveId = false;
   if (s.splitPdfsByStage === undefined) s.splitPdfsByStage = false;
   if (s.otsBlanks === undefined) s.otsBlanks = false;

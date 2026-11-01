@@ -60,7 +60,7 @@ describe('generation scope', () => {
     rounds: [{ eventId: '333', roundNum: 2 }],
     documents: {
       scorecards: true, scheduleTracker: false, nametags: false,
-      roundChecklist: true, firstTimerSlips: false, groupOverview: false,
+      roundChecklist: true, firstTimerSlips: false, groupOverview: false, venueSchedule: false,
     },
   };
 
@@ -258,9 +258,16 @@ describe('settings restore', () => {
 
   it('backfills roundChecklist into an earlier four-key document selection', () => {
     stored({ generationScope: { mode: 'latest', documents: {
-      scorecards: true, scheduleTracker: false, nametags: false, firstTimerSlips: false, groupOverview: false,
+      scorecards: true, scheduleTracker: false, nametags: false, firstTimerSlips: false, groupOverview: false, venueSchedule: false,
     } } });
     expect(readSettings()?.generationScope.documents.roundChecklist).toBe(false);
+  });
+
+  it('backfills the venue schedule, off, into a selection saved before it existed', () => {
+    stored({ generationScope: { mode: 'latest', documents: {
+      scorecards: true, scheduleTracker: true, nametags: true, roundChecklist: false, firstTimerSlips: false, groupOverview: true,
+    } } });
+    expect(readSettings()?.generationScope.documents).toMatchObject({ venueSchedule: false, groupOverview: true });
   });
 
   // The checking sheet is its own document, so only the cover-card half survives.
