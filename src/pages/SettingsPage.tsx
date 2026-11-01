@@ -19,7 +19,7 @@ import { readPresetSettings, presetLogoUrl } from '../presets';
 import { SCC_DEFAULT_LOGO } from '../assets/scc-logo';
 import Header from '../components/Header';
 import WarningBanner from '../components/WarningBanner';
-import { restorableSettings, submittedSettings, type SettingsDraft } from '../lib/settingsDraft';
+import { coverTimingShown, restorableSettings, submittedSettings, type SettingsDraft } from '../lib/settingsDraft';
 import OtsNotice from '../components/OtsNotice';
 import CustomEventEditor from '../components/CustomEventEditor';
 import { fetchCompetitionInfo, fetchWcaLiveId, fetchWcaLivePersonIds } from '../auth/wca';
@@ -126,7 +126,7 @@ export default function SettingsPage() {
     scrambleDoubleCheckRegionScope, otsBlanks, staffNametags, finalStationNumbers, stationsPerStage, scorecardsA6,
   } = draft;
   const merged = mergesRounds(draft);
-  const coverTiming = draft.coverTiming ?? !docs?.scheduleTracker;
+  const coverTiming = coverTimingShown(draft.coverTiming, docs);
 
   // Not part of the draft, but stored so a restored upload isn't nameless.
   const [logoName, setLogoName] = useState<string | null>(() => readFileName('logo') ?? preset.logo ?? null);
