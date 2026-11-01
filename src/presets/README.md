@@ -56,6 +56,7 @@ Note: mid-competition, `scheduleTracker` and `nametags` default to `false` inste
 | `scorecardCheckMode` | `"per-group-card"` `"per-round-card"` `"none"` | `"per-group-card"` |
 | `scrambleDoubleCheckRegionTop` | positive integer (top N in the country, regulation 11i) | off |
 | `mergeScorecardRounds` | boolean (one scorecard PDF for every round) | `false` |
+| `underlineSharedFirstNames` | boolean (underline the surname when a first name repeats in a group) | `false` |
 | `coverTiming` | boolean (the planned/actual/set line on cover cards) | follows the schedule tracker: off when it is printed |
 | `logo` | a filename in `logos/`, e.g. `"abracm.png"` | none |
 

@@ -18,10 +18,22 @@ export const CHANGELOG: ChangelogEntry[] = [
   {
     id: '2026-11-01',
     items: {
-      en: ['Cover cards can now hide the planned and actual times line.'],
-      fr: ['Les feuilles de couverture peuvent maintenant masquer la ligne des heures prévues et réelles.'],
-      es: ['Las carátulas ahora pueden ocultar la línea de horas previstas y reales.'],
-      pt: ['As capas agora podem ocultar a linha de horários previstos e reais.'],
+      en: [
+        'Cover cards can now hide the planned and actual times line.',
+        'Scorecards can underline surnames when competitors in a group share a first name.',
+      ],
+      fr: [
+        'Les feuilles de couverture peuvent maintenant masquer la ligne des heures prévues et réelles.',
+        'Les feuilles de score peuvent souligner le nom de famille quand des compétiteurs d\'un groupe ont le même prénom.',
+      ],
+      es: [
+        'Las carátulas ahora pueden ocultar la línea de horas previstas y reales.',
+        'Las hojas de puntuación pueden subrayar el apellido cuando competidores de un grupo tienen el mismo nombre.',
+      ],
+      pt: [
+        'As capas agora podem ocultar a linha de horários previstos e reais.',
+        'As súmulas podem sublinhar o sobrenome quando competidores de um grupo têm o mesmo nome.',
+      ],
     },
   },
   {

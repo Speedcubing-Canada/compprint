@@ -8,5 +8,7 @@
     "roundChecklist": true,
     "groupOverview": true
   },
-  "settings": {}
+  "settings": {
+    "underlineSharedFirstNames": true
+  }
 }

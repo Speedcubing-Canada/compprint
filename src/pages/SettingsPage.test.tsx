@@ -257,7 +257,7 @@ describe('restoring the previous submission', () => {
       language: 'fr', secondaryLanguage: 'en', paperFormat: 'A4', secondRoundMode: 'blanks',
       nametagLayout: 'horizontal', nametagQrMode: 'both-sides', scorecardCheckMode: 'none',
       hideWcaLiveId: true, wcaLiveId: '9667', useDefaultLogo: true, liveResultsMode: 'ilr',
-      scorecardCompNameWithLogo: true, coverTiming: true,
+      scorecardCompNameWithLogo: true, coverTiming: true, underlineSharedFirstNames: true,
       scrambleDoubleCheck: true, scrambleDoubleCheckRounds: ['firstRound'],
       scrambleDoubleCheckOverrides: { '333|1': ['2019SMIT01'] },
       customEvents: [event('Mini Guildford')],
@@ -571,5 +571,23 @@ describe('cover card timing line', () => {
     writeSettings(stored({ scorecardCheckMode: 'none' }));
     await renderSettings();
     expect(box()).toBeNull();
+  });
+});
+
+describe('underlined surnames', () => {
+  const box = () => screen.getByRole('checkbox', { name: /Underline surnames/ }) as HTMLInputElement;
+
+  it('is off by default and saves a click', async () => {
+    await renderSettings();
+    expect(box().checked).toBe(false);
+    fireEvent.click(box());
+    generate();
+    expect(readSettings()?.underlineSharedFirstNames).toBe(true);
+  });
+
+  it('starts on when a preset seeds it', async () => {
+    writePresetSettings({ underlineSharedFirstNames: true });
+    await renderSettings();
+    expect(box().checked).toBe(true);
   });
 });

@@ -4,6 +4,7 @@ import { getStrings, getEventName, getFirstTimerSlipStrings, getNametTagTitleStr
 import { packSlipPages } from '../pdf/firstTimerSlipLines';
 import { buildScheduleDays, scheduleLabels, type CheckingDay, type ScheduleDay } from './scheduleRows';
 import { cmp } from './sort';
+import { splitName } from './splitName';
 import { buildVenueSchedule, type VenueSchedule } from './venueSchedule';
 import { parseActivityCode, roundIdOf, type ActivityCode } from './activityCode';
 
@@ -62,6 +63,21 @@ export function printedName(name: string): string {
   return name.replace(/ \(.*\)$/, '').normalize('NFC');
 }
 
+// Per group (stations folded into their cover group), accent- and case-insensitive.
+function markSharedFirstNames(named: { entry: ScorecardEntry; country: string }[]): void {
+  const byKey = new Map<string, { entry: ScorecardEntry; surname: string }[]>();
+  for (const { entry, country } of named) {
+    const { given, surname } = splitName(entry.name, country);
+    const first = given.split(' ')[0].normalize('NFD').replace(/\p{M}/gu, '').toLowerCase();
+    const key = `${entry.eventId}|${entry.roundNum}|${entry.coverGroup ?? entry.group}|${first}`;
+    byKey.set(key, [...(byKey.get(key) ?? []), { entry, surname }]);
+  }
+  for (const same of byKey.values()) {
+    if (same.length < 2) continue;
+    for (const { entry, surname } of same) if (surname) entry.sharedFirstName = { surname };
+  }
+}
+
 function buildDuties(
   assignments: Assignment[],
   code: Assignment['assignmentCode'],
@@ -118,6 +134,8 @@ export interface ScorecardEntry {
   iconDataUrl?: string;
   // When true, render a second scrambler-signature column (scramble double-checking).
   scrambleDoubleCheck?: boolean;
+  // Set when someone else in the group shares the first given name, so runners call the surname too.
+  sharedFirstName?: { surname: string };
 }
 
 export interface CoverEntry {
@@ -721,6 +739,7 @@ export function parseWCIF(wcif: WCIF, settings: CompetitionSettings): ParsedWCIF
   }
 
   // Named scorecard entries from person assignments
+  const named: { entry: ScorecardEntry; country: string }[] = [];
   for (const person of wcif.persons) {
     if (!person.registration || person.registration.status !== 'accepted') continue;
 
@@ -804,6 +823,7 @@ export function parseWCIF(wcif: WCIF, settings: CompetitionSettings): ParsedWCIF
       };
 
       targetBucket.push(entry);
+      named.push({ entry, country: person.countryIso2 });
       if (isFirst) {
         if (!round1Participants[eventId]) round1Participants[eventId] = [];
         round1Participants[eventId].push(entry);
@@ -814,6 +834,9 @@ export function parseWCIF(wcif: WCIF, settings: CompetitionSettings): ParsedWCIF
       namedGroupSizes[aid].add(person.registrantId);
     }
   }
+
+  // Computed here, not at render: a group can span page slices.
+  markSharedFirstNames(named);
 
   // Cover cards (one per group) for every named round
   for (const [aidStr, ids] of Object.entries(namedGroupSizes)) {

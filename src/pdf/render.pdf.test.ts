@@ -1,5 +1,7 @@
 import { describe, it, expect } from 'vitest';
-import { renderToBuffer } from '@react-pdf/renderer';
+import { renderToBuffer, type DocumentProps } from '@react-pdf/renderer';
+import { createElement, type ReactElement } from 'react';
+import { ScorecardDocument } from './ScorecardDocument';
 import { parseWCIF } from '../lib/wcif-parser';
 import { buildPdfJobs, type PdfJob } from '../lib/pdfJobs';
 import { sampleWcif, testSettings } from '../test/fixtures';
@@ -7,7 +9,7 @@ import { PDFDocument } from 'pdf-lib';
 import { jobElement, jobElements } from './jobElement';
 import { mergePdfs } from './mergePdfs';
 import { RENDER_PART_PAGES } from './layoutConstants';
-import type { ScorecardData } from '../lib/wcif-parser';
+import type { ScorecardData, ScorecardEntry } from '../lib/wcif-parser';
 
 // The layout tests assert measurements; this asserts the documents render at all.
 // Nothing else in the suite executes src/pdf/*Document.tsx, so a job kind that
@@ -69,5 +71,23 @@ describe('rendering a big job in parts', () => {
     const merged = await PDFDocument.load(await mergePdfs([render, render]));
     expect(merged.getPageCount()).toBe(one.getPageCount() * 2);
     expect(merged.getTitle()).toBe(one.getTitle());
+  });
+});
+
+// Off is the default for every non-Canadian organizer, so it must not move a single byte.
+describe('shared first name underline', () => {
+  const named = parsed.firstRound.find((e): e is ScorecardEntry => e.kind === 'scorecard' && e.name.includes(' '))!;
+  const flagged: ScorecardEntry = { ...named, sharedFirstName: { surname: named.name.split(' ').at(-1)! } };
+  // The creation date and the file ID it seeds differ per render.
+  const bytes = async (entries: ScorecardData[], on: boolean) =>
+    (await renderToBuffer(createElement(ScorecardDocument, { entries, settings: { ...settings, underlineSharedFirstNames: on } }) as ReactElement<DocumentProps>))
+      .toString('latin1').replace(/\/CreationDate \(D:[^)]*\)/, '').replace(/\/ID \[[^\]]*\]/, '');
+
+  it('renders byte-identical when off', async () => {
+    expect(await bytes([flagged], false)).toBe(await bytes([named], false));
+  });
+
+  it('changes the card when on', async () => {
+    expect(await bytes([flagged], true)).not.toBe(await bytes([named], true));
   });
 });

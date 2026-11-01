@@ -2,7 +2,7 @@ import { describe, it, expect } from 'vitest';
 import { fileURLToPath } from 'node:url';
 import * as fontkit from 'fontkit';
 import {
-  textWidth, nameBox, nameLayout, nametagName, nametagNameW, nametagInnerW,
+  textWidth, nameBox, nameLayout, nametagName, nametagNameW, nametagInnerW, splitAtSurname,
   NAME_LINE_HEIGHT, NAME_MAX_FS, NAME_MIN_FS, NAMETAG_NAME_MAX_FS,
 } from './nameFit';
 import {
@@ -163,5 +163,16 @@ describe('every real name fits', () => {
     const shrunk = names.filter(n => textWidth(n, NAMETAG_COMPACT_NAME_FS, false) <= nametagNameW(panelW)
       && nametagName(n, panelW, NAMETAG_COMPACT_NAME_H, NAMETAG_COMPACT_NAME_FS).fontSize < NAMETAG_COMPACT_NAME_FS);
     expect(shrunk).toEqual([]);
+  });
+});
+
+describe('splitAtSurname', () => {
+  it.each([
+    ['Max Park', 'Park', ['Max ', 'Park']],
+    ['Juan Pablo\nPérez García', 'Pérez García', ['Juan Pablo\n', 'Pérez García']],
+    ['Maria Fernanda Pérez\nGarcía', 'Pérez García', ['Maria Fernanda ', 'Pérez\nGarcía']],
+    ['Jean-Philippe Gagnon-\nTremblay', 'Gagnon-Tremblay', ['Jean-Philippe ', 'Gagnon-\nTremblay']],
+  ] as const)('%j', (laid, surname, parts) => {
+    expect(splitAtSurname(laid, surname)).toEqual(parts);
   });
 });

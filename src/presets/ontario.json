@@ -8,6 +8,7 @@
   "settings": {
     "hideWcaLiveId": true,
     "nametagLogoMode": "hidden",
-    "nametagLayout": "horizontal"
+    "nametagLayout": "horizontal",
+    "underlineSharedFirstNames": true
   }
 }

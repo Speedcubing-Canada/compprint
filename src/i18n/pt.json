@@ -56,6 +56,8 @@
       "letter_desc": "8,5 × 11 pol - cada súmula é 107,95 × 139,7 mm",
       "a6_label": "Súmulas em A6",
       "a6_desc": "Uma súmula por página A6, para impressoras A6.",
+      "underline_label": "Sublinhar o sobrenome quando o nome se repete",
+      "underline_desc": "Quando dois competidores do mesmo grupo têm o mesmo nome, o sobrenome é sublinhado para que chamem pelo nome completo.",
       "a6_info": "Apenas os PDFs de súmulas são afetados. Os crachás e os demais documentos continuam sendo gerados em {{format}}."
     },
     "subsequent_rounds": {

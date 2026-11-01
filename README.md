@@ -123,6 +123,21 @@ selected on /scope, since the tracker already records those times, and on otherw
 organizer clicks it, the default keeps following the tracker, even after going back and changing
 the documents; a click is kept. A preset may seed it. Hidden when cover cards are off.
 
+### Underlined surnames for shared first names
+
+"Underline surnames when first names repeat" (Settings, under the paper format,
+`underlineSharedFirstNames`) underlines the surname on a scorecard when someone else in the same
+group (stations fold into their group) shares the first given name, compared without case or
+accents. Off by default; the Ontario, Québec and British Columbia presets turn it on. The parser
+flags the cards (`sharedFirstName`), since a group can span render slices; off, the PDF is
+byte-identical. `src/lib/splitName.ts` finds the surname: in Spanish- and Portuguese-speaking
+countries a common compound given name (Ana Clara, João Pedro, Juan Pablo, ...) takes the first 2
+words; otherwise a particle (de, da, van, von, ...) after
+the first word starts it; otherwise a 2-word name splits 1 | 1, and a longer one keeps the last
+word, or the last 2 for Spanish- and Portuguese-speaking countries. Hyphenated parts count as one
+word, and a single-word name is never underlined. A surname wrapped onto the second line stays
+underlined on both.
+
 ### A6 scorecards
 
 "Scorecards on A6" (Settings, under the paper format) prints one scorecard per A6 page for

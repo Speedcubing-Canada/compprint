@@ -3210,3 +3210,33 @@ describe('finals station numbers', () => {
     expect(stationary(finalGroups({ stationsPerStage: 10 }, { stations: 20 }).groups)).toBe(false);
   });
 });
+
+describe('shared first names', () => {
+  const flags = (persons: Person[], rooms: Room[]) => Object.fromEntries(
+    scs(parseWCIF(mkWCIF([evt('333', [rSpec('a')])], rooms, persons), cfg()).firstRound)
+      .map(s => [s.name, s.sharedFirstName?.surname ?? null]),
+  );
+
+  it('flags a first name repeated in the group, ignoring case and accents', () => {
+    const rooms = [room('Main', [act('333', 1, [ch(100, '333', 1, 1), ch(101, '333', 1, 2)])])];
+    expect(flags([
+      per(1, [{ aid: 100 }], { name: 'Émile Roy' }),
+      per(2, [{ aid: 100 }], { name: 'emile Gagnon' }),
+      per(3, [{ aid: 101 }], { name: 'Emile Côté' }),
+      per(4, [{ aid: 100 }], { name: 'Ali' }),
+      per(5, [{ aid: 100 }], { name: 'Ali Khan' }),
+      per(6, [{ aid: 100 }], { name: 'Alice Wong' }),
+    ], rooms)).toEqual({
+      'Émile Roy': 'Roy', 'emile Gagnon': 'Gagnon', 'Emile Côté': null,
+      Ali: null, 'Ali Khan': 'Khan', 'Alice Wong': null,
+    });
+  });
+
+  it('compares stationed cards within their cover group', () => {
+    const rooms = [room('Main', [act('333', 1, [ch(100, '333', 1, 1)])])];
+    expect(flags([
+      per(1, [{ aid: 100, station: 1 }], { name: 'Sam Lee' }),
+      per(2, [{ aid: 100, station: 2 }], { name: 'Sam Park' }),
+    ], rooms)).toEqual({ 'Sam Lee': 'Lee', 'Sam Park': 'Park' });
+  });
+});

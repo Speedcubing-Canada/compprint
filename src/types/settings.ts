@@ -82,6 +82,8 @@ export interface CompetitionSettings {
   // The planned/actual/set line on cover cards. Undefined in the draft = follow the schedule
   // tracker (hidden when it is printed); the submitted blob always holds the resolved boolean.
   coverTiming?: boolean;
+  // Underlines the surname on cards whose first name repeats in the group. Off unless clicked or preset.
+  underlineSharedFirstNames?: boolean;
   // Adds a second scrambler-signature column to scorecards whose round is in
   // `scrambleDoubleCheckRounds` or whose competitor+event is in the overrides.
   scrambleDoubleCheck: boolean;
