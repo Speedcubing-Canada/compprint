@@ -287,7 +287,7 @@ function CoverCard({
       {card.group === ''
         ? <Text style={styles.coverGroup}>{cover.allGroups(card.numGroups)}</Text>
         : <LabelWithGreyTotal label={card.group} connector={strings.ofConnector} style={styles.coverGroup} />}
-      <Text style={styles.coverTiming}>{cover.timing(card.startTime, card.endTime)}</Text>
+      {settings.coverTiming !== false && <Text style={styles.coverTiming}>{cover.timing(card.startTime, card.endTime)}</Text>}
 
       <View style={styles.coverDividerRow}>
         <View style={styles.coverDividerLine} />

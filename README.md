@@ -29,7 +29,7 @@ we can see which competitions the tool is used on and which settings people pick
 
 | File | Contents |
 |---|---|
-| `{id}_round1.pdf` | Named scorecards for round 1, plus delegate/scoretaker cover cards (each shows the group's planned time, with write-ins for the actual time and scramble set) |
+| `{id}_round1.pdf` | Named scorecards for round 1, plus delegate/scoretaker cover cards (each can show the group's planned time, with write-ins for the actual time and scramble set) |
 | `{id}_round2.pdf` | Round 2 of events with 3+ rounds; named, prefilled or blank |
 | `{id}_semis.pdf` | Round 3 of events with 4 rounds |
 | `{id}_finals.pdf` | Final round of every multi-round event |
@@ -114,6 +114,14 @@ times use the venue's timezone (12h in English, 24h otherwise). A round running 
 at once is one row listing its rooms, and a time limit split across rounds names the rounds it is
 shared with. Rows have fixed heights, so the page count shown before generating is exact.
 Unchecked by default; the Québec preset turns it on.
+
+### Cover card timing line
+
+"Show planned and actual times" (Settings > Cover cards, `coverTiming`) controls the
+"Planned · Actual · Set" line on cover cards. It defaults to off when the Schedule Tracker is
+selected on /scope, since the tracker already records those times, and on otherwise. Until the
+organizer clicks it, the default keeps following the tracker, even after going back and changing
+the documents; a click is kept. A preset may seed it. Hidden when cover cards are off.
 
 ### A6 scorecards
 

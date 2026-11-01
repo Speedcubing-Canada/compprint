@@ -73,7 +73,9 @@
       "per_round": "Cover card per round",
       "per_round_desc": "One checklist card per event round instead of per group - fewer cards to print.",
       "none": "None",
-      "none_desc": "No cover cards."
+      "none_desc": "No cover cards.",
+      "timing_label": "Show planned and actual times",
+      "timing_desc": "The Planned, Actual and Set line under the group. Off by default when you print the Schedule Tracker, which already records them."
     },
     "double_check": {
       "title": "Scramble double-checking",

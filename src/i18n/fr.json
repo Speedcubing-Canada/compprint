@@ -73,7 +73,9 @@
       "per_round": "Feuille de couverture par tour",
       "per_round_desc": "Une feuille de couverture par tour d'épreuve plutôt que par groupe - moins de feuilles à imprimer.",
       "none": "Aucune",
-      "none_desc": "Aucune feuille de couverture."
+      "none_desc": "Aucune feuille de couverture.",
+      "timing_label": "Afficher les heures prévues et réelles",
+      "timing_desc": "La ligne Prévu, Réel et Set sous le groupe. Désactivée par défaut si vous imprimez le Suivi de l'horaire, qui les note déjà."
     },
     "double_check": {
       "title": "Double vérification des mélanges",
