@@ -57,6 +57,7 @@ function settings(over: Partial<CompetitionSettings> = {}): CompetitionSettings 
     nametagQrMode: 'back-only',
     nametagLayout: 'vertical',
     scorecardCheckMode: 'per-group-card',
+    coverTiming: true,
     scrambleDoubleCheck: false,
     scorecardsA6: false,
     ...over,

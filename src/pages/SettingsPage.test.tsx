@@ -6,7 +6,7 @@ import { markAllSeen } from '../changelog';
 import { renderWithProviders, useEnglish } from '../test/render';
 import { testSettings } from '../test/fixtures';
 import {
-  clearSettings, DEFAULT_SCOPE, readSettings, writeCompetition, writeCustom, writeFileName, writeScope,
+  DEFAULT_SCOPE, readSettings, writeCompetition, writeCustom, writeFileName, writeScope,
   writeSettings,
 } from '../lib/flowState';
 import { NO_DOCUMENTS } from '../lib/generationScope';
@@ -530,38 +530,48 @@ describe('cover card timing line', () => {
   );
   const rerender = async (scheduleTracker: boolean) => { cleanup(); withTracker(scheduleTracker); await renderSettings(); };
 
-  it('defaults to hidden with the tracker and shown without it', async () => {
+  it('follows the tracker until clicked, through submits', async () => {
     withTracker(true);
     await renderSettings();
     expect(box()?.checked).toBe(false);
     generate();
-    expect(readSettings()?.coverTiming).toBe(false);
-
-    clearSettings();
-    await rerender(false);
-    expect(box()?.checked).toBe(true);
-    generate();
-    expect(readSettings()?.coverTiming).toBe(true);
-  });
-
-  it('keeps following the tracker after an untouched submit', async () => {
-    withTracker(true);
-    await renderSettings();
-    generate();
-
-    await rerender(false);
-    expect(box()?.checked).toBe(true);
-  });
-
-  it('keeps a click through tracker changes', async () => {
-    withTracker(true);
-    await renderSettings();
-    fireEvent.click(box()!);
-    generate();
+    expect(readSettings()).not.toHaveProperty('coverTiming');
 
     await rerender(false);
     expect(box()?.checked).toBe(true);
     await rerender(true);
+    expect(box()?.checked).toBe(false);
+  });
+
+  it.each([true, false])('keeps a click through tracker changes (tracker %s first)', async (first) => {
+    withTracker(first);
+    await renderSettings();
+    fireEvent.click(box()!);
+    generate();
+
+    await rerender(!first);
+    expect(box()?.checked).toBe(first);
+    generate();
+    await rerender(first);
+    expect(box()?.checked).toBe(first);
+    expect(readSettings()?.coverTiming).toBe(first);
+  });
+
+  it('keeps a tick-then-untick that lands on the default', async () => {
+    withTracker(true);
+    await renderSettings();
+    fireEvent.click(box()!);
+    fireEvent.click(box()!);
+    generate();
+
+    await rerender(false);
+    expect(box()?.checked).toBe(false);
+  });
+
+  it('takes a preset seed over the tracker default', async () => {
+    writePresetSettings({ coverTiming: true });
+    withTracker(true);
+    await renderSettings();
     expect(box()?.checked).toBe(true);
     generate();
     expect(readSettings()?.coverTiming).toBe(true);
