@@ -487,6 +487,7 @@ export function parseWCIF(wcif: WCIF, settings: CompetitionSettings): ParsedWCIF
   }
 
   const allRooms = wcif.schedule.venues.flatMap((v) => v.rooms);
+  const roomTz = wcif.schedule.venues.flatMap((v) => v.rooms.map(() => v.timezone));
   // Only rooms that host groups: check-in/lunch/tutorial rooms would dilute the shared words.
   const roundRoomIdx = new Map<string, number[]>();
   allRooms.forEach((room, i) => {
@@ -527,7 +528,8 @@ export function parseWCIF(wcif: WCIF, settings: CompetitionSettings): ParsedWCIF
         if (cCode?.group !== undefined) {
           const rk = roundIdOf(cCode);
           groupTimes[`${rk}|${cCode.group}|${stage}`] = {
-            startTime: labels.localTime(child.startTime), endTime: labels.localTime(child.endTime),
+            startTime: labels.localTime(child.startTime, roomTz[roomIdx]),
+            endTime: labels.localTime(child.endTime, roomTz[roomIdx]),
           };
           (roundGroupCodes[rk] ??= new Set()).add(`g${cCode.group}`);
         }
@@ -1278,6 +1280,7 @@ export function parseWCIF(wcif: WCIF, settings: CompetitionSettings): ParsedWCIF
     const { eventId, round: roundNum, group: groupNum } = code;
     const bucket = overviewBuckets.get(unit.id)!;
     const rid = roundIdOf(code);
+    const tz = roomTz[activityRoomIdx[unit.id]];
     const roundLabel = labels.roundLabel(eventId, roundNum);
     // Two stages number their groups from 1 each, so the stage has to qualify the label.
     const stage = (roundStages[rid]?.size ?? 1) > 1 ? activityStage[unit.id] : '';
@@ -1294,10 +1297,10 @@ export function parseWCIF(wcif: WCIF, settings: CompetitionSettings): ParsedWCIF
       .map(c => c.name);
 
     return {
-      dayLabel: labels.dayLabel(labels.localDate(unit.startTime)),
+      dayLabel: labels.dayLabel(labels.localDate(unit.startTime, tz)),
       heading: `${getEventName(eventId, settings.language)} ${roundLabel} - ${groupLabel}`,
-      startTime: labels.localTime(unit.startTime),
-      endTime: labels.localTime(unit.endTime),
+      startTime: labels.localTime(unit.startTime, tz),
+      endTime: labels.localTime(unit.endTime, tz),
       room: activityRoom[unit.id] ?? '',
       eventId,
       roundNum,
