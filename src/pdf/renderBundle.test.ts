@@ -10,7 +10,7 @@ vi.mock('@react-pdf/renderer', async (importOriginal) => ({
 }));
 
 import { parseWCIF } from '../lib/wcif-parser';
-import { filterParsedByScope } from '../lib/generationScope';
+import { NO_DOCUMENTS, filterParsedByScope } from '../lib/generationScope';
 import { buildPdfJobs } from '../lib/pdfJobs';
 import { getWorkerStrings } from '../lib/i18n';
 import { emptyParsedWcif } from '../lib/wcif-parser';
@@ -65,10 +65,7 @@ describe('a single document', () => {
   // One document ships as the PDF itself, not a zip.
   const scope = {
     mode: 'everything' as const,
-    documents: {
-      scorecards: false, scheduleTracker: true, nametags: false,
-      roundChecklist: false, firstTimerSlips: false, groupOverview: false, venueSchedule: false,
-    },
+    documents: { ...NO_DOCUMENTS, scheduleTracker: true },
   };
   const soloSettings = testSettings({ generationScope: scope });
   // The scope is applied by the generate page before the request reaches the worker.

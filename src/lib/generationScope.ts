@@ -2,20 +2,27 @@ import type { ParsedWCIF, ScorecardData } from './wcif-parser';
 import { finalizeEntries, realEntries } from './wcif-parser';
 import type { CompetitionSettings } from '../types/settings';
 
-export interface DocumentSelection {
-  scorecards: boolean;
-  scheduleTracker: boolean;
-  nametags: boolean;
+// Adding a document is one key here plus its /scope label.
+export const DEFAULT_DOCUMENTS = {
+  scorecards: true,
+  scheduleTracker: true,
+  nametags: true,
   // The Round Checklist (parser field `checkingDays`). Opt-in: it tracks the whole
   // competition's data flow rather than a pile of scorecards, so most users don't want it.
-  roundChecklist: boolean;
-  firstTimerSlips: boolean;
+  roundChecklist: false,
+  firstTimerSlips: false,
   // Who competes, scrambles, runs and judges in each group. Opt-in: only useful once the
   // WCIF has groups, and most organizers print it separately from the scorecard pile.
-  groupOverview: boolean;
+  groupOverview: false,
   // The WCA competition PDF's events table and daily schedule, posted around the venue. Opt-in.
-  venueSchedule: boolean;
-}
+  venueSchedule: false,
+};
+
+export type DocumentSelection = Record<keyof typeof DEFAULT_DOCUMENTS, boolean>;
+
+export const DOCUMENT_KEYS = Object.keys(DEFAULT_DOCUMENTS) as (keyof DocumentSelection)[];
+
+export const NO_DOCUMENTS = Object.fromEntries(DOCUMENT_KEYS.map(k => [k, false])) as DocumentSelection;
 
 // What the user chose to generate.
 export type GenerationScope =

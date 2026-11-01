@@ -1,5 +1,5 @@
 import type { CompetitionSettings, CustomEvent } from '../types/settings';
-import type { GenerationScope } from './generationScope';
+import { DEFAULT_DOCUMENTS, type DocumentSelection, type GenerationScope } from './generationScope';
 
 /**
  * Everything that crosses a wizard page boundary. The steps are separate routes with no
@@ -69,15 +69,7 @@ export function writeHasGroups(hasGroups: boolean): void {
 
 export const DEFAULT_SCOPE: GenerationScope = {
   mode: 'everything',
-  documents: {
-    scorecards: true,
-    scheduleTracker: true,
-    nametags: true,
-    roundChecklist: false,
-    groupOverview: false,
-    firstTimerSlips: false,
-    venueSchedule: false,
-  },
+  documents: { ...DEFAULT_DOCUMENTS },
 };
 
 export function readScope(): GenerationScope {
@@ -158,14 +150,7 @@ export function readSettings(): CompetitionSettings | null {
   else if (s.secondaryLanguage === undefined) { s.secondaryLanguage = null; }
   if (s.generationScope === undefined) s.generationScope = { mode: 'everything' };
   const gs = s.generationScope as Record<string, unknown>;
-  if (gs.documents === undefined) gs.documents = {
-    scorecards: true, scheduleTracker: true, nametags: true,
-    roundChecklist: false, firstTimerSlips: false, groupOverview: false, venueSchedule: false,
-  };
-  const gsDocs = gs.documents as Record<string, unknown>;
-  if (gsDocs.roundChecklist === undefined) gsDocs.roundChecklist = false;
-  if (gsDocs.groupOverview === undefined) gsDocs.groupOverview = false;
-  if (gsDocs.venueSchedule === undefined) gsDocs.venueSchedule = false;
+  gs.documents = { ...DEFAULT_DOCUMENTS, ...(gs.documents as Partial<DocumentSelection> | undefined) };
   if (s.hideWcaLiveId === undefined) s.hideWcaLiveId = false;
   if (s.splitPdfsByStage === undefined) s.splitPdfsByStage = false;
   if (s.otsBlanks === undefined) s.otsBlanks = false;

@@ -1,7 +1,7 @@
 import { describe, it, expect } from 'vitest';
 import { buildPdfJobs, downloadTarget, guideSections, hasOversizedPdf } from './pdfJobs';
 import type { PdfJob } from './pdfJobs';
-import { filterParsedByScope } from './generationScope';
+import { DEFAULT_DOCUMENTS, NO_DOCUMENTS, filterParsedByScope } from './generationScope';
 import { finalizeEntries, stackQuadrants, type ParsedWCIF, type ScorecardData, type ScorecardEntry, type CoverEntry, type NametTagEntry } from './wcif-parser';
 import { MAX_PAGES_PER_SCORECARD_PDF, MAX_PAGES_PER_NAMETAG_PDF } from '../pdf/layoutConstants';
 import type { CompetitionSettings, CustomEvent } from '../types/settings';
@@ -47,14 +47,8 @@ function mkSettings(over: Partial<CompetitionSettings> = {}): CompetitionSetting
 const customEvent = (name: string): CustomEvent =>
   ({ name, format: 'avg5', cutoff: '', limit: '', iconDataUrl: null }) as unknown as CustomEvent;
 
-const allDocs = {
-  scorecards: true, scheduleTracker: true, nametags: true,
-  roundChecklist: true, firstTimerSlips: true, groupOverview: false, venueSchedule: false,
-};
-const noDocs = {
-  scorecards: false, scheduleTracker: false, nametags: false,
-  roundChecklist: false, firstTimerSlips: false, groupOverview: false, venueSchedule: false,
-};
+const allDocs = { ...DEFAULT_DOCUMENTS, roundChecklist: true, firstTimerSlips: true };
+const noDocs = NO_DOCUMENTS;
 
 /** A parse with every bucket populated - the full pre-competition case. */
 const fullParsed = mkParsed({

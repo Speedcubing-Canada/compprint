@@ -8,7 +8,7 @@ import { getGroupOverviewStrings } from '../lib/i18n';
 import { textWidth } from './nameFit';
 import { parseWCIF, type GroupOverviewEntry } from '../lib/wcif-parser';
 import { buildPdfJobs } from '../lib/pdfJobs';
-import { filterParsedByScope, type DocumentSelection } from '../lib/generationScope';
+import { NO_DOCUMENTS, filterParsedByScope, type DocumentSelection } from '../lib/generationScope';
 import { estimateTotalPages } from '../lib/pageEstimate';
 import { hasPdftotext, pageCount, pdfText as text, unpack } from '../test/pdfFiles';
 import { sampleWcif, testSettings, variedSettings } from '../test/fixtures';
@@ -44,11 +44,7 @@ async function generate(wcif: WCIF, settings: CompetitionSettings) {
 const onlyDocument = (doc: keyof DocumentSelection | null): Partial<CompetitionSettings> => ({
   generationScope: {
     mode: 'everything',
-    documents: {
-      scorecards: false, scheduleTracker: false, nametags: false,
-      roundChecklist: false, firstTimerSlips: false, groupOverview: false, venueSchedule: false,
-      ...(doc ? { [doc]: true } : {}),
-    },
+    documents: { ...NO_DOCUMENTS, ...(doc ? { [doc]: true } : {}) },
   },
 });
 

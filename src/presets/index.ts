@@ -1,5 +1,5 @@
 import type { CompetitionSettings } from '../types/settings';
-import type { DocumentSelection } from '../lib/generationScope';
+import { DOCUMENT_KEYS, type DocumentSelection } from '../lib/generationScope';
 
 // A starting point for the options on /scope and /settings, for regions that always use the
 // same setup. Adding one is a JSON file drop in this folder; see README.md.
@@ -24,11 +24,6 @@ export type PresetSettings = Partial<Pick<CompetitionSettings,
   // A filename in ./logos, for an organization that prints the same logo at every competition.
   logo?: string;
 };
-
-const DOCUMENT_KEYS: (keyof DocumentSelection)[] = [
-  'scorecards', 'scheduleTracker', 'nametags', 'roundChecklist', 'firstTimerSlips',
-  'groupOverview', 'venueSchedule',
-];
 
 // Filename -> asset URL, so the image stays out of the JS bundle.
 const LOGOS = Object.fromEntries(

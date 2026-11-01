@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { availableRounds, filterParsedByScope, latestAssignedRound, hasUnassignedIntermediate, stageSplitSkipsRound2 } from './generationScope';
+import { DEFAULT_DOCUMENTS, NO_DOCUMENTS, availableRounds, filterParsedByScope, latestAssignedRound, hasUnassignedIntermediate, stageSplitSkipsRound2 } from './generationScope';
 import type { ParsedWCIF, ScorecardData, ScorecardEntry, CoverEntry } from './wcif-parser';
 
 function sc(eventId: string, roundNum: number, name = ''): ScorecardEntry {
@@ -95,7 +95,7 @@ describe('hasUnassignedIntermediate', () => {
 
 describe('filterParsedByScope', () => {
   const allDocs = {
-    scorecards: true, scheduleTracker: true, nametags: true,
+    ...DEFAULT_DOCUMENTS,
     roundChecklist: true, firstTimerSlips: true, groupOverview: true, venueSchedule: true,
   };
   const base = mkParsed({
@@ -163,10 +163,7 @@ describe('filterParsedByScope', () => {
   it('roundChecklist:true with scorecards:false → the checklist is the only output', () => {
     const out = filterParsedByScope(base, {
       mode: 'everything',
-      documents: {
-        scorecards: false, scheduleTracker: false, nametags: false,
-        roundChecklist: true, firstTimerSlips: false, groupOverview: false, venueSchedule: false,
-      },
+      documents: { ...NO_DOCUMENTS, roundChecklist: true },
     });
     expect(out.checkingDays).toHaveLength(1);
     expect(out.scheduleDays).toHaveLength(0);
@@ -252,7 +249,7 @@ describe('filterParsedByScope', () => {
   it('latest + only schedule → clears scorecards but keeps schedule', () => {
     const out = filterParsedByScope(base, {
       mode: 'latest',
-      documents: { scorecards: false, scheduleTracker: true, nametags: false, roundChecklist: false, firstTimerSlips: false, groupOverview: false, venueSchedule: false },
+      documents: { ...NO_DOCUMENTS, scheduleTracker: true },
     });
     expect(out.firstRound).toHaveLength(0);
     expect(out.intermediate).toHaveLength(0);
