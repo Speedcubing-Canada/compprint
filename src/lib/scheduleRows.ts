@@ -62,6 +62,8 @@ interface RoundSlot {
   code: ActivityCode;
   startTime: string;
   endTime: string;
+  // The venue's; a merged slot keeps its earliest room's.
+  tz: string;
   // Codes, not a count: two stages running one logical group share its code, and a later
   // round synthesizes the same g1..gN per room, so collapsing rooms unions rather than sums.
   groupCodes: Set<string>;
@@ -79,7 +81,7 @@ function mergeSlots(slots: RoundSlot[]): RoundSlot[] {
       continue;
     }
     // Parsed, not compared as strings: WCIF times carry UTC offsets.
-    if (Date.parse(slot.startTime) < Date.parse(merged.startTime)) merged.startTime = slot.startTime;
+    if (Date.parse(slot.startTime) < Date.parse(merged.startTime)) { merged.startTime = slot.startTime; merged.tz = slot.tz; }
     if (Date.parse(slot.endTime) > Date.parse(merged.endTime)) merged.endTime = slot.endTime;
     for (const code of slot.groupCodes) merged.groupCodes.add(code);
   }
@@ -93,16 +95,26 @@ export type ScheduleLabels = ReturnType<typeof scheduleLabels>;
  * Group Overview. Built once per parse: each Intl formatter holds ICU memory outside the JS heap.
  */
 export function scheduleLabels(wcif: WCIF, language: LocaleCode) {
-  const timezone = wcif.schedule.venues[0]?.timezone ?? 'UTC';
-  const dateFormat = zonedFormat(timezone, { year: 'numeric', month: '2-digit', day: '2-digit' });
-  const timeFormat = zonedFormat(timezone, { hour: '2-digit', minute: '2-digit', hour12: false });
-  const localTime = (isoTime: string): string => {
-    try { return timeFormat.format(new Date(isoTime)); } catch { return isoTime.slice(11, 16); }
+  // One pair per timezone: each Intl formatter holds ICU memory.
+  const formats = new Map<string, { date: Intl.DateTimeFormat; time: Intl.DateTimeFormat }>();
+  const formatsOf = (tz: string) => {
+    let f = formats.get(tz);
+    if (!f) {
+      f = {
+        date: zonedFormat(tz, { year: 'numeric', month: '2-digit', day: '2-digit' }),
+        time: zonedFormat(tz, { hour: '2-digit', minute: '2-digit', hour12: false }),
+      };
+      formats.set(tz, f);
+    }
+    return f;
+  };
+  const localTime = (isoTime: string, tz: string): string => {
+    try { return formatsOf(tz).time.format(new Date(isoTime)); } catch { return isoTime.slice(11, 16); }
   };
   // "YYYY-MM-DD" in the venue's timezone.
-  const localDate = (isoTime: string): string => {
+  const localDate = (isoTime: string, tz: string): string => {
     try {
-      const parts = dateFormat.formatToParts(new Date(isoTime));
+      const parts = formatsOf(tz).date.formatToParts(new Date(isoTime));
       const y = parts.find(p => p.type === 'year')?.value ?? '';
       const m = parts.find(p => p.type === 'month')?.value ?? '';
       const d = parts.find(p => p.type === 'day')?.value ?? '';
@@ -121,7 +133,7 @@ export function scheduleLabels(wcif: WCIF, language: LocaleCode) {
   for (const venue of wcif.schedule.venues)
     for (const room of venue.rooms)
       for (const activity of room.activities)
-        uniqueDates.add(localDate(activity.startTime));
+        uniqueDates.add(localDate(activity.startTime, venue.timezone));
   const dateToDay: Record<string, number> = {};
   [...uniqueDates].sort(cmp).forEach((d, i) => { dateToDay[d] = i + 1; });
 
@@ -167,6 +179,7 @@ export function buildScheduleDays(
   // Build a (date → roomIndex → activities[]) map, preserving WCIF room order via roomIndex.
   const dayRoomMap = new Map<string, Map<number, Activity[]>>();
   const roomIndexToName = new Map<number, string>();
+  const roomIndexToTz = new Map<number, string>();
   // Collected across EVERY room: lunch is often scheduled once, in one room, but the rule
   // belongs on every stage's table that day.
   const lunchStartsByDate = new Map<string, number[]>();
@@ -174,8 +187,9 @@ export function buildScheduleDays(
   for (const venue of wcif.schedule.venues) {
     for (const room of venue.rooms) {
       roomIndexToName.set(roomIdx, room.name);
+      roomIndexToTz.set(roomIdx, venue.timezone);
       for (const activity of room.activities) {
-        const date = localDate(activity.startTime);
+        const date = localDate(activity.startTime, venue.timezone);
         if (!dayRoomMap.has(date)) dayRoomMap.set(date, new Map());
         const roomMap = dayRoomMap.get(date)!;
         if (!roomMap.has(roomIdx)) roomMap.set(roomIdx, []);
@@ -191,7 +205,7 @@ export function buildScheduleDays(
 
   // Lunch, awards and events absent from the WCIF are dropped here, so the row builder sees
   // only rounds and attempts.
-  const slotsOf = (activities: Activity[]): RoundSlot[] => {
+  const slotsOf = (activities: Activity[], tz: string): RoundSlot[] => {
     const slots: RoundSlot[] = [];
     const sorted = [...activities].sort((a, b) => Date.parse(a.startTime) - Date.parse(b.startTime));
     for (const activity of sorted) {
@@ -201,6 +215,7 @@ export function buildScheduleDays(
         code,
         startTime: activity.startTime,
         endTime: activity.endTime,
+        tz,
         // Per round, not per attempt: one attempt's g1 is the same pile as the next one's.
         groupCodes: new Set(groupCodesOf(activity).map(c => c.replace(/-a\d+$/, ''))),
       });
@@ -214,15 +229,15 @@ export function buildScheduleDays(
     // Where the previous row's round started, so a lunch can fall between two rows.
     // Timestamps, not ISO strings: WCIF times carry UTC offsets.
     let prevStart: number | null = null;
-    for (const { code, startTime, endTime, groupCodes } of slots) {
+    for (const { code, startTime, endTime, tz, groupCodes } of slots) {
       // The first row has only the header border above it.
       const thisStart = Date.parse(startTime);
       const breakBefore = prevStart !== null
         && lunchStarts.some((l) => l >= prevStart! && l < thisStart);
       prevStart = thisStart;
       rows.push({
-        startTime: localTime(startTime),
-        endTime: localTime(endTime),
+        startTime: localTime(startTime, tz),
+        endTime: localTime(endTime, tz),
         eventRound: roundName(code),
         breakBefore,
         groupCount: groupCodes.size,
@@ -242,7 +257,7 @@ export function buildScheduleDays(
     const daySlots: RoundSlot[] = [];
     const lunchStarts = lunchStartsByDate.get(date) ?? [];
     for (const [ri, activities] of [...roomMap].sort(([a], [b]) => a - b)) {
-      const slots = slotsOf(activities);
+      const slots = slotsOf(activities, roomIndexToTz.get(ri)!);
       // One table per room: the tracker records when each stage runs, which the merge drops.
       const rows = buildRows(slots, lunchStarts)
         .map(({ startTime, endTime, eventRound, breakBefore }) => ({ startTime, endTime, eventRound, breakBefore }));
