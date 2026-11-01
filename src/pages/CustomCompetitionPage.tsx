@@ -4,6 +4,7 @@ import { useTranslation } from 'react-i18next';
 import type { CustomEvent } from '../types/settings';
 import Header from '../components/Header';
 import CustomEventEditor from '../components/CustomEventEditor';
+import { NO_DOCUMENTS } from '../lib/generationScope';
 import {
   readCompetition, readCustomEvents, readIsCustom,
   writeCompetition, writeCustom, writeHasGroups, writeScope,
@@ -44,7 +45,7 @@ export default function CustomCompetitionPage() {
     writeScope(
       {
         mode: 'everything',
-        documents: { scorecards: true, scheduleTracker: false, nametags: false, roundChecklist: false, firstTimerSlips: false, groupOverview: false, venueSchedule: false },
+        documents: { ...NO_DOCUMENTS, scorecards: true },
       },
       { showSecondRoundMode: false, multiStage: false, detectedStations: null },
     );

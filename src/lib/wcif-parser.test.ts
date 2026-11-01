@@ -1,6 +1,6 @@
 import { describe, it, expect, beforeEach } from 'vitest';
 import { subStageLabel, parseWCIF } from './wcif-parser';
-import { hasUnassignedIntermediate } from './generationScope';
+import { DEFAULT_DOCUMENTS, hasUnassignedIntermediate } from './generationScope';
 import type { ScorecardEntry, CoverEntry, ScorecardData, NametTagEntry } from './wcif-parser';
 import type {
   WCIF, Event, Round, RoundFormat, Activity, ChildActivity,
@@ -23,7 +23,7 @@ const BASE: CompetitionSettings = {
   customEvents: [], scorecardCheckMode: 'per-group-card',
   scrambleDoubleCheck: false, scrambleDoubleCheckRounds: ['finals'], scrambleDoubleCheckOverrides: {},
   scrambleDoubleCheckWorldTop: 50, scrambleDoubleCheckRegionTop: null, scrambleDoubleCheckRegionScope: 'national',
-  generationScope: { mode: 'everything', documents: { scorecards: true, scheduleTracker: true, nametags: true, roundChecklist: false, firstTimerSlips: false, groupOverview: false, venueSchedule: false } },
+  generationScope: { mode: 'everything', documents: { ...DEFAULT_DOCUMENTS } },
   isCustomCompetition: false,
 };
 const cfg = (o: Partial<CompetitionSettings> = {}): CompetitionSettings => ({ ...BASE, ...o });

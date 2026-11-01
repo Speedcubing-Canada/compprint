@@ -5,6 +5,7 @@ import type {
   Activity, Assignment, ChildActivity, Event, EventId, Person, Room, RoundFormat, WCIF,
 } from '../types/wcif';
 import type { CompetitionSettings } from '../types/settings';
+import { DEFAULT_DOCUMENTS } from '../lib/generationScope';
 import type { WCAToken, WCAUser } from '../auth/wca';
 
 export const organizer: WCAUser = {
@@ -55,7 +56,7 @@ export function testSettings(over: Partial<CompetitionSettings> = {}): Competiti
     generationScope: {
       mode: 'everything',
       documents: {
-        scorecards: true, scheduleTracker: true, nametags: true,
+        ...DEFAULT_DOCUMENTS,
         roundChecklist: true, firstTimerSlips: true, groupOverview: true, venueSchedule: true,
       },
     },

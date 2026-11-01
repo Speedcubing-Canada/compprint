@@ -6,6 +6,7 @@ import {
   readStoredSettings, writeCompetition, writeCustom, writeFileName, writeHasGroups, writeScope,
   writeSettings,
 } from './flowState';
+import { DEFAULT_DOCUMENTS, NO_DOCUMENTS } from './generationScope';
 import type { CompetitionSettings } from '../types/settings';
 import { testSettings } from '../test/fixtures';
 
@@ -58,10 +59,7 @@ describe('generation scope', () => {
   const scope = {
     mode: 'selected' as const,
     rounds: [{ eventId: '333', roundNum: 2 }],
-    documents: {
-      scorecards: true, scheduleTracker: false, nametags: false,
-      roundChecklist: true, firstTimerSlips: false, groupOverview: false, venueSchedule: false,
-    },
+    documents: { ...NO_DOCUMENTS, scorecards: true, roundChecklist: true },
   };
 
   it('round-trips scope and detection together', () => {
@@ -268,6 +266,11 @@ describe('settings restore', () => {
       scorecards: true, scheduleTracker: true, nametags: true, roundChecklist: false, firstTimerSlips: false, groupOverview: true,
     } } });
     expect(readSettings()?.generationScope.documents).toMatchObject({ venueSchedule: false, groupOverview: true });
+  });
+
+  it('backfills every missing document key, first-timer slips included', () => {
+    stored({ generationScope: { mode: 'latest', documents: { scorecards: false, nametags: true } } });
+    expect(readSettings()?.generationScope.documents).toEqual({ ...DEFAULT_DOCUMENTS, scorecards: false });
   });
 
   // The checking sheet is its own document, so only the cover-card half survives.

@@ -1,6 +1,7 @@
 import { describe, it, expect } from 'vitest';
 import { estimateTotalPages } from './pageEstimate';
 import { buildPdfJobs } from './pdfJobs';
+import { DEFAULT_DOCUMENTS } from './generationScope';
 import type { ParsedWCIF, ScorecardData, ScorecardEntry, FirstTimerEntry, NametTagEntry } from './wcif-parser';
 import type { ScheduleDay } from './scheduleRows';
 import type { CompetitionSettings, CustomEvent } from '../types/settings';
@@ -45,7 +46,7 @@ function mkSettings(over: Partial<CompetitionSettings> = {}): CompetitionSetting
     nametagLogoMode: 'with-name', nametagQrMode: 'back-only', nametagLayout: 'vertical',
     customEvents: [], scorecardCheckMode: 'per-group-card',
     scrambleDoubleCheck: false, scrambleDoubleCheckRounds: [], scrambleDoubleCheckOverrides: {},
-    generationScope: { mode: 'everything', documents: { scorecards: true, scheduleTracker: true, nametags: true, roundChecklist: false, firstTimerSlips: false, groupOverview: false, venueSchedule: false } },
+    generationScope: { mode: 'everything', documents: { ...DEFAULT_DOCUMENTS } },
     ...over,
   } as CompetitionSettings;
 }
