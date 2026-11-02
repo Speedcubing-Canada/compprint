@@ -134,11 +134,11 @@ interface QrConfig {
   wcaLivePersonIds: Record<number, string> | null;
 }
 
-// Compact: the WCA ID sits centred between badge and the bottom-pinned QR codes. `wcaId` null
+// Compact: the WCA ID sits centred between badge and the bottom-pinned QR codes. No ID still
 // keeps the gap, so a QR front lines up with its back.
-function QrSection({ entry, qr, qrSize, strings, compact = false, wcaId = null }: {
+function QrSection({ entry, qr, qrSize, strings, compact = false }: {
   entry: NametTagEntry; qr: QrConfig; qrSize: number; strings: NametTagStrings;
-  compact?: boolean; wcaId?: string | null;
+  compact?: boolean;
 }) {
   const cgComp = `https://www.competitiongroups.com/competitions/${qr.competitionId}`;
   const cgUrl = entry.blank || entry.staff ? cgComp : `${cgComp}/persons/${entry.registrantId}`;
@@ -158,7 +158,7 @@ function QrSection({ entry, qr, qrSize, strings, compact = false, wcaId = null }
   if (!compact) return codes;
   return (
     <>
-      <View style={sc.idSlot}><Text style={sc.wcaId}>{wcaId || ' '}</Text></View>
+      <View style={sc.idSlot}><Text style={sc.wcaId}>{entry.wcaId || ' '}</Text></View>
       {codes}
     </>
   );
@@ -236,7 +236,7 @@ function BackPanel({ entry, panelW, panelH, pos, compName, qr, logoMode, logoDat
   return (
     <PanelFrame pos={pos} panelW={panelW} panelH={panelH}>
       <PanelTop entry={entry} panelW={panelW} compName={compName} titleText={entry.titleBack} logoMode={logoMode} logoDataUrl={logoDataUrl} compact={compact} showEvents={eventIconsVisible({ isQrSide: true, compact })} />
-      <QrSection entry={entry} qr={qr} qrSize={qrSize} strings={strings} compact={compact} wcaId={entry.wcaId} />
+      <QrSection entry={entry} qr={qr} qrSize={qrSize} strings={strings} compact={compact} />
     </PanelFrame>
   );
 }

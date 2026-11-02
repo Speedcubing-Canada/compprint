@@ -13,12 +13,12 @@ const [front, back, below] = [0, 1, 2].map(i => nametagHPositions('LETTER')[i]!)
 
 // Measured off the real render: what the badge holder and the pair's alignment depend on.
 describe.skipIf(!hasPdftotext && !process.env.CI)('horizontal name tag render', () => {
-  const render = async (nametagLogoMode: NametTagLogoMode, over: Partial<CompetitionSettings> = {}) => {
+  const render = async (nametagLogoMode: NametTagLogoMode, over: Partial<CompetitionSettings> = {}, staff = false) => {
     const settings = testSettings({
       nametagLayout: 'horizontal', nametagLogoMode, useDefaultLogo: true, language: 'fr', secondaryLanguage: 'en', ...over,
     });
     const [first, ...rest] = parseWCIF(sampleWcif(), settings).nametags;
-    const tag = { ...first!, name: 'André Rodrigo César Pinheiro Monte Amado', wcaId: '2017ONDE01' };
+    const tag = { ...first!, name: 'André Rodrigo César Pinheiro Monte Amado', wcaId: '2017ONDE01', staff };
     const words = pdfWords(await renderToBuffer(createElement(NametTagDocument, { nametags: [tag, ...rest], settings }) as never));
     // First pair only: front card left, back card right.
     const pair = words.filter(w => w.yMax < below.top);
@@ -49,5 +49,13 @@ describe.skipIf(!hasPdftotext && !process.env.CI)('horizontal name tag render', 
     find(back, 'Schedule');
     find(back, 'Results');
     expect(back.some(w => w.text === 'Horaire')).toBe(false);
+  });
+
+  it.each([
+    ['staff', {}, true],
+    ['both-sides', { nametagQrMode: 'both-sides' }, false],
+  ] as const)('%s: the WCA ID is on the front too', async (_, over, staff) => {
+    const { front } = await render('hidden', over, staff);
+    find(front, '2017ONDE01');
   });
 });
