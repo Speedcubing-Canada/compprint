@@ -56,6 +56,8 @@
       "letter_desc": "8.5 × 11 in - each scorecard is 107.95 × 139.7 mm",
       "a6_label": "Scorecards on A6",
       "a6_desc": "One scorecard per A6 page, for A6 printers.",
+      "underline_label": "Underline surnames when first names repeat",
+      "underline_desc": "When two competitors in the same group share a first name, their surnames are underlined so the full name gets called.",
       "a6_info": "Only the scorecard PDFs are affected. Name tags and the other documents are still generated on {{format}}."
     },
     "subsequent_rounds": {

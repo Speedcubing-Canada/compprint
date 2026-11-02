@@ -81,6 +81,8 @@ export interface CompetitionSettings {
   scorecardCheckMode: ScorecardCheckMode;
   // The planned/actual/set line on cover cards. Undefined = follow the Schedule Tracker; see coverTimingShown.
   coverTiming?: boolean;
+  // Underlines the surname on cards whose first name repeats in the group. Off unless clicked or preset.
+  underlineSharedFirstNames?: boolean;
   // Adds a second scrambler-signature column to scorecards whose round is in
   // `scrambleDoubleCheckRounds` or whose competitor+event is in the overrides.
   scrambleDoubleCheck: boolean;

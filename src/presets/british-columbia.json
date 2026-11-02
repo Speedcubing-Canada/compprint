@@ -8,5 +8,8 @@
     "roundChecklist": true,
     "groupOverview": true
   },
-  "settings": {}
+  "settings": {
+    "language": "en",
+    "underlineSharedFirstNames": true
+  }
 }

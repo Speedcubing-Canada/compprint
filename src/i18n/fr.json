@@ -56,6 +56,8 @@
       "letter_desc": "8,5 × 11 po - chaque feuille est 107,95 × 139,7 mm",
       "a6_label": "Feuilles de score en A6",
       "a6_desc": "Une feuille de score par page A6, pour les imprimantes A6.",
+      "underline_label": "Souligner le nom de famille des prénoms en double",
+      "underline_desc": "Quand deux compétiteurs d'un même groupe ont le même prénom, leur nom de famille est souligné pour qu'on appelle le nom complet.",
       "a6_info": "Seuls les PDF de feuilles de score sont concernés. Les badges et les autres documents restent générés en {{format}}."
     },
     "subsequent_rounds": {

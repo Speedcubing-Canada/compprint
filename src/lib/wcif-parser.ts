@@ -4,6 +4,7 @@ import { getStrings, getEventName, getFirstTimerSlipStrings, getNametTagTitleStr
 import { packSlipPages } from '../pdf/firstTimerSlipLines';
 import { buildScheduleDays, scheduleLabels, type CheckingDay, type ScheduleDay } from './scheduleRows';
 import { cmp } from './sort';
+import { markSharedFirstNames } from './splitName';
 import { buildVenueSchedule, type VenueSchedule } from './venueSchedule';
 import { parseActivityCode, roundIdOf, type ActivityCode } from './activityCode';
 
@@ -118,6 +119,8 @@ export interface ScorecardEntry {
   iconDataUrl?: string;
   // When true, render a second scrambler-signature column (scramble double-checking).
   scrambleDoubleCheck?: boolean;
+  // Set when someone else in the group shares the first given name, so runners call the surname too.
+  underlinedSurname?: string;
 }
 
 export interface CoverEntry {
@@ -721,6 +724,7 @@ export function parseWCIF(wcif: WCIF, settings: CompetitionSettings): ParsedWCIF
   }
 
   // Named scorecard entries from person assignments
+  const named: { entry: ScorecardEntry; country: string }[] = [];
   for (const person of wcif.persons) {
     if (!person.registration || person.registration.status !== 'accepted') continue;
 
@@ -804,6 +808,7 @@ export function parseWCIF(wcif: WCIF, settings: CompetitionSettings): ParsedWCIF
       };
 
       targetBucket.push(entry);
+      named.push({ entry, country: person.countryIso2 });
       if (isFirst) {
         if (!round1Participants[eventId]) round1Participants[eventId] = [];
         round1Participants[eventId].push(entry);
@@ -814,6 +819,9 @@ export function parseWCIF(wcif: WCIF, settings: CompetitionSettings): ParsedWCIF
       namedGroupSizes[aid].add(person.registrantId);
     }
   }
+
+  // Computed here, not at render: a group can span page slices.
+  if (settings.underlineSharedFirstNames === true) markSharedFirstNames(named);
 
   // Cover cards (one per group) for every named round
   for (const [aidStr, ids] of Object.entries(namedGroupSizes)) {

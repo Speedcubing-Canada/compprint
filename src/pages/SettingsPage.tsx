@@ -87,6 +87,7 @@ export default function SettingsPage() {
     nametagLayout: preset.nametagLayout ?? 'vertical',
     scorecardCheckMode: preset.scorecardCheckMode ?? 'per-group-card',
     coverTiming: preset.coverTiming,
+    underlineSharedFirstNames: preset.underlineSharedFirstNames ?? false,
     splitPdfsByStage: false,
     mergeScorecardRounds: preset.mergeScorecardRounds ?? false,
     scorecardsA6: false,
@@ -119,7 +120,7 @@ export default function SettingsPage() {
 
   const {
     language, secondaryLanguage, paperFormat, secondRoundMode, logoDataUrl, useDefaultLogo,
-    scorecardCompNameWithLogo,
+    scorecardCompNameWithLogo, underlineSharedFirstNames,
     liveResultsMode, wcaLiveId, hideWcaLiveId, nametagLogoMode, nametagQrMode, nametagLayout,
     scorecardCheckMode, customEvents, splitPdfsByStage, scrambleDoubleCheckRounds,
     scrambleDoubleCheckOverrides, scrambleDoubleCheckWorldTop, scrambleDoubleCheckRegionTop,
@@ -425,6 +426,15 @@ export default function SettingsPage() {
                 {t('settings.paper.a6_info', { format: paperFormat === 'A4' ? t('settings.paper.a4') : t('settings.paper.letter') })}
               </WarningBanner>
             </div>
+          )}
+          {showScorecards && (
+            <CheckboxCard
+              checked={underlineSharedFirstNames === true}
+              onChange={checked => patch({ underlineSharedFirstNames: checked })}
+              className={s.checkboxCard}
+              label={t('settings.paper.underline_label')}
+              desc={t('settings.paper.underline_desc')}
+            />
           )}
         </section>
 

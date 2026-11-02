@@ -75,7 +75,7 @@ describe('parsePresetSettings', () => {
       useDefaultLogo: false, hideWcaLiveId: true, nametagLogoMode: 'hidden',
       nametagQrMode: 'both-sides', nametagLayout: 'horizontal',
       scorecardCheckMode: 'none', scrambleDoubleCheckRegionTop: 15, logo: 'abracm.png',
-      mergeScorecardRounds: true,
+      mergeScorecardRounds: true, coverTiming: false, underlineSharedFirstNames: true,
     };
     expect(parsePresetSettings(all)).toEqual(all);
   });
@@ -194,5 +194,16 @@ describe('shipped presets', () => {
       mergeScorecardRounds: true,
     });
     expect(presetLogoUrl(byId.brasilia.settings.logo)).toBeTruthy();
+  });
+
+  // Unset, the printed language follows the organizer's interface, so a French browser printed Ontario in French.
+  it('pins the printed language in every preset', () => {
+    expect(PRESETS.filter(p => !p.settings.language).map(p => p.id)).toEqual([]);
+  });
+
+  // A click or a Canadian preset only; Brasília stays off.
+  it('underlines shared first names in the Canadian presets only', () => {
+    const on = PRESETS.filter(p => p.settings.underlineSharedFirstNames === true).map(p => p.id).sort();
+    expect(on).toEqual(['british-columbia', 'ontario', 'quebec']);
   });
 });

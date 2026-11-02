@@ -56,6 +56,8 @@
       "letter_desc": "8,5 × 11 in - cada hoja es 107,95 × 139,7 mm",
       "a6_label": "Hojas de puntuación en A6",
       "a6_desc": "Una hoja de puntuación por página A6, para impresoras A6.",
+      "underline_label": "Subrayar el apellido si se repite el nombre",
+      "underline_desc": "Cuando dos competidores del mismo grupo tienen el mismo nombre, su apellido se subraya para que se llame por el nombre completo.",
       "a6_info": "Solo se ven afectados los PDF de hojas de puntuación. Las etiquetas de nombre y los demás documentos se siguen generando en {{format}}."
     },
     "subsequent_rounds": {

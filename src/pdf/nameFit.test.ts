@@ -2,7 +2,7 @@ import { describe, it, expect } from 'vitest';
 import { fileURLToPath } from 'node:url';
 import * as fontkit from 'fontkit';
 import {
-  textWidth, nameBox, nameLayout, nametagName, nametagNameW,
+  textWidth, nameBox, nameLayout, nametagName, nametagNameW, splitAtSurname,
   NAME_LINE_HEIGHT, NAME_MAX_FS, NAME_MIN_FS, NAMETAG_NAME_MAX_FS,
 } from './nameFit';
 import {
@@ -12,6 +12,7 @@ import {
 import { corpus } from '../test/corpus';
 import { randomWcif } from '../test/wcifGen';
 import { printedName } from '../lib/wcif-parser';
+import { splitName } from '../lib/splitName';
 
 const LONG = 'André Rodrigo César Pinheiro Monte Amado';
 const lines = (text: string) => text.split('\n');
@@ -185,5 +186,35 @@ describe('every real name fits', () => {
       return r.fontSize > NAME_MIN_FS && lines(r.text).length === 1 && textWidth(r.text, r.fontSize, false) > nametagNameW(panelW) + 0.01;
     });
     expect(over).toEqual([]);
+  });
+});
+
+describe('splitAtSurname', () => {
+  it.each([
+    ['Max Park', 'Park', ['Max ', 'Park']],
+    ['Juan Pablo\nPérez García', 'Pérez García', ['Juan Pablo\n', 'Pérez García']],
+    ['Maria Fernanda Pérez\nGarcía', 'Pérez García', ['Maria Fernanda ', 'Pérez\nGarcía']],
+    ['Jean-Philippe Gagnon-\nTremblay', 'Gagnon-Tremblay', ['Jean-Philippe ', 'Gagnon-\nTremblay']],
+  ] as const)('%j', (laid, surname, parts) => {
+    expect(splitAtSurname(laid, surname)).toEqual(parts);
+  });
+
+  // Real names through the real layout: a wrong realignment would underline the wrong letters.
+  it('splits every laid-out real name exactly at its surname', () => {
+    const box = nameBox(SCORECARD_CONFIGS.LETTER.cardW, true, false);
+    const persons = [...corpus().map(([, w]) => w), ...Array.from({ length: 30 }, (_, i) => randomWcif(i + 1))]
+      .flatMap(w => w.persons);
+    let wrapped = 0;
+    const bad = persons.flatMap((p) => {
+      const name = printedName(p.name);
+      const { surname } = splitName(name, p.countryIso2);
+      if (!surname) return [];
+      const laid = nameLayout(name, box.w, box.h).text;
+      if (laid.includes('\n')) wrapped++;
+      const [before, sur] = splitAtSurname(laid, surname);
+      return before + sur === laid && sur.replace(/-\n/g, '-').replace(/\n/g, ' ') === surname ? [] : [name];
+    });
+    expect(bad).toEqual([]);
+    expect(wrapped).toBeGreaterThan(10);
   });
 });

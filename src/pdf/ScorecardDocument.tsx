@@ -12,7 +12,7 @@ import {
   PDF_FONT as FONT, PDF_FONT_BOLD as FONT_BOLD,
 } from './layoutConstants';
 import './fontSetup';
-import { nameBox, nameLayout, NAME_LINE_HEIGHT } from './nameFit';
+import { nameBox, nameLayout, NAME_LINE_HEIGHT, splitAtSurname } from './nameFit';
 import { resultHeader as buildResultHeader } from './resultHeader';
 
 const BORDER      = `${H.cardBorder}pt solid black`;
@@ -180,6 +180,7 @@ function ScorecardCard({
     : headerLogo && logoMode === 'default' ? 'compNameLogo' : 'compName';
   const box = nameBox(cardW, leftCell !== 'compName', headerCompNameFs !== null);
   const name = nameLayout(card.name, box.w, box.h);
+  const underline = card.underlinedSurname ? splitAtSurname(name.text, card.underlinedSurname) : null;
   // A6 reuses the A4 card, so it takes the A4 row heights.
   const rowH = scorecardRowHeight(card.format, settings.scorecardsA6 ? 'A4' : settings.paperFormat, preRows.length + postRows.length);
 
@@ -206,7 +207,7 @@ function ScorecardCard({
             <Text style={[styles.headerCompNameText, { fontSize: headerCompNameFs }]}>{settings.competitionName}</Text>
           )}
           <Text style={[styles.nameText, { fontSize: name.fontSize }]}>
-            {name.text}
+            {underline ? <>{underline[0]}<Text style={{ textDecoration: 'underline' }}>{underline[1]}</Text></> : name.text}
           </Text>
           <Text style={styles.idText}>
             {card.wcaId}{showLiveIdLine(settings.hideWcaLiveId, card.liveId) && <>{'    '}WCA Live: <Text style={{ fontFamily: FONT_BOLD }}>{card.liveId}</Text></>}

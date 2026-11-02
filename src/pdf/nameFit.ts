@@ -117,6 +117,16 @@ export function nameLayout(
   return { text: best.text, fontSize: Math.max(NAME_MIN_FS, Math.floor(best.fontSize * 2) / 2) };
 }
 
+// Splits a laid-out name before `surname`, a suffix of the name before layout. Layout only swaps a
+// space for '\n' or adds one after a hyphen, so walking back from the end realigns the two.
+export function splitAtSurname(laid: string, surname: string): [string, string] {
+  let i = laid.length;
+  for (let j = surname.length; j > 0 && i > 0; i--) {
+    if (laid[i - 1] === surname[j - 1] || (laid[i - 1] === '\n' && surname[j - 1] === ' ')) j--;
+  }
+  return [laid.slice(0, i), laid.slice(i)];
+}
+
 // Name tags: the name's size cap and width, 4pt clear of the panel on each side.
 export const NAMETAG_NAME_MAX_FS = 20;
 export const nametagNameW = (panelW: number) => nametagInnerW(panelW) - 2 * 4;
