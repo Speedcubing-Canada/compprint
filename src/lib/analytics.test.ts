@@ -5,6 +5,7 @@ import {
 } from './analytics';
 import { emptyParsedWcif, type ParsedWCIF, type NametTagEntry } from './wcif-parser';
 import type { CompetitionSettings } from '../types/settings';
+import { DEFAULT_DOCUMENTS } from './generationScope';
 import type { WCIF } from '../types/wcif';
 import type { PdfJob } from './pdfJobs';
 
@@ -38,10 +39,7 @@ function settings(over: Partial<CompetitionSettings> = {}): CompetitionSettings 
     scrambleDoubleCheckRegionScope: 'national',
     generationScope: {
       mode: 'everything',
-      documents: {
-        scorecards: true, scheduleTracker: true, nametags: true,
-        roundChecklist: false, firstTimerSlips: false, groupOverview: false, venueSchedule: false,
-      },
+      documents: { ...DEFAULT_DOCUMENTS },
     },
     isCustomCompetition: false,
     ...over,

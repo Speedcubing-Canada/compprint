@@ -6,11 +6,11 @@ import { parseWCIF } from '../lib/wcif-parser';
 import { useParsedCompetition } from '../lib/useParsedCompetition';
 import {
   availableRounds, latestAssignedRound, filterParsedByScope, hasUnassignedIntermediate,
-  type GenerationScope, type DocumentSelection,
+  DEFAULT_DOCUMENTS, DOCUMENT_KEYS, type GenerationScope, type DocumentSelection,
 } from '../lib/generationScope';
 import type { CompetitionSettings, LocaleCode } from '../types/settings';
 import { clearSettings, readCompetition, readStoredScope, writeHasGroups, writeScope } from '../lib/flowState';
-import { PRESETS, readPresetId, writePresetSettings, writePresetId, type Preset } from '../presets';
+import { PRESETS, parseDocuments, readPresetId, writePresetSettings, writePresetId, type Preset } from '../presets';
 import Header from '../components/Header';
 import Skeleton from '../components/Skeleton';
 import ui from '../styles/ui.module.css';
@@ -20,14 +20,9 @@ const keyOf = (eventId: string, roundNum: number) => `${eventId}|${roundNum}`;
 
 // Mid-competition, only scorecards are usually wanted: the rest printed before day 1.
 const baseDocuments = (isMidComp: boolean): DocumentSelection => ({
-  scorecards: true,
+  ...DEFAULT_DOCUMENTS,
   scheduleTracker: !isMidComp,
   nametags: !isMidComp,
-  // Opt-in either way: most delegates don't need them.
-  roundChecklist: false,
-  firstTimerSlips: false,
-  groupOverview: false,
-  venueSchedule: false,
 });
 
 export default function RoundScopePage() {
@@ -50,15 +45,9 @@ export default function RoundScopePage() {
       : null,
   );
 
-  const [docScorecards, setDocScorecards] = useState(restored?.documents.scorecards ?? true);
-  // `null` until chosen: the default depends on whether the competition has started.
-  const [scheduleChoice, setDocSchedule] = useState<boolean | null>(restored?.documents.scheduleTracker ?? null);
-  const [nametagsChoice, setDocNametags] = useState<boolean | null>(restored?.documents.nametags ?? null);
-  // Opt-in either way: most delegates don't need it.
-  const [docRoundChecklist, setDocRoundChecklist] = useState(restored?.documents.roundChecklist ?? false);
-  const [docFirstTimers, setDocFirstTimers] = useState(restored?.documents.firstTimerSlips ?? false);
-  const [docGroupOverview, setDocGroupOverview] = useState(restored?.documents.groupOverview ?? false);
-  const [docVenueSchedule, setDocVenueSchedule] = useState(restored?.documents.venueSchedule ?? false);
+  // Only explicit choices: a missing key follows `base`, which depends on whether the
+  // competition has started.
+  const [docChoices, setDocChoices] = useState(() => parseDocuments(restored?.documents));
 
   // `null` means Default. A preset seeds the options below and the /settings step; nothing
   // is locked.
@@ -81,15 +70,14 @@ export default function RoundScopePage() {
       scrambleDoubleCheck: false, scrambleDoubleCheckRounds: [], scrambleDoubleCheckOverrides: {},
       scrambleDoubleCheckWorldTop: null, scrambleDoubleCheckRegionTop: null,
       scrambleDoubleCheckRegionScope: 'national',
-      generationScope: { mode: 'everything', documents: { scorecards: true, scheduleTracker: true, nametags: true, roundChecklist: false, firstTimerSlips: false, groupOverview: false, venueSchedule: false } },
+      generationScope: { mode: 'everything', documents: { ...DEFAULT_DOCUMENTS } },
       isCustomCompetition: false,
     };
     return parseWCIF(wcif, detectionSettings);
   });
   const isMidComp = (parsed?.laterRoundsWithAssignments.length ?? 0) > 0;
   const base = baseDocuments(isMidComp);
-  const docSchedule = scheduleChoice ?? base.scheduleTracker;
-  const docNametags = nametagsChoice ?? base.nametags;
+  const documents: DocumentSelection = { ...base, ...docChoices };
 
   const roundOptions = useMemo(() => {
     if (!parsed) return [] as { key: string; label: string }[];
@@ -118,17 +106,9 @@ export default function RoundScopePage() {
   }, [parsed]);
   const effectiveSelected = selectedKeys ?? defaultSelected;
 
-  // Re-seeded from the base defaults, so switching presets never accumulates the last one's.
   function applyPreset(preset: Preset | null) {
     setPresetId(preset?.id ?? null);
-    const docs = { ...base, ...(preset?.documents ?? {}) };
-    setDocScorecards(docs.scorecards);
-    setDocSchedule(docs.scheduleTracker);
-    setDocNametags(docs.nametags);
-    setDocRoundChecklist(docs.roundChecklist);
-    setDocFirstTimers(docs.firstTimerSlips);
-    setDocGroupOverview(docs.groupOverview);
-    setDocVenueSchedule(docs.venueSchedule);
+    setDocChoices({ ...preset?.documents });
   }
 
   function toggleRound(key: string) {
@@ -141,16 +121,6 @@ export default function RoundScopePage() {
 
   function handleContinue() {
     if (!parsed) return;
-
-    const documents: DocumentSelection = {
-      scorecards: docScorecards,
-      scheduleTracker: docSchedule,
-      nametags: docNametags,
-      roundChecklist: docRoundChecklist,
-      firstTimerSlips: docFirstTimers,
-      groupOverview: docGroupOverview,
-      venueSchedule: docVenueSchedule,
-    };
 
     const scope: GenerationScope = isMidComp
       ? (scopeMode === 'selected'
@@ -182,24 +152,23 @@ export default function RoundScopePage() {
   // Opened from a bookmark or a fresh tab: there is nothing to scope yet.
   if (!competitionId) return <Navigate to="/competitions" replace />;
 
-  const noDocsSelected =
-    !docScorecards && !docSchedule && !docNametags && !docRoundChecklist && !docFirstTimers
-    && !docGroupOverview && !docVenueSchedule;
+  const noDocsSelected = !DOCUMENT_KEYS.some(k => documents[k]);
   const noRoundsSelected = isMidComp && scopeMode === 'selected' && effectiveSelected.size === 0;
   // A greyed-out button with nothing saying why is a dead end; the reason is shown next to it.
   const blockedReason = noDocsSelected
     ? t('scope.needs_document')
     : noRoundsSelected ? t('scope.needs_round') : null;
 
-  const docOptions: { key: keyof DocumentSelection; label: string; checked: boolean; set: (v: boolean) => void }[] = [
-    { key: 'scorecards',      label: t('scope.doc_scorecards'),  checked: docScorecards,  set: setDocScorecards },
-    { key: 'scheduleTracker', label: t('scope.doc_schedule'),    checked: docSchedule,    set: setDocSchedule },
-    { key: 'nametags',        label: t('scope.doc_nametags'),    checked: docNametags,    set: setDocNametags },
-    { key: 'roundChecklist',  label: t('scope.doc_round_checklist'), checked: docRoundChecklist, set: setDocRoundChecklist },
-    { key: 'groupOverview',   label: t('scope.doc_group_overview'), checked: docGroupOverview, set: setDocGroupOverview },
-    { key: 'venueSchedule',   label: t('scope.doc_venue_schedule'), checked: docVenueSchedule, set: setDocVenueSchedule },
-    { key: 'firstTimerSlips', label: t('scope.doc_first_timers'),checked: docFirstTimers, set: setDocFirstTimers },
-  ];
+  // Display order.
+  const docLabels: Record<keyof DocumentSelection, string> = {
+    scorecards: t('scope.doc_scorecards'),
+    scheduleTracker: t('scope.doc_schedule'),
+    nametags: t('scope.doc_nametags'),
+    roundChecklist: t('scope.doc_round_checklist'),
+    groupOverview: t('scope.doc_group_overview'),
+    venueSchedule: t('scope.doc_venue_schedule'),
+    firstTimerSlips: t('scope.doc_first_timers'),
+  };
 
   return (
     <div className={ui.page}>
@@ -316,15 +285,15 @@ export default function RoundScopePage() {
               <section>
                 <fieldset className={ui.optionGroup}>
                   <legend className={ui.groupLegend}>{t('scope.docs_title')}</legend>
-                  {docOptions.map(o => (
-                    <label key={o.key} className={`${ui.optionCard} ${o.checked ? ui.optionCardActive : ''}`}>
+                  {(Object.keys(docLabels) as (keyof DocumentSelection)[]).map(key => (
+                    <label key={key} className={`${ui.optionCard} ${documents[key] ? ui.optionCardActive : ''}`}>
                       <input
                         type="checkbox"
-                        checked={o.checked}
-                        onChange={e => o.set(e.target.checked)}
+                        checked={documents[key]}
+                        onChange={e => setDocChoices(prev => ({ ...prev, [key]: e.target.checked }))}
                         className={ui.radio}
                       />
-                      <div className={ui.optionLabel}>{o.label}</div>
+                      <div className={ui.optionLabel}>{docLabels[key]}</div>
                     </label>
                   ))}
                 </fieldset>

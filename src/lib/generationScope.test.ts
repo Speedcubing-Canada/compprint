@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { availableRounds, filterParsedByScope, latestAssignedRound, hasUnassignedIntermediate, stageSplitSkipsRound2 } from './generationScope';
+import { ALL_DOCUMENTS, NO_DOCUMENTS, availableRounds, filterParsedByScope, latestAssignedRound, hasUnassignedIntermediate, stageSplitSkipsRound2 } from './generationScope';
 import type { ParsedWCIF, ScorecardData, ScorecardEntry, CoverEntry } from './wcif-parser';
 
 function sc(eventId: string, roundNum: number, name = ''): ScorecardEntry {
@@ -94,10 +94,6 @@ describe('hasUnassignedIntermediate', () => {
 });
 
 describe('filterParsedByScope', () => {
-  const allDocs = {
-    scorecards: true, scheduleTracker: true, nametags: true,
-    roundChecklist: true, firstTimerSlips: true, groupOverview: true, venueSchedule: true,
-  };
   const base = mkParsed({
     firstRound: [sc('333', 1, 'A'), sc('333', 1, 'B')],
     intermediate: [sc('333', 2, 'A'), cover('333', 2)],
@@ -115,14 +111,14 @@ describe('filterParsedByScope', () => {
   });
 
   it('everything with all docs → returns equivalent data', () => {
-    const out = filterParsedByScope(base, { mode: 'everything', documents: allDocs });
+    const out = filterParsedByScope(base, { mode: 'everything', documents: ALL_DOCUMENTS });
     expect(out).toEqual(base);
   });
 
   it('everything with nametags:false → clears nametags', () => {
     const out = filterParsedByScope(base, {
       mode: 'everything',
-      documents: { ...allDocs, nametags: false },
+      documents: { ...ALL_DOCUMENTS, nametags: false },
     });
     expect(out.nametags).toHaveLength(0);
     expect(out.scheduleDays).toHaveLength(1);
@@ -131,7 +127,7 @@ describe('filterParsedByScope', () => {
   it('everything with scheduleTracker:false → clears scheduleDays', () => {
     const out = filterParsedByScope(base, {
       mode: 'everything',
-      documents: { ...allDocs, scheduleTracker: false },
+      documents: { ...ALL_DOCUMENTS, scheduleTracker: false },
     });
     expect(out.scheduleDays).toHaveLength(0);
   });
@@ -139,13 +135,13 @@ describe('filterParsedByScope', () => {
   it('roundChecklist:false → clears checkingDays', () => {
     const out = filterParsedByScope(base, {
       mode: 'everything',
-      documents: { ...allDocs, roundChecklist: false },
+      documents: { ...ALL_DOCUMENTS, roundChecklist: false },
     });
     expect(out.checkingDays).toHaveLength(0);
   });
 
   it('roundChecklist:true → keeps checkingDays', () => {
-    const out = filterParsedByScope(base, { mode: 'everything', documents: allDocs });
+    const out = filterParsedByScope(base, { mode: 'everything', documents: ALL_DOCUMENTS });
     expect(out.checkingDays).toHaveLength(1);
   });
 
@@ -154,7 +150,7 @@ describe('filterParsedByScope', () => {
   it('scorecards:false → keeps checkingDays (the checklist is independent)', () => {
     const out = filterParsedByScope(base, {
       mode: 'everything',
-      documents: { ...allDocs, scorecards: false },
+      documents: { ...ALL_DOCUMENTS, scorecards: false },
     });
     expect(out.firstRound).toHaveLength(0);
     expect(out.checkingDays).toHaveLength(1);
@@ -163,10 +159,7 @@ describe('filterParsedByScope', () => {
   it('roundChecklist:true with scorecards:false → the checklist is the only output', () => {
     const out = filterParsedByScope(base, {
       mode: 'everything',
-      documents: {
-        scorecards: false, scheduleTracker: false, nametags: false,
-        roundChecklist: true, firstTimerSlips: false, groupOverview: false, venueSchedule: false,
-      },
+      documents: { ...NO_DOCUMENTS, roundChecklist: true },
     });
     expect(out.checkingDays).toHaveLength(1);
     expect(out.scheduleDays).toHaveLength(0);
@@ -178,7 +171,7 @@ describe('filterParsedByScope', () => {
   it('everything with firstTimerSlips:false → clears firstTimers', () => {
     const out = filterParsedByScope(base, {
       mode: 'everything',
-      documents: { ...allDocs, firstTimerSlips: false },
+      documents: { ...ALL_DOCUMENTS, firstTimerSlips: false },
     });
     expect(out.firstTimers).toHaveLength(0);
   });
@@ -186,7 +179,7 @@ describe('filterParsedByScope', () => {
   it('everything with scorecards:false → clears all scorecard buckets and extras', () => {
     const out = filterParsedByScope(base, {
       mode: 'everything',
-      documents: { ...allDocs, scorecards: false },
+      documents: { ...ALL_DOCUMENTS, scorecards: false },
     });
     expect(out.firstRound).toHaveLength(0);
     expect(out.intermediate).toHaveLength(0);
@@ -196,7 +189,7 @@ describe('filterParsedByScope', () => {
   });
 
   it('latest + all docs → keeps only latest assigned round, keeps nametags/schedule', () => {
-    const out = filterParsedByScope(base, { mode: 'latest', documents: allDocs });
+    const out = filterParsedByScope(base, { mode: 'latest', documents: ALL_DOCUMENTS });
     expect(realScs(out.firstRound)).toHaveLength(0);
     expect(realScs(out.intermediate).map(s => s.name).sort()).toEqual(['A']);
     expect(realScs(out.finals)).toHaveLength(0);
@@ -209,7 +202,7 @@ describe('filterParsedByScope', () => {
   it('latest + nametags:false → keeps latest round scorecards, clears nametags', () => {
     const out = filterParsedByScope(base, {
       mode: 'latest',
-      documents: { ...allDocs, nametags: false },
+      documents: { ...ALL_DOCUMENTS, nametags: false },
     });
     expect(realScs(out.intermediate)).toHaveLength(1);
     expect(out.nametags).toHaveLength(0);
@@ -219,7 +212,7 @@ describe('filterParsedByScope', () => {
   it('groupOverview:false → clears the group overview, keeps everything else', () => {
     const out = filterParsedByScope(base, {
       mode: 'everything',
-      documents: { ...allDocs, groupOverview: false },
+      documents: { ...ALL_DOCUMENTS, groupOverview: false },
     });
     expect(out.groupOverview).toHaveLength(0);
     expect(out.checkingDays).toHaveLength(1);
@@ -228,7 +221,7 @@ describe('filterParsedByScope', () => {
   // Whole-competition by nature: no round filter touches it, only its checkbox.
   it('venueSchedule gates the venue schedule alone', () => {
     const withSchedule = mkParsed({ ...base, venueSchedule: { events: [], days: [] } });
-    const docs = (venueSchedule: boolean) => ({ ...allDocs, venueSchedule });
+    const docs = (venueSchedule: boolean) => ({ ...ALL_DOCUMENTS, venueSchedule });
     expect(filterParsedByScope(withSchedule, { mode: 'everything', documents: docs(false) }).venueSchedule).toBeNull();
     expect(filterParsedByScope(withSchedule, { mode: 'latest', documents: docs(true) }).venueSchedule).toEqual({ events: [], days: [] });
   });
@@ -236,7 +229,7 @@ describe('filterParsedByScope', () => {
   // The round filter reaches the overview too: a mid-competition "round 2 only" run should
   // not reprint day one's groups alongside the round it was asked for.
   it('latest → the group overview keeps only the latest assigned round', () => {
-    const out = filterParsedByScope(base, { mode: 'latest', documents: allDocs });
+    const out = filterParsedByScope(base, { mode: 'latest', documents: ALL_DOCUMENTS });
     expect(out.groupOverview.map(e => e.roundNum)).toEqual([2]);
   });
 
@@ -244,7 +237,7 @@ describe('filterParsedByScope', () => {
     const out = filterParsedByScope(base, {
       mode: 'selected',
       rounds: [{ eventId: '333', roundNum: 1 }],
-      documents: allDocs,
+      documents: ALL_DOCUMENTS,
     });
     expect(out.groupOverview.map(e => e.roundNum)).toEqual([1]);
   });
@@ -252,7 +245,7 @@ describe('filterParsedByScope', () => {
   it('latest + only schedule → clears scorecards but keeps schedule', () => {
     const out = filterParsedByScope(base, {
       mode: 'latest',
-      documents: { scorecards: false, scheduleTracker: true, nametags: false, roundChecklist: false, firstTimerSlips: false, groupOverview: false, venueSchedule: false },
+      documents: { ...NO_DOCUMENTS, scheduleTracker: true },
     });
     expect(out.firstRound).toHaveLength(0);
     expect(out.intermediate).toHaveLength(0);
@@ -263,7 +256,7 @@ describe('filterParsedByScope', () => {
     const out = filterParsedByScope(base, {
       mode: 'selected',
       rounds: [{ eventId: '333', roundNum: 1 }, { eventId: '333', roundNum: 3 }],
-      documents: allDocs,
+      documents: ALL_DOCUMENTS,
     });
     expect(realScs(out.firstRound).map(s => s.name).sort()).toEqual(['A', 'B']);
     expect(realScs(out.intermediate)).toHaveLength(0);
@@ -275,7 +268,7 @@ describe('filterParsedByScope', () => {
     const out = filterParsedByScope(base, {
       mode: 'selected',
       rounds: [{ eventId: '333', roundNum: 1 }],
-      documents: allDocs,
+      documents: ALL_DOCUMENTS,
     });
     expect(out.firstRound.length % 4).toBe(0);
     expect(out.firstRound.length).toBeGreaterThan(0);
