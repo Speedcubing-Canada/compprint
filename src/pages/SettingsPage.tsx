@@ -1,4 +1,4 @@
-import { useState, useRef, useEffect, useEffectEvent, type ChangeEvent } from 'react';
+import { useState, useRef, useEffect, useEffectEvent, type ChangeEvent, type ReactNode } from 'react';
 import { Check, ChevronDown, ChevronRight, Info, RectangleHorizontal, RectangleVertical } from 'lucide-react';
 import { Navigate, useNavigate } from 'react-router';
 import { useTranslation } from 'react-i18next';
@@ -411,18 +411,13 @@ export default function SettingsPage() {
             ))}
           </fieldset>
           {showScorecards && (
-            <label className={`${ui.toggleCard} ${s.a6Toggle} ${scorecardsA6 ? ui.toggleCardActive : ''}`}>
-              <input
-                type="checkbox"
-                checked={scorecardsA6}
-                onChange={e => patch({ scorecardsA6: e.target.checked })}
-                className={ui.radio}
-              />
-              <div>
-                <div className={ui.optionLabel}>{t('settings.paper.a6_label')}</div>
-                <div className={ui.optionDesc}>{t('settings.paper.a6_desc')}</div>
-              </div>
-            </label>
+            <CheckboxCard
+              checked={scorecardsA6}
+              onChange={checked => patch({ scorecardsA6: checked })}
+              className={s.a6Toggle}
+              label={t('settings.paper.a6_label')}
+              desc={t('settings.paper.a6_desc')}
+            />
           )}
           {showScorecards && scorecardsA6 && (
             <div className={s.warningWrap}>
@@ -480,18 +475,13 @@ export default function SettingsPage() {
             ))}
           </fieldset>
           {scorecardCheckMode !== 'none' && (
-            <label className={`${ui.toggleCard} ${s.checkboxCard} ${coverTiming ? ui.toggleCardActive : ''}`}>
-              <input
-                type="checkbox"
-                checked={coverTiming}
-                onChange={e => patch({ coverTiming: e.target.checked })}
-                className={ui.radio}
-              />
-              <div>
-                <div className={ui.optionLabel}>{t('settings.check_mode.timing_label')}</div>
-                <div className={ui.optionDesc}>{t('settings.check_mode.timing_desc')}</div>
-              </div>
-            </label>
+            <CheckboxCard
+              checked={coverTiming}
+              onChange={checked => patch({ coverTiming: checked })}
+              className={s.checkboxCard}
+              label={t('settings.check_mode.timing_label')}
+              desc={t('settings.check_mode.timing_desc')}
+            />
           )}
         </section>
         )}
@@ -560,18 +550,13 @@ export default function SettingsPage() {
           </>)}
           </>)}
           {showScorecards && (
-          <label className={`${ui.toggleCard} ${s.checkboxCard} ${hideWcaLiveId ? ui.toggleCardActive : ''}`}>
-            <input
-              type="checkbox"
-              checked={hideWcaLiveId}
-              onChange={e => patch({ hideWcaLiveId: e.target.checked })}
-              className={ui.radio}
-            />
-            <div>
-              <div className={ui.optionLabel}>{t('settings.wca_live.hide_label')}</div>
-              <div className={ui.optionDesc}>{t('settings.wca_live.hide_desc')}</div>
-            </div>
-          </label>
+          <CheckboxCard
+            checked={hideWcaLiveId}
+            onChange={checked => patch({ hideWcaLiveId: checked })}
+            className={s.checkboxCard}
+            label={t('settings.wca_live.hide_label')}
+            desc={t('settings.wca_live.hide_desc')}
+          />
           )}
         </section>
         )}
@@ -593,18 +578,13 @@ export default function SettingsPage() {
               </div>
             </div>
             {showScorecards && (
-            <label className={`${ui.toggleCard} ${s.checkboxCard} ${scorecardCompNameWithLogo ? ui.toggleCardActive : ''}`}>
-              <input
-                type="checkbox"
-                checked={scorecardCompNameWithLogo}
-                onChange={e => patch({ scorecardCompNameWithLogo: e.target.checked })}
-                className={ui.radio}
-              />
-              <div>
-                <div className={ui.optionLabel}>{t('settings.logo.show_comp_name_label')}</div>
-                <div className={ui.optionDesc}>{t('settings.logo.show_comp_name_desc')}</div>
-              </div>
-            </label>
+            <CheckboxCard
+              checked={scorecardCompNameWithLogo}
+              onChange={checked => patch({ scorecardCompNameWithLogo: checked })}
+              className={s.checkboxCard}
+              label={t('settings.logo.show_comp_name_label')}
+              desc={t('settings.logo.show_comp_name_desc')}
+            />
             )}
             </>
           ) : (
@@ -711,36 +691,26 @@ export default function SettingsPage() {
             </button>
           </div>
 
-          <label className={`${ui.toggleCard} ${s.checkboxCard} ${staffNametags ? ui.toggleCardActive : ''}`}>
-            <input
-              type="checkbox"
-              checked={staffNametags}
-              onChange={e => patch({ staffNametags: e.target.checked })}
-              className={ui.radio}
-            />
-            <div>
-              <div className={ui.optionLabel}>{t('settings.nametag.staff_label')}</div>
-              <div className={ui.optionDesc}>{t('settings.nametag.staff_desc')}</div>
-            </div>
-          </label>
+          <CheckboxCard
+            checked={staffNametags}
+            onChange={checked => patch({ staffNametags: checked })}
+            className={s.checkboxCard}
+            label={t('settings.nametag.staff_label')}
+            desc={t('settings.nametag.staff_desc')}
+          />
         </section>
         )}
 
         {!isCustom && (
         <section className={s.section}>
           <h3 className={ui.sectionHeading}>{t('settings.ots.title')}</h3>
-          <label className={`${ui.toggleCard} ${s.checkboxCard} ${otsBlanks ? ui.toggleCardActive : ''}`}>
-            <input
-              type="checkbox"
-              checked={otsBlanks}
-              onChange={e => { touched.current.ots = true; patch({ otsBlanks: e.target.checked }); }}
-              className={ui.radio}
-            />
-            <div>
-              <div className={ui.optionLabel}>{t('settings.ots.label')}</div>
-              <div className={ui.optionDesc}>{t('settings.ots.desc')}</div>
-            </div>
-          </label>
+          <CheckboxCard
+            checked={otsBlanks}
+            onChange={checked => { touched.current.ots = true; patch({ otsBlanks: checked }); }}
+            className={s.checkboxCard}
+            label={t('settings.ots.label')}
+            desc={t('settings.ots.desc')}
+          />
         </section>
         )}
         </div>
@@ -922,18 +892,12 @@ export default function SettingsPage() {
                   <h3 className={ui.sectionHeading}>
                     {t('settings.advanced.stage_split_title')}
                   </h3>
-                  <label className={`${ui.toggleCard} ${splitPdfsByStage ? ui.toggleCardActive : ''}`}>
-                    <input
-                      type="checkbox"
-                      checked={splitPdfsByStage}
-                      onChange={e => patch({ splitPdfsByStage: e.target.checked })}
-                      className={ui.radio}
-                    />
-                    <div>
-                      <div className={ui.optionLabel}>{t('settings.advanced.stage_split_label')}</div>
-                      <div className={ui.optionDesc}>{t('settings.advanced.stage_split_desc')}</div>
-                    </div>
-                  </label>
+                  <CheckboxCard
+                    checked={splitPdfsByStage}
+                    onChange={checked => patch({ splitPdfsByStage: checked })}
+                    label={t('settings.advanced.stage_split_label')}
+                    desc={t('settings.advanced.stage_split_desc')}
+                  />
                   {stageSplitSkipsRound2(draft, showSecondRoundMode) && (
                     <div className={s.warningWrap}>
                       <WarningBanner>{t('warnings.stage_split_prefilled')}</WarningBanner>
@@ -946,21 +910,13 @@ export default function SettingsPage() {
                 <h3 className={ui.sectionHeading}>
                   {t('settings.advanced.merge_rounds_title')}
                 </h3>
-                <label className={`${ui.toggleCard} ${merged ? ui.toggleCardActive : ''}`}>
-                  <input
-                    type="checkbox"
-                    checked={merged}
-                    disabled={splitPdfsByStage}
-                    onChange={e => patch({ mergeScorecardRounds: e.target.checked })}
-                    className={ui.radio}
-                  />
-                  <div>
-                    <div className={ui.optionLabel}>{t('settings.advanced.merge_rounds_label')}</div>
-                    <div className={ui.optionDesc}>
-                      {t(splitPdfsByStage ? 'settings.advanced.merge_rounds_stage_split' : 'settings.advanced.merge_rounds_desc')}
-                    </div>
-                  </div>
-                </label>
+                <CheckboxCard
+                  checked={merged}
+                  disabled={splitPdfsByStage}
+                  onChange={checked => patch({ mergeScorecardRounds: checked })}
+                  label={t('settings.advanced.merge_rounds_label')}
+                  desc={t(splitPdfsByStage ? 'settings.advanced.merge_rounds_stage_split' : 'settings.advanced.merge_rounds_desc')}
+                />
               </section>
 
               {everything && (
@@ -987,5 +943,30 @@ export default function SettingsPage() {
         </div>
       </main>
     </div>
+  );
+}
+
+function CheckboxCard({ checked, onChange, label, desc, className, disabled }: {
+  checked: boolean;
+  onChange: (checked: boolean) => void;
+  label: ReactNode;
+  desc: ReactNode;
+  className?: string;
+  disabled?: boolean;
+}) {
+  return (
+    <label className={[ui.toggleCard, className, checked && ui.toggleCardActive].filter(Boolean).join(' ')}>
+      <input
+        type="checkbox"
+        checked={checked}
+        disabled={disabled}
+        onChange={e => onChange(e.target.checked)}
+        className={ui.radio}
+      />
+      <div>
+        <div className={ui.optionLabel}>{label}</div>
+        <div className={ui.optionDesc}>{desc}</div>
+      </div>
+    </label>
   );
 }
