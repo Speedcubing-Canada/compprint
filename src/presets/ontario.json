@@ -6,6 +6,7 @@
     "firstTimerSlips": true
   },
   "settings": {
+    "language": "en",
     "hideWcaLiveId": true,
     "nametagLogoMode": "hidden",
     "nametagLayout": "horizontal",

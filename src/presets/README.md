@@ -44,7 +44,7 @@ Note: mid-competition, `scheduleTracker` and `nametags` default to `false` inste
 
 | Key | Values | Default |
 |---|---|---|
-| `language` | `"en"` `"fr"` `"es"` `"pt"` | interface language |
+| `language` | `"en"` `"fr"` `"es"` `"pt"` | interface language; shipped presets always set it |
 | `secondaryLanguage` | as above, or `null` | `null` |
 | `paperFormat` | `"A4"` `"LETTER"` | `"LETTER"` |
 | `secondRoundMode` | `"prefilled"` `"blanks"` | `"prefilled"` |

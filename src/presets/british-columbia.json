@@ -9,6 +9,7 @@
     "groupOverview": true
   },
   "settings": {
+    "language": "en",
     "underlineSharedFirstNames": true
   }
 }
