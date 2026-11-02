@@ -5,7 +5,7 @@ import type {
   Activity, Assignment, ChildActivity, Event, EventId, Person, Room, RoundFormat, WCIF,
 } from '../types/wcif';
 import type { CompetitionSettings } from '../types/settings';
-import { DEFAULT_DOCUMENTS } from '../lib/generationScope';
+import { ALL_DOCUMENTS } from '../lib/generationScope';
 import type { WCAToken, WCAUser } from '../auth/wca';
 
 export const organizer: WCAUser = {
@@ -53,13 +53,7 @@ export function testSettings(over: Partial<CompetitionSettings> = {}): Competiti
     scrambleDoubleCheckWorldTop: null,
     scrambleDoubleCheckRegionTop: null,
     scrambleDoubleCheckRegionScope: 'national',
-    generationScope: {
-      mode: 'everything',
-      documents: {
-        ...DEFAULT_DOCUMENTS,
-        roundChecklist: true, firstTimerSlips: true, groupOverview: true, venueSchedule: true,
-      },
-    },
+    generationScope: { mode: 'everything', documents: ALL_DOCUMENTS },
     isCustomCompetition: false,
     ...over,
   };

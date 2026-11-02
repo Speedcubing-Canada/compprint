@@ -9,12 +9,12 @@ import { resolveLogo } from '../lib/logo';
 import { qrPathData } from './qrPath';
 import {
   NAMETAGS_PER_PAGE, NAMETAG_COMPACT as C, NAMETAG_COMPACT_NAME_FS, NAMETAG_COMPACT_NAME_H, NAMETAG_CONFIGS, NAMETAG_H, NAMETAG_PANEL_BORDER,
-  NAMETAG_PANEL_PAD, eventIconsVisible, liveQrTarget, nametagCompactQrSize, nametagHPositions, nametagNameH,
+  NAMETAG_PANEL_PAD, ICON_GAP, eventIconsVisible, nametagIconSize, liveQrTarget, nametagCompactQrSize, nametagHPositions, nametagNameH,
   nametagTopSectionH,
   PDF_FONT as FONT, PDF_FONT_BOLD as FONT_BOLD,
 } from './layoutConstants';
 import './fontSetup';
-import { nametagInnerW, nametagName, NAME_LINE_HEIGHT, textWidth } from './nameFit';
+import { nametagName, NAME_LINE_HEIGHT, textWidth } from './nameFit';
 
 
 // Vertical layout: landscape page, 4 slots wide × 2 tall = 8 slots = 4 pairs.
@@ -84,8 +84,6 @@ function DutyLines({ duties, fontSize }: { duties: string[]; fontSize: number })
 //   'hidden'    → comp name text only
 //   'with-name' → small logo + comp name text side-by-side
 //   'logo-only' → large logo centred, no comp name text
-const ICON_GAP = 1;
-
 function PanelTop({ entry, panelW, compName, titleText, logoMode, logoDataUrl, compact = false, showEvents = true }: {
   entry: NametTagEntry; panelW: number; compName: string; titleText: string;
   logoMode: NametTagLogoMode; logoDataUrl: string | null;
@@ -97,8 +95,7 @@ function PanelTop({ entry, panelW, compName, titleText, logoMode, logoDataUrl, c
     ? nametagName(entry.name, panelW, NAMETAG_COMPACT_NAME_H, NAMETAG_COMPACT_NAME_FS)
     : nametagName(entry.name, panelW, nametagNameH(logoMode));
   const icons = entry.events.filter(evId => EVENT_ICONS[evId]);
-  // Packed in the centre (Sarah prefers them close), shrunk only when a full-event competitor would overrun the row.
-  const iconSz = Math.min(compact ? C.iconMax : 14, nametagInnerW(panelW) / Math.max(icons.length, 1) - 2 * ICON_GAP);
+  const iconSz = nametagIconSize(panelW, icons.length, compact);
 
   // Compact tags top-pack and never shrink, so the role badge lands at the same Y on front and
   // back and the two align across the pair. Event icons follow the badge, so hiding them on the

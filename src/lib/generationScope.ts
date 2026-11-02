@@ -1,9 +1,9 @@
 import type { ParsedWCIF, ScorecardData } from './wcif-parser';
-import { finalizeEntries, realEntries } from './wcif-parser';
+import { emptyParsedWcif, finalizeEntries, realEntries } from './wcif-parser';
 import type { CompetitionSettings } from '../types/settings';
 
-// Adding a document is one key here plus its /scope label.
-export const DEFAULT_DOCUMENTS = {
+// Adding a document is one key here, its /scope label, and its DOCUMENT_FIELDS entry.
+export const DEFAULT_DOCUMENTS = Object.freeze({
   scorecards: true,
   scheduleTracker: true,
   nametags: true,
@@ -16,13 +16,28 @@ export const DEFAULT_DOCUMENTS = {
   groupOverview: false,
   // The WCA competition PDF's events table and daily schedule, posted around the venue. Opt-in.
   venueSchedule: false,
-};
+});
 
 export type DocumentSelection = Record<keyof typeof DEFAULT_DOCUMENTS, boolean>;
 
 export const DOCUMENT_KEYS = Object.keys(DEFAULT_DOCUMENTS) as (keyof DocumentSelection)[];
 
-export const NO_DOCUMENTS = Object.fromEntries(DOCUMENT_KEYS.map(k => [k, false])) as DocumentSelection;
+const allSetTo = (on: boolean): Readonly<DocumentSelection> =>
+  Object.freeze(Object.fromEntries(DOCUMENT_KEYS.map(k => [k, on])) as DocumentSelection);
+
+export const NO_DOCUMENTS = allSetTo(false);
+export const ALL_DOCUMENTS = allSetTo(true);
+
+// The parsed fields each document prints from; an unselected document's fields are emptied.
+const DOCUMENT_FIELDS: Record<keyof DocumentSelection, readonly (keyof ParsedWCIF)[]> = {
+  scorecards: ['firstRound', 'intermediate', 'semis', 'finals', 'extras'],
+  scheduleTracker: ['scheduleDays'],
+  nametags: ['nametags'],
+  roundChecklist: ['checkingDays'],
+  firstTimerSlips: ['firstTimers'],
+  groupOverview: ['groupOverview'],
+  venueSchedule: ['venueSchedule'],
+};
 
 // What the user chose to generate.
 export type GenerationScope =
@@ -117,21 +132,7 @@ export function filterParsedByScope(parsed: ParsedWCIF, scope: GenerationScope):
     };
   }
 
-  const { documents } = scope;
-  return {
-    ...result,
-    firstRound:   documents.scorecards      ? result.firstRound   : [],
-    intermediate: documents.scorecards      ? result.intermediate : [],
-    semis:        documents.scorecards      ? result.semis        : [],
-    finals:       documents.scorecards      ? result.finals       : [],
-    extras:       documents.scorecards      ? result.extras       : [],
-    nametags:     documents.nametags        ? result.nametags     : [],
-    scheduleDays: documents.scheduleTracker ? result.scheduleDays : [],
-    // The Round Checklist is its own artefact, not a variant of the cover card, so it is
-    // selected independently of the scorecards.
-    checkingDays: documents.roundChecklist ? result.checkingDays : [],
-    firstTimers:  documents.firstTimerSlips ? result.firstTimers  : [],
-    groupOverview: documents.groupOverview  ? result.groupOverview : [],
-    venueSchedule: documents.venueSchedule ? result.venueSchedule : null,
-  };
+  const empty = emptyParsedWcif();
+  const unselected = DOCUMENT_KEYS.filter(k => !scope.documents[k]).flatMap(k => DOCUMENT_FIELDS[k]);
+  return { ...result, ...Object.fromEntries(unselected.map(f => [f, empty[f]])) };
 }

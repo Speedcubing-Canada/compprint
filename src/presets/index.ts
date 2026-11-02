@@ -77,7 +77,8 @@ export function parsePreset(raw: unknown): Preset | null {
   };
 }
 
-function parseDocuments(raw: unknown): Partial<DocumentSelection> {
+/** Exported so /scope can re-validate the documents it restores from sessionStorage. */
+export function parseDocuments(raw: unknown): Partial<DocumentSelection> {
   const out: Partial<DocumentSelection> = {};
   if (!raw || typeof raw !== 'object') return out;
   const o = raw as Record<string, unknown>;
