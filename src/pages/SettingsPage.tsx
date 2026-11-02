@@ -428,18 +428,13 @@ export default function SettingsPage() {
             </div>
           )}
           {showScorecards && (
-            <label className={`${ui.toggleCard} ${s.checkboxCard} ${underlineSharedFirstNames === true ? ui.toggleCardActive : ''}`}>
-              <input
-                type="checkbox"
-                checked={underlineSharedFirstNames === true}
-                onChange={e => patch({ underlineSharedFirstNames: e.target.checked })}
-                className={ui.radio}
-              />
-              <div>
-                <div className={ui.optionLabel}>{t('settings.paper.underline_label')}</div>
-                <div className={ui.optionDesc}>{t('settings.paper.underline_desc')}</div>
-              </div>
-            </label>
+            <CheckboxCard
+              checked={underlineSharedFirstNames === true}
+              onChange={checked => patch({ underlineSharedFirstNames: checked })}
+              className={s.checkboxCard}
+              label={t('settings.paper.underline_label')}
+              desc={t('settings.paper.underline_desc')}
+            />
           )}
         </section>
 

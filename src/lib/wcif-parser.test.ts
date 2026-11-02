@@ -3212,9 +3212,12 @@ describe('finals station numbers', () => {
 });
 
 describe('shared first names', () => {
-  const flags = (persons: Person[], rooms: Room[]) => Object.fromEntries(
-    scs(parseWCIF(mkWCIF([evt('333', [rSpec('a')])], rooms, persons), cfg()).firstRound)
-      .map(s => [s.name, s.sharedFirstName?.surname ?? null]),
+  const named = (persons: Person[], rooms: Room[], on = true, events = [evt('333', [rSpec('a')])]) => {
+    const p = parseWCIF(mkWCIF(events, rooms, persons), cfg({ underlineSharedFirstNames: on }));
+    return scs([...p.firstRound, ...p.intermediate, ...p.semis, ...p.finals]).filter(s => s.name);
+  };
+  const flags = (...args: Parameters<typeof named>) => Object.fromEntries(
+    named(...args).map(s => [s.name, s.underlinedSurname ?? null]),
   );
 
   it('flags a first name repeated in the group, ignoring case and accents', () => {
@@ -3238,5 +3241,29 @@ describe('shared first names', () => {
       per(1, [{ aid: 100, station: 1 }], { name: 'Sam Lee' }),
       per(2, [{ aid: 100, station: 2 }], { name: 'Sam Park' }),
     ], rooms)).toEqual({ 'Sam Lee': 'Lee', 'Sam Park': 'Park' });
+  });
+
+  it('keeps events and rounds apart in the same time slot', () => {
+    const rooms = [room('Main', [
+      act('333', 1, [ch(100, '333', 1, 1)]),
+      act('222', 1, [ch(200, '222', 1, 1)]),
+      act('333', 2, [ch(300, '333', 2, 1)]),
+    ])];
+    const events = [evt('333', [rSpec('a'), rSpec('a')]), evt('222', [rSpec('a')])];
+    expect(flags([
+      per(1, [{ aid: 100 }], { name: 'Sam Lee' }),
+      per(2, [{ aid: 200 }], { name: 'Sam Park' }),
+      per(3, [{ aid: 300 }], { name: 'Sam Kim' }),
+    ], rooms, true, events)).toEqual({ 'Sam Lee': null, 'Sam Park': null, 'Sam Kim': null });
+  });
+
+  it('flags nothing when the setting is off', () => {
+    const rooms = [room('Main', [act('333', 1, [ch(100, '333', 1, 1)])])];
+    const cards = named([
+      per(1, [{ aid: 100 }], { name: 'Sam Lee' }),
+      per(2, [{ aid: 100 }], { name: 'Sam Park' }),
+    ], rooms, false);
+    expect(cards.map(s => s.name).sort()).toEqual(['Sam Lee', 'Sam Park']);
+    expect(cards.filter(s => 'underlinedSurname' in s)).toEqual([]);
   });
 });

@@ -1,3 +1,5 @@
+import type { ScorecardEntry } from './wcif-parser';
+
 // Surname particles: the surname starts at the first one after the first word.
 const PARTICLES = new Set([
   'de', 'da', 'do', 'dos', 'das', 'del', 'della', 'di', 'du', 'des', 'van', 'von', 'der', 'den',
@@ -39,4 +41,18 @@ export function splitName(name: string, countryIso2: string): { given: string; s
     : words.length === 2 ? 1
     : words.length - (twoSurnames ? 2 : 1);
   return { given: words.slice(0, at).join(' '), surname: words.slice(at).join(' ') };
+}
+
+// Per group (stations folded into their cover group), accent- and case-insensitive.
+export function markSharedFirstNames(named: { entry: ScorecardEntry; country: string }[]): void {
+  const byKey = new Map<string, { entry: ScorecardEntry; surname: string }[]>();
+  for (const { entry, country } of named) {
+    const { given, surname } = splitName(entry.name, country);
+    const key = `${entry.eventId}|${entry.roundNum}|${entry.coverGroup ?? entry.group}|${fold(given.split(' ')[0])}`;
+    byKey.set(key, [...(byKey.get(key) ?? []), { entry, surname }]);
+  }
+  for (const same of byKey.values()) {
+    if (same.length < 2) continue;
+    for (const { entry, surname } of same) if (surname) entry.underlinedSurname = surname;
+  }
 }

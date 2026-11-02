@@ -180,8 +180,7 @@ function ScorecardCard({
     : headerLogo && logoMode === 'default' ? 'compNameLogo' : 'compName';
   const box = nameBox(cardW, leftCell !== 'compName', headerCompNameFs !== null);
   const name = nameLayout(card.name, box.w, box.h);
-  const underline = settings.underlineSharedFirstNames === true && card.sharedFirstName
-    ? splitAtSurname(name.text, card.sharedFirstName.surname) : null;
+  const underline = card.underlinedSurname ? splitAtSurname(name.text, card.underlinedSurname) : null;
   // A6 reuses the A4 card, so it takes the A4 row heights.
   const rowH = scorecardRowHeight(card.format, settings.scorecardsA6 ? 'A4' : settings.paperFormat, preRows.length + postRows.length);
 

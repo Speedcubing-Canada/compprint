@@ -74,20 +74,22 @@ describe('rendering a big job in parts', () => {
   });
 });
 
-// Off is the default for every non-Canadian organizer, so it must not move a single byte.
+// Off is the default for every non-Canadian organizer, so it must not move a single byte: the
+// parser leaves the field unset when off, and the renderer never reads the setting.
 describe('shared first name underline', () => {
   const named = parsed.firstRound.find((e): e is ScorecardEntry => e.kind === 'scorecard' && e.name.includes(' '))!;
-  const flagged: ScorecardEntry = { ...named, sharedFirstName: { surname: named.name.split(' ').at(-1)! } };
+  const flagged: ScorecardEntry = { ...named, underlinedSurname: named.name.split(' ').at(-1)! };
   // The creation date and the file ID it seeds differ per render.
   const bytes = async (entries: ScorecardData[], on: boolean) =>
     (await renderToBuffer(createElement(ScorecardDocument, { entries, settings: { ...settings, underlineSharedFirstNames: on } }) as ReactElement<DocumentProps>))
       .toString('latin1').replace(/\/CreationDate \(D:[^)]*\)/, '').replace(/\/ID \[[^\]]*\]/, '');
 
-  it('renders byte-identical when off', async () => {
-    expect(await bytes([flagged], false)).toBe(await bytes([named], false));
+  it('renders an unflagged card byte-identical whatever the setting', async () => {
+    expect('underlinedSurname' in named).toBe(false);
+    expect(await bytes([named], true)).toBe(await bytes([named], false));
   });
 
-  it('changes the card when on', async () => {
-    expect(await bytes([flagged], true)).not.toBe(await bytes([named], true));
+  it('changes a flagged card', async () => {
+    expect(await bytes([flagged], false)).not.toBe(await bytes([named], false));
   });
 });

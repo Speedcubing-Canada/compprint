@@ -4,7 +4,7 @@ import { getStrings, getEventName, getFirstTimerSlipStrings, getNametTagTitleStr
 import { packSlipPages } from '../pdf/firstTimerSlipLines';
 import { buildScheduleDays, scheduleLabels, type CheckingDay, type ScheduleDay } from './scheduleRows';
 import { cmp } from './sort';
-import { splitName } from './splitName';
+import { markSharedFirstNames } from './splitName';
 import { buildVenueSchedule, type VenueSchedule } from './venueSchedule';
 import { parseActivityCode, roundIdOf, type ActivityCode } from './activityCode';
 
@@ -61,21 +61,6 @@ export interface FirstTimerEntry {
 // standalone combining marks (a decomposed ư would lose its horn).
 export function printedName(name: string): string {
   return name.replace(/ \(.*\)$/, '').normalize('NFC');
-}
-
-// Per group (stations folded into their cover group), accent- and case-insensitive.
-function markSharedFirstNames(named: { entry: ScorecardEntry; country: string }[]): void {
-  const byKey = new Map<string, { entry: ScorecardEntry; surname: string }[]>();
-  for (const { entry, country } of named) {
-    const { given, surname } = splitName(entry.name, country);
-    const first = given.split(' ')[0].normalize('NFD').replace(/\p{M}/gu, '').toLowerCase();
-    const key = `${entry.eventId}|${entry.roundNum}|${entry.coverGroup ?? entry.group}|${first}`;
-    byKey.set(key, [...(byKey.get(key) ?? []), { entry, surname }]);
-  }
-  for (const same of byKey.values()) {
-    if (same.length < 2) continue;
-    for (const { entry, surname } of same) if (surname) entry.sharedFirstName = { surname };
-  }
 }
 
 function buildDuties(
@@ -135,7 +120,7 @@ export interface ScorecardEntry {
   // When true, render a second scrambler-signature column (scramble double-checking).
   scrambleDoubleCheck?: boolean;
   // Set when someone else in the group shares the first given name, so runners call the surname too.
-  sharedFirstName?: { surname: string };
+  underlinedSurname?: string;
 }
 
 export interface CoverEntry {
@@ -836,7 +821,7 @@ export function parseWCIF(wcif: WCIF, settings: CompetitionSettings): ParsedWCIF
   }
 
   // Computed here, not at render: a group can span page slices.
-  markSharedFirstNames(named);
+  if (settings.underlineSharedFirstNames === true) markSharedFirstNames(named);
 
   // Cover cards (one per group) for every named round
   for (const [aidStr, ids] of Object.entries(namedGroupSizes)) {

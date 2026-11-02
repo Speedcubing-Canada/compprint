@@ -128,9 +128,9 @@ the documents; a click is kept. A preset may seed it. Hidden when cover cards ar
 "Underline surnames when first names repeat" (Settings, under the paper format,
 `underlineSharedFirstNames`) underlines the surname on a scorecard when someone else in the same
 group (stations fold into their group) shares the first given name, compared without case or
-accents. Off by default; the Ontario, Québec and British Columbia presets turn it on. The parser
-flags the cards (`sharedFirstName`), since a group can span render slices; off, the PDF is
-byte-identical. `src/lib/splitName.ts` finds the surname: in Spanish- and Portuguese-speaking
+accents. Off by default; the Ontario, Québec and British Columbia presets turn it on. Only when it is
+on, the parser sets `underlinedSurname` on the cards, since a group can span render slices; off,
+no card carries it and the PDF is byte-identical. `src/lib/splitName.ts` finds the surname: in Spanish- and Portuguese-speaking
 countries a common compound given name (Ana Clara, João Pedro, Juan Pablo, ...) takes the first 2
 words; otherwise a particle (de, da, van, von, ...) after
 the first word starts it; otherwise a 2-word name splits 1 | 1, and a longer one keeps the last
