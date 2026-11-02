@@ -18,10 +18,10 @@ export const CHANGELOG: ChangelogEntry[] = [
   {
     id: '2026-11-01',
     items: {
-      en: ['Cover cards can now hide the planned and actual times line.'],
-      fr: ['Les feuilles de couverture peuvent maintenant masquer la ligne des heures prévues et réelles.'],
-      es: ['Las carátulas ahora pueden ocultar la línea de horas previstas y reales.'],
-      pt: ['As capas agora podem ocultar a linha de horários previstos e reais.'],
+      en: ['Cover cards now leave out the planned and actual times when you print the Schedule Tracker.'],
+      fr: ["Les feuilles de couverture omettent maintenant les heures prévues et réelles quand vous imprimez le Suivi de l'horaire."],
+      es: ['Las carátulas ahora omiten las horas previstas y reales cuando imprimes el Seguimiento de horario.'],
+      pt: ['As capas agora omitem os horários previstos e reais quando você imprime o Acompanhamento de horário.'],
     },
   },
   {
