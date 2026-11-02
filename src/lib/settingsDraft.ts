@@ -1,3 +1,4 @@
+import type { DocumentSelection } from './generationScope';
 import type { CompetitionSettings } from '../types/settings';
 
 type FlowOwned = 'competitionId' | 'competitionName' | 'generationScope' | 'isCustomCompetition';
@@ -41,4 +42,9 @@ export function submittedSettings(
     otsBlanks: !isCustom && draft.otsBlanks,
     scrambleDoubleCheck: !isCustom,
   };
+}
+
+/** The cover cards' planned/actual/set line: the organizer's choice, else off when the Schedule Tracker is printed. */
+export function coverTimingShown(coverTiming: boolean | undefined, documents: DocumentSelection | undefined): boolean {
+  return coverTiming ?? documents?.scheduleTracker === false;
 }

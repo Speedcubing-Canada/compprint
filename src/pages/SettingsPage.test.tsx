@@ -257,7 +257,7 @@ describe('restoring the previous submission', () => {
       language: 'fr', secondaryLanguage: 'en', paperFormat: 'A4', secondRoundMode: 'blanks',
       nametagLayout: 'horizontal', nametagQrMode: 'both-sides', scorecardCheckMode: 'none',
       hideWcaLiveId: true, wcaLiveId: '9667', useDefaultLogo: true, liveResultsMode: 'ilr',
-      scorecardCompNameWithLogo: true,
+      scorecardCompNameWithLogo: true, coverTiming: true,
       scrambleDoubleCheck: true, scrambleDoubleCheckRounds: ['firstRound'],
       scrambleDoubleCheckOverrides: { '333|1': ['2019SMIT01'] },
       customEvents: [event('Mini Guildford')],
@@ -518,5 +518,68 @@ describe('A6 scorecards', () => {
     expect(notice()?.textContent).toMatch(/still generated on Letter/);
     generate();
     expect(readSettings()?.scorecardsA6).toBe(true);
+  });
+});
+
+// The schedule tracker already records the times, so the cover line defaults to off beside it.
+describe('cover card timing line', () => {
+  const box = () => screen.queryByRole('checkbox', { name: /Show planned and actual times/ }) as HTMLInputElement | null;
+  const withTracker = (scheduleTracker: boolean) => writeScope(
+    { ...DEFAULT_SCOPE, documents: { ...DEFAULT_SCOPE.documents, scheduleTracker } },
+    { showSecondRoundMode: false, multiStage: false },
+  );
+  const rerender = async (scheduleTracker: boolean) => { cleanup(); withTracker(scheduleTracker); await renderSettings(); };
+
+  it('follows the tracker until clicked, through submits', async () => {
+    withTracker(true);
+    await renderSettings();
+    expect(box()?.checked).toBe(false);
+    generate();
+    expect(readSettings()).not.toHaveProperty('coverTiming');
+
+    await rerender(false);
+    expect(box()?.checked).toBe(true);
+    await rerender(true);
+    expect(box()?.checked).toBe(false);
+  });
+
+  it.each([true, false])('keeps a click through tracker changes (tracker %s first)', async (first) => {
+    withTracker(first);
+    await renderSettings();
+    fireEvent.click(box()!);
+    generate();
+
+    await rerender(!first);
+    expect(box()?.checked).toBe(first);
+    generate();
+    await rerender(first);
+    expect(box()?.checked).toBe(first);
+    expect(readSettings()?.coverTiming).toBe(first);
+  });
+
+  it('keeps a tick-then-untick that lands on the default', async () => {
+    withTracker(true);
+    await renderSettings();
+    fireEvent.click(box()!);
+    fireEvent.click(box()!);
+    generate();
+
+    await rerender(false);
+    expect(box()?.checked).toBe(false);
+  });
+
+  it('takes a preset seed over the tracker default', async () => {
+    writePresetSettings({ coverTiming: true });
+    withTracker(true);
+    await renderSettings();
+    expect(box()?.checked).toBe(true);
+    generate();
+    expect(readSettings()?.coverTiming).toBe(true);
+  });
+
+  it('is hidden without cover cards', async () => {
+    writeSettings(stored({ scorecardCheckMode: 'none' }));
+    await renderSettings();
+    expect(box()).toBeNull();
   });
 });

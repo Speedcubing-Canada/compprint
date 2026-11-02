@@ -6,6 +6,7 @@ import { getStrings, splitLabelTotal, type ScorecardStrings } from '../lib/i18n'
 import type { Style } from '@react-pdf/types';
 import { EVENT_ICONS } from '../assets/events';
 import { logoState, resolveLogo, showCompNameAboveCompetitor, type LogoState } from '../lib/logo';
+import { coverTimingShown } from '../lib/settingsDraft';
 import {
   SCORECARD_CONFIGS as CONFIGS, SCORECARD_HEADER as H, scorecardsPerPage, scorecardRowHeight, showLiveIdLine,
   PDF_FONT as FONT, PDF_FONT_BOLD as FONT_BOLD,
@@ -287,7 +288,7 @@ function CoverCard({
       {card.group === ''
         ? <Text style={styles.coverGroup}>{cover.allGroups(card.numGroups)}</Text>
         : <LabelWithGreyTotal label={card.group} connector={strings.ofConnector} style={styles.coverGroup} />}
-      <Text style={styles.coverTiming}>{cover.timing(card.startTime, card.endTime)}</Text>
+      {coverTimingShown(settings.coverTiming, settings.generationScope.documents) && <Text style={styles.coverTiming}>{cover.timing(card.startTime, card.endTime)}</Text>}
 
       <View style={styles.coverDividerRow}>
         <View style={styles.coverDividerLine} />

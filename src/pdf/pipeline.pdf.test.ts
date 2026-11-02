@@ -157,6 +157,14 @@ describe.skipIf(!hasPdftotext && !process.env.CI)('the printed text', () => {
     expect(text(files['WaterlooSpring2026_extras.pdf']!)).toContain(blankPrompt);
   }, SLOW);
 
+  it.each([[true, false], [false, true]] as const)('tracker %s: cover timing line printed %s', async (scheduleTracker, printed) => {
+    const settings = testSettings({ competitionId: waterloo.id, ...onlyDocument('scorecards') });
+    settings.generationScope.documents.scheduleTracker = scheduleTracker;
+    const round1 = text((await generate(waterloo, settings)).files['WaterlooSpring2026_round1.pdf']!);
+    expect(round1).toContain('FOR DATA ENTRY');
+    expect(round1.includes('Actual _____')).toBe(printed);
+  }, SLOW);
+
   it('a custom event without a time limit prints no limit prompt', async () => {
     const settings = testSettings({
       competitionId: waterloo.id, ...onlyDocument('scheduleTracker'),
