@@ -10,7 +10,7 @@ import {
 } from '../lib/generationScope';
 import type { CompetitionSettings, LocaleCode } from '../types/settings';
 import { clearSettings, readCompetition, readStoredScope, writeHasGroups, writeScope } from '../lib/flowState';
-import { PRESETS, readPresetId, writePresetSettings, writePresetId, type Preset } from '../presets';
+import { PRESETS, parseDocuments, readPresetId, writePresetSettings, writePresetId, type Preset } from '../presets';
 import Header from '../components/Header';
 import Skeleton from '../components/Skeleton';
 import ui from '../styles/ui.module.css';
@@ -47,7 +47,7 @@ export default function RoundScopePage() {
 
   // Only explicit choices: a missing key follows `base`, which depends on whether the
   // competition has started.
-  const [docChoices, setDocChoices] = useState<Partial<DocumentSelection>>(restored?.documents ?? {});
+  const [docChoices, setDocChoices] = useState(() => parseDocuments(restored?.documents));
 
   // `null` means Default. A preset seeds the options below and the /settings step; nothing
   // is locked.
@@ -106,10 +106,9 @@ export default function RoundScopePage() {
   }, [parsed]);
   const effectiveSelected = selectedKeys ?? defaultSelected;
 
-  // Re-seeded from the base defaults, so switching presets never accumulates the last one's.
   function applyPreset(preset: Preset | null) {
     setPresetId(preset?.id ?? null);
-    setDocChoices({ ...base, ...preset?.documents });
+    setDocChoices({ ...preset?.documents });
   }
 
   function toggleRound(key: string) {
