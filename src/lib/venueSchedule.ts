@@ -144,14 +144,14 @@ export function buildVenueSchedule(wcif: WCIF, labels: ScheduleLabels): VenueSch
         const name = code ? roundName(code)
           : lookup(strings.activities, activity.activityCode.replace(/^other-/, '')) ?? activity.name;
         // By printed name: two rooms' "Lunch" and "Dîner" under one code are one row.
-        const key = `${activity.activityCode}|${name}|${activity.startTime}|${activity.endTime}`;
+        const key = `${activity.activityCode}|${name}|${activity.startTime}|${activity.endTime}|${venue.timezone}`;
         const twin = seen.get(key);
         if (twin) { if (!twin.rooms.includes(room.name)) twin.rooms.push(room.name); continue; }
-        const date = localDate(activity.startTime);
+        const date = localDate(activity.startTime, venue.timezone);
         if (!byDate.has(date)) byDate.set(date, []);
         const row: VenueRow = {
-          start: clock(localTime(activity.startTime), language),
-          end: clock(localTime(activity.endTime), language),
+          start: clock(localTime(activity.startTime, venue.timezone), language),
+          end: clock(localTime(activity.endTime, venue.timezone), language),
           eventId: code?.eventId ?? null,
           name,
           rooms: [room.name],
