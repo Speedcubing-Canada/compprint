@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { restorableSettings, submittedSettings, type SettingsDraft } from './settingsDraft';
+import { coverTimingShown, restorableSettings, submittedSettings, type SettingsDraft } from './settingsDraft';
 import { testSettings } from '../test/fixtures';
 
 const scope = testSettings().generationScope!;
@@ -40,18 +40,19 @@ describe('submittedSettings', () => {
 });
 
 describe('coverTiming', () => {
-  const withTracker = (scheduleTracker: boolean) => ({
-    ...flow(false), generationScope: { mode: 'everything' as const, documents: { ...scope.documents, scheduleTracker } },
+  const docs = (scheduleTracker: boolean) => ({ ...scope.documents, scheduleTracker });
+
+  it('follows the tracker until chosen', () => {
+    expect(coverTimingShown(undefined, docs(true))).toBe(false);
+    expect(coverTimingShown(undefined, docs(false))).toBe(true);
+    expect(coverTimingShown(true, docs(true))).toBe(true);
+    expect(coverTimingShown(false, docs(false))).toBe(false);
   });
 
-  it('resolves an untouched draft from the tracker and keeps a click', () => {
-    expect(submittedSettings(draftOf(), withTracker(true)).coverTiming).toBe(false);
-    expect(submittedSettings(draftOf(), withTracker(false)).coverTiming).toBe(true);
-    expect(submittedSettings({ ...draftOf(), coverTiming: true }, withTracker(true)).coverTiming).toBe(true);
-  });
-
-  it('restores only a value the tracker did not imply', () => {
-    expect(restorableSettings(submittedSettings(draftOf(), withTracker(true)))).not.toHaveProperty('coverTiming');
-    expect(restorableSettings(submittedSettings({ ...draftOf(), coverTiming: true }, withTracker(true))).coverTiming).toBe(true);
+  it('stores and restores the draft value as-is', () => {
+    const untouched = submittedSettings({ ...draftOf(), coverTiming: undefined }, flow(false));
+    expect(untouched.coverTiming).toBeUndefined();
+    expect(restorableSettings(JSON.parse(JSON.stringify(untouched)))).not.toHaveProperty('coverTiming');
+    expect(restorableSettings(submittedSettings({ ...draftOf(), coverTiming: false }, flow(false))).coverTiming).toBe(false);
   });
 });

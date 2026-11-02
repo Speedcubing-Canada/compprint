@@ -2,12 +2,12 @@ import { describe, it, expect } from 'vitest';
 import { fileURLToPath } from 'node:url';
 import * as fontkit from 'fontkit';
 import {
-  textWidth, nameBox, nameLayout, nametagName, nametagNameW, nametagInnerW, splitAtSurname,
+  textWidth, nameBox, nameLayout, nametagName, nametagNameW, splitAtSurname,
   NAME_LINE_HEIGHT, NAME_MAX_FS, NAME_MIN_FS, NAMETAG_NAME_MAX_FS,
 } from './nameFit';
 import {
   NAMETAG_COMPACT_NAME_FS, NAMETAG_COMPACT_NAME_H, NAMETAG_CONFIGS, NAMETAG_H, PDF_FONT, PDF_FONT_BOLD, PDF_FONT_BOLD_EXT, PDF_FONT_EXT,
-  SCORECARD_CONFIGS, nametagNameH,
+  SCORECARD_CONFIGS, nametagInnerW, nametagNameH,
 } from './layoutConstants';
 import { corpus } from '../test/corpus';
 import { randomWcif } from '../test/wcifGen';
@@ -163,6 +163,28 @@ describe('every real name fits', () => {
     const shrunk = names.filter(n => textWidth(n, NAMETAG_COMPACT_NAME_FS, false) <= nametagNameW(panelW)
       && nametagName(n, panelW, NAMETAG_COMPACT_NAME_H, NAMETAG_COMPACT_NAME_FS).fontSize < NAMETAG_COMPACT_NAME_FS);
     expect(shrunk).toEqual([]);
+  });
+
+  it('a horizontal name that wraps at 14pt never prints one line smaller', () => {
+    const { panelW } = NAMETAG_H;
+    const wrapsAt14 = (n: string) => [...n].some((c, i) => (c === ' ' || n[i - 1] === '-') && i > 0
+      && [n.slice(0, i), n.slice(i).trimStart()].every(l => textWidth(l, NAMETAG_COMPACT_NAME_FS, false) <= nametagNameW(panelW)));
+    const shrunk = names.filter((n) => {
+      const r = nametagName(n, panelW, NAMETAG_COMPACT_NAME_H, NAMETAG_COMPACT_NAME_FS);
+      return lines(r.text).length === 1 && r.fontSize < NAMETAG_COMPACT_NAME_FS && wrapsAt14(r.text);
+    });
+    expect(shrunk).toEqual([]);
+  });
+
+  it.each([
+    ...Object.entries(NAMETAG_CONFIGS).map(([paper, { panelW }]) => [paper, panelW, nametagNameH('with-name'), undefined] as const),
+    ['horizontal', NAMETAG_H.panelW, NAMETAG_COMPACT_NAME_H, NAMETAG_COMPACT_NAME_FS] as const,
+  ])('its %s one-line names stay 4pt clear of the panel', (_layout, panelW, h, floor) => {
+    const over = names.filter((n) => {
+      const r = nametagName(n, panelW, h, floor);
+      return r.fontSize > NAME_MIN_FS && lines(r.text).length === 1 && textWidth(r.text, r.fontSize, false) > nametagNameW(panelW) + 0.01;
+    });
+    expect(over).toEqual([]);
   });
 });
 

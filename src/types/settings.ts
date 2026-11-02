@@ -79,8 +79,7 @@ export interface CompetitionSettings {
   nametagLayout: NametTagLayout;
   customEvents: CustomEvent[];
   scorecardCheckMode: ScorecardCheckMode;
-  // The planned/actual/set line on cover cards. Undefined in the draft = follow the schedule
-  // tracker (hidden when it is printed); the submitted blob always holds the resolved boolean.
+  // The planned/actual/set line on cover cards. Undefined = follow the Schedule Tracker; see coverTimingShown.
   coverTiming?: boolean;
   // Underlines the surname on cards whose first name repeats in the group. Off unless clicked or preset.
   underlineSharedFirstNames?: boolean;

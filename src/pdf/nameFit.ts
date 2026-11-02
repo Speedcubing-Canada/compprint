@@ -1,5 +1,5 @@
 // Competitor-name sizing for scorecards and name tags. Pure, so the layout tests can import it.
-import { NAMETAG_PANEL_BORDER, NAMETAG_PANEL_PAD, SCORECARD_HEADER as H } from './layoutConstants';
+import { nametagInnerW, SCORECARD_HEADER as H } from './layoutConstants';
 
 // Advance widths (1/1000 em) of the embedded Scorecard Sans, which shares Helvetica's metrics
 // and also covers the letters Helvetica lacks (Ł, ł, Đ). The test checks each against the OTF.
@@ -129,15 +129,15 @@ export function splitAtSurname(laid: string, surname: string): [string, string] 
 
 // Name tags: the name's size cap and width, 4pt clear of the panel on each side.
 export const NAMETAG_NAME_MAX_FS = 20;
-export const nametagInnerW = (panelW: number) => panelW - 2 * (NAMETAG_PANEL_PAD + NAMETAG_PANEL_BORDER);
 export const nametagNameW = (panelW: number) => nametagInnerW(panelW) - 2 * 4;
 
 // One line keeps the originals' length-based size; two lines once they are 2pt bigger. The size
-// counts characters, not glyph widths, so it is capped where a wide name would overrun the panel.
-// `lengthFloorFs` keeps that count from shrinking a name that measures as fitting at that size.
-export function nametagName(name: string, panelW: number, availH: number, lengthFloorFs = 9) {
-  const fits = Math.max(NAME_MIN_FS, Math.floor((nametagInnerW(panelW) / Math.max(textWidth(name, 1, false), 1)) * 2) / 2);
-  const byLength = Math.max(lengthFloorFs, Math.floor((panelW - 14) / Math.max(name.length * 0.55, 1)));
+// counts characters, not glyph widths, so it is capped where a wide name would overrun the name width.
+// A name fitting one line at `minOneLineFs` prints at least that size; a longer one wraps if that's bigger.
+export function nametagName(name: string, panelW: number, availH: number, minOneLineFs = 9) {
+  const fits = Math.max(NAME_MIN_FS, Math.floor((nametagNameW(panelW) / Math.max(textWidth(name, 1, false), 1)) * 2) / 2);
+  const tooLong = fits < minOneLineFs;
+  const byLength = Math.max(tooLong ? 9 : minOneLineFs, Math.floor((panelW - 14) / Math.max(name.length * 0.55, 1)));
   const legacy = Math.min(fits, NAMETAG_NAME_MAX_FS, byLength);
-  return nameLayout(name, nametagNameW(panelW), availH, { bold: false, maxFs: NAMETAG_NAME_MAX_FS, wrapGainFs: 2, oneLineFs: legacy });
+  return nameLayout(name, nametagNameW(panelW), availH, { bold: false, maxFs: NAMETAG_NAME_MAX_FS, wrapGainFs: tooLong ? 0 : 2, oneLineFs: legacy });
 }

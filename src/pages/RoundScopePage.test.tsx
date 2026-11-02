@@ -16,7 +16,8 @@ import { fetchWcif } from '../auth/wca';
 import { send } from '../lib/analytics';
 import i18n from '../i18n/index';
 import { markAllSeen } from '../changelog';
-import { writeCompetition, readHasGroups, readStoredScope } from '../lib/flowState';
+import { writeCompetition, readHasGroups, readStoredScope, writeScope } from '../lib/flowState';
+import type { GenerationScope } from '../lib/generationScope';
 import { PRESETS, readPresetId } from '../presets';
 import { sampleWcif } from '../test/fixtures';
 import { renderWithProviders, signedInAuth, useEnglish } from '../test/render';
@@ -75,6 +76,40 @@ describe('RoundScopePage', () => {
     const scope = readStoredScope()!;
     expect(scope.documents.nametags).toBe(!before);
     expect(scope.documents.scorecards).toBe(true);
+  });
+
+  const checkbox = (key: `scope.doc_${'scorecards' | 'schedule' | 'nametags' | 'group_overview'}`) =>
+    screen.getByLabelText(i18n.t(key)) as HTMLInputElement;
+
+  // The schedule tracker and name tags were printed before day 1.
+  it('starts mid-competition with the schedule tracker and name tags unchecked', async () => {
+    renderWithProviders(<RoundScopePage />, { auth: signedInAuth });
+    await screen.findByText(i18n.t('scope.docs_title'));
+
+    expect(checkbox('scope.doc_scorecards').checked).toBe(true);
+    expect(checkbox('scope.doc_schedule').checked).toBe(false);
+    expect(checkbox('scope.doc_nametags').checked).toBe(false);
+  });
+
+  it('restores the stored selection on the way back, missing keys following the defaults', async () => {
+    // Partial and carrying a retired key, as an older build may have written it.
+    writeScope({
+      mode: 'everything',
+      documents: { nametags: true, groupOverview: true, retired: true, scorecards: 'yes' },
+    } as unknown as GenerationScope, { showSecondRoundMode: false, multiStage: false, detectedStations: null });
+    renderWithProviders(<RoundScopePage />, { auth: signedInAuth });
+    await screen.findByText(i18n.t('scope.docs_title'));
+
+    expect(checkbox('scope.doc_nametags').checked).toBe(true);
+    expect(checkbox('scope.doc_group_overview').checked).toBe(true);
+    expect(checkbox('scope.doc_schedule').checked).toBe(false);
+    expect(checkbox('scope.doc_scorecards').checked).toBe(true);
+
+    fireEvent.click(screen.getByRole('button', { name: i18n.t('scope.continue') }));
+    expect(readStoredScope()!.documents).toEqual({
+      scorecards: true, scheduleTracker: false, nametags: true, roundChecklist: false,
+      firstTimerSlips: false, groupOverview: true, venueSchedule: false,
+    });
   });
 
   it('refuses to continue with no documents selected', async () => {
