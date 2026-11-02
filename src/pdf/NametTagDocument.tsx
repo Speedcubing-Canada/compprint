@@ -8,13 +8,13 @@ import { getNametTagStrings, type NametTagStrings } from '../lib/i18n';
 import { resolveLogo } from '../lib/logo';
 import { qrPathData } from './qrPath';
 import {
-  NAMETAGS_PER_PAGE, NAMETAG_COMPACT as C, NAMETAG_COMPACT_NAME_H, NAMETAG_CONFIGS, NAMETAG_H, NAMETAG_PANEL_BORDER,
-  NAMETAG_PANEL_PAD, eventIconsVisible, liveQrTarget, nametagCompactQrSize, nametagHPositions, nametagNameH,
+  NAMETAGS_PER_PAGE, NAMETAG_COMPACT as C, NAMETAG_COMPACT_NAME_FS, NAMETAG_COMPACT_NAME_H, NAMETAG_CONFIGS, NAMETAG_H, NAMETAG_PANEL_BORDER,
+  NAMETAG_PANEL_PAD, ICON_GAP, eventIconsVisible, nametagIconSize, liveQrTarget, nametagCompactQrSize, nametagHPositions, nametagNameH,
   nametagTopSectionH,
   PDF_FONT as FONT, PDF_FONT_BOLD as FONT_BOLD,
 } from './layoutConstants';
 import './fontSetup';
-import { nametagInnerW, nametagName, NAME_LINE_HEIGHT, textWidth } from './nameFit';
+import { nametagName, NAME_LINE_HEIGHT, textWidth } from './nameFit';
 
 
 // Vertical layout: landscape page, 4 slots wide × 2 tall = 8 slots = 4 pairs.
@@ -28,7 +28,7 @@ import { nametagInnerW, nametagName, NAME_LINE_HEIGHT, textWidth } from './nameF
 //     row 1: [Front_B] [Back_B]
 //     row 2: [Front_C] [Back_C]
 //     row 3: [Front_D] [Back_D]
-//   Cards are landscape 90x55mm (NAMETAG_H), centred on the page, no rotation.
+//   Cards are landscape 86x55mm (NAMETAG_H), centred on the page, no rotation.
 
 function panelPositions(cfg: { panelW: number; panelH: number; margin: number; gapH: number; gapV: number }) {
   const { panelW, panelH, margin, gapH, gapV } = cfg;
@@ -91,10 +91,11 @@ function PanelTop({ entry, panelW, compName, titleText, logoMode, logoDataUrl, c
 }) {
   const { bg, fg } = badgeColors(entry.role);
   const c: Partial<typeof sc> = compact ? sc : {};
-  const name = nametagName(entry.name, panelW, compact ? NAMETAG_COMPACT_NAME_H : nametagNameH(logoMode));
+  const name = compact
+    ? nametagName(entry.name, panelW, NAMETAG_COMPACT_NAME_H, NAMETAG_COMPACT_NAME_FS)
+    : nametagName(entry.name, panelW, nametagNameH(logoMode));
   const icons = entry.events.filter(evId => EVENT_ICONS[evId]);
-  // Spread like the originals, shrunk only when a full-event competitor would overrun the row.
-  const iconSz = Math.min(compact ? C.iconMax : 14, nametagInnerW(panelW) / Math.max(icons.length, 1) - 1);
+  const iconSz = nametagIconSize(panelW, icons.length, compact);
 
   // Compact tags top-pack and never shrink, so the role badge lands at the same Y on front and
   // back and the two align across the pair. Event icons follow the badge, so hiding them on the
@@ -118,7 +119,7 @@ function PanelTop({ entry, panelW, compName, titleText, logoMode, logoDataUrl, c
       </View>
       {showEvents && (
         <View style={[s.iconsRow, c.iconsRow]}>
-          {icons.map(evId => <Image key={evId} src={EVENT_ICONS[evId]} style={{ width: iconSz, height: iconSz }} />)}
+          {icons.map(evId => <Image key={evId} src={EVENT_ICONS[evId]} style={{ width: iconSz, height: iconSz, marginHorizontal: ICON_GAP }} />)}
         </View>
       )}
       {!compact && <Text style={s.wcaId}>{entry.wcaId || ' '}</Text>}
@@ -255,7 +256,7 @@ const s = StyleSheet.create({
   name:       { textAlign: 'center', fontFamily: FONT, marginBottom: 6 },
   badge:      { borderRadius: 2, height: 22, justifyContent: 'center', marginBottom: 4 },
   badgeText:  { fontSize: 13, textAlign: 'center', fontFamily: FONT_BOLD },
-  iconsRow:   { flexDirection: 'row', justifyContent: 'space-around', alignItems: 'center', marginTop: 5, marginBottom: 3 },
+  iconsRow:   { flexDirection: 'row', justifyContent: 'center', alignItems: 'center', marginTop: 5, marginBottom: 3 },
   wcaId:      { fontSize: 13, textAlign: 'center', marginBottom: 4, color: '#222', fontFamily: FONT },
   dutiesSection: { flexDirection: 'column', flex: 1 },
   dutyRow:    { flexDirection: 'row', alignItems: 'flex-start' },
