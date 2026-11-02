@@ -100,6 +100,7 @@ export const MAX_PAGES_PER_NAMETAG_PDF = 250;
 // Name tag panel side padding and border.
 export const NAMETAG_PANEL_PAD = 7;
 export const NAMETAG_PANEL_BORDER = 1.5;
+export const nametagInnerW = (panelW: number) => panelW - 2 * (NAMETAG_PANEL_PAD + NAMETAG_PANEL_BORDER);
 
 // Vertical name tag panels.
 export const NAMETAG_CONFIGS = {
@@ -157,6 +158,12 @@ export function nametagNameH(logoMode: NametTagLogoMode) {
 // The compact layout is tight enough that the QR side must stay uncluttered.
 export function eventIconsVisible({ isQrSide, compact }: { isQrSide: boolean; compact: boolean }): boolean {
   return !(isQrSide && compact);
+}
+
+// Icons sit packed in the centre, ICON_GAP each side; shrunk only when a full-event row would overrun.
+export const ICON_GAP = 1;
+export function nametagIconSize(panelW: number, count: number, compact: boolean) {
+  return Math.min(compact ? NAMETAG_COMPACT.iconMax : 14, nametagInnerW(panelW) / Math.max(count, 1) - 2 * ICON_GAP);
 }
 
 // Flex units, not points: the table fills the page width. `event` carries the longest
