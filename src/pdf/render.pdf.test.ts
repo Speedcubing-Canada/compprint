@@ -82,7 +82,7 @@ describe('shared first name underline', () => {
   // The creation date and the file ID it seeds differ per render.
   const bytes = async (entries: ScorecardData[], on: boolean) =>
     (await renderToBuffer(createElement(ScorecardDocument, { entries, settings: { ...settings, underlineSharedFirstNames: on } }) as ReactElement<DocumentProps>))
-      .toString('latin1').replace(/\/CreationDate \(D:[^)]*\)/, '').replace(/\/ID \[[^\]]*\]/, '');
+      .toString('latin1').replace(/\(D:\d{14}Z\)/g, '').replace(/\/ID \[[^\]]*\]/, '');
 
   it('renders an unflagged card byte-identical whatever the setting', async () => {
     expect('underlinedSurname' in named).toBe(false);
