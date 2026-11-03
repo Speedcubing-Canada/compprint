@@ -23,6 +23,7 @@
     "record:walkthrough": "vite-node scripts/recordWalkthrough.ts --"
   },
   "dependencies": {
+    "@fontsource/montserrat": "^5.3.0",
     "@google-cloud/secret-manager": "^7.2.0",
     "@react-pdf/renderer": "^4.9.0",
     "buffer": "^6.0.3",

@@ -42,7 +42,6 @@ export class FakeWca {
     const url = new URL(req.url());
     this.calls.push(`${req.method()} ${url.href}`);
 
-    if (url.host === 'fonts.googleapis.com') return route.fulfill({ contentType: 'text/css', body: '' });
     if (url.host === 'avatars.worldcubeassociation.org') return route.fulfill({ contentType: 'image/png', body: PIXEL });
 
     if (url.href.startsWith('https://www.worldcubeassociation.org/oauth/authorize')) {
