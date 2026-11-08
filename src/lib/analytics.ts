@@ -70,7 +70,7 @@ function competitionSize(parsed: ParsedWCIF, wcif: WCIF | null) {
     for (const row of day.rows) groups += row.groupCount;
 
   return {
-    competitors: parsed.nametags.filter(t => !t.staff && !t.blank).length,
+    competitors: parsed.nametags.filter(t => !t.nonCompeting && !t.blank).length,
     events: wcif?.events.length ?? 0,
     rounds: wcif?.events.reduce((n, e) => n + e.rounds.length, 0) ?? 0,
     groups,
@@ -123,6 +123,9 @@ export function buildGenerateEvent(args: {
       logo: logoChoice(settings),
       liveResultsMode: settings.liveResultsMode,
       hideWcaLiveId: settings.hideWcaLiveId,
+      nametagCompetitorId: settings.nametagCompetitorId,
+      // A count only: the lines are people's names.
+      staffCsvLines: settings.staffCsv.length,
       splitPdfsByStage: settings.splitPdfsByStage,
       mergeScorecardRounds: settings.mergeScorecardRounds,
       otsBlanks: settings.otsBlanks,

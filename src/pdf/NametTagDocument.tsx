@@ -1,5 +1,6 @@
 import type { ReactNode } from 'react';
 import { Document, Page, View, Text, Image, StyleSheet, Svg, Path } from '@react-pdf/renderer';
+import type { Style } from '@react-pdf/types';
 import { docMeta } from './docMeta';
 import type { CompetitionSettings, LiveResultsMode, NametTagLayout, NametTagLogoMode } from '../types/settings';
 import type { NametTagEntry, NametTagRole } from '../lib/wcif-parser';
@@ -9,12 +10,36 @@ import { resolveLogo } from '../lib/logo';
 import { qrPathData } from './qrPath';
 import {
   NAMETAGS_PER_PAGE, NAMETAG_COMPACT as C, NAMETAG_COMPACT_NAME_FS, NAMETAG_COMPACT_NAME_H, NAMETAG_CONFIGS, NAMETAG_H, NAMETAG_PANEL_BORDER,
-  NAMETAG_PANEL_PAD, ICON_GAP, eventIconsVisible, nametagIconSize, liveQrTarget, nametagCompactQrSize, nametagHPositions, nametagNameH,
+  NAMETAG_PANEL_PAD, ICON_GAP, nametagInnerW, eventIconsVisible, nametagIconSize, liveQrTarget, nametagCompactQrSize, nametagHPositions, nametagNameH,
   nametagTopSectionH,
   PDF_FONT as FONT, PDF_FONT_BOLD as FONT_BOLD,
 } from './layoutConstants';
 import './fontSetup';
-import { nametagName, NAME_LINE_HEIGHT, textWidth } from './nameFit';
+import { badgeFs, fitLineFs, nametagName, NAME_LINE_HEIGHT, textWidth } from './nameFit';
+
+// Not "WCA Live": that site is being retired, the registrant number outlives it.
+const ID_PREFIX = 'ID: ';
+const ID_GAP = '    ';
+const BADGE_FS = 13;
+const ID_FS = 13;
+// Badge titles never wrap: a long custom one shrinks, then ellipsizes.
+const ONE_LINE: Style = { maxLines: 1, textOverflow: 'ellipsis' };
+
+// The WCA ID, then the registrant number in bold like scorecards. The line box keeps `maxFs`'s
+// height when the text shrinks, so nothing under it moves.
+function IdLine({ entry, maxFs, panelW, style }: {
+  entry: NametTagEntry; maxFs: number; panelW: number; style: Style;
+}) {
+  const id = entry.competitorId === undefined ? '' : String(entry.competitorId);
+  const plain = [entry.wcaId, id && ID_PREFIX].filter(Boolean).join(ID_GAP);
+  const fontSize = fitLineFs(textWidth(plain, 1, false) + textWidth(id, 1, true), nametagInnerW(panelW), maxFs);
+  return (
+    <Text style={[style, { fontSize, lineHeight: (maxFs * 1.1) / fontSize }]}>
+      {plain || ' '}
+      {id && <Text style={{ fontFamily: FONT_BOLD }}>{id}</Text>}
+    </Text>
+  );
+}
 
 
 // Vertical layout: landscape page, 4 slots wide × 2 tall = 8 slots = 4 pairs.
@@ -96,6 +121,7 @@ function PanelTop({ entry, panelW, compName, titleText, logoMode, logoDataUrl, c
     : nametagName(entry.name, panelW, nametagNameH(logoMode));
   const icons = entry.events.filter(evId => EVENT_ICONS[evId]);
   const iconSz = nametagIconSize(panelW, icons.length, compact);
+  const titleFs = badgeFs(titleText, panelW, compact ? C.badgeFs : BADGE_FS);
 
   // Compact tags top-pack and never shrink, so the role badge lands at the same Y on front and
   // back and the two align across the pair. Event icons follow the badge, so hiding them on the
@@ -115,14 +141,14 @@ function PanelTop({ entry, panelW, compName, titleText, logoMode, logoDataUrl, c
       <Text style={[s.name, c.name, { fontSize: name.fontSize, lineHeight: NAME_LINE_HEIGHT }]}>{name.text}</Text>
       {!compact && <View style={{ flex: 1 }} />}
       <View style={[s.badge, c.badge, { backgroundColor: bg }]}>
-        <Text style={[s.badgeText, c.badgeText, { color: fg }]}>{titleText}</Text>
+        <Text style={[s.badgeText, c.badgeText, ONE_LINE, { color: fg, fontSize: titleFs }]}>{titleText}</Text>
       </View>
       {showEvents && (
         <View style={[s.iconsRow, c.iconsRow]}>
           {icons.map(evId => <Image key={evId} src={EVENT_ICONS[evId]} style={{ width: iconSz, height: iconSz, marginHorizontal: ICON_GAP }} />)}
         </View>
       )}
-      {!compact && <Text style={s.wcaId}>{entry.wcaId || ' '}</Text>}
+      {!compact && <IdLine entry={entry} maxFs={ID_FS} panelW={panelW} style={s.wcaId} />}
     </View>
   );
 }
@@ -142,7 +168,7 @@ function QrSection({ entry, qr, qrSize, strings, compact = false }: {
   compact?: boolean;
 }) {
   const cgComp = `https://www.competitiongroups.com/competitions/${qr.competitionId}`;
-  const cgUrl = entry.blank || entry.staff ? cgComp : `${cgComp}/persons/${entry.registrantId}`;
+  const cgUrl = entry.blank || entry.nonCompeting ? cgComp : `${cgComp}/persons/${entry.registrantId}`;
 
   const codes = (
     <View style={compact ? sc.qrRow : s.qrSection}>
@@ -159,7 +185,7 @@ function QrSection({ entry, qr, qrSize, strings, compact = false }: {
   if (!compact) return codes;
   return (
     <>
-      <View style={sc.idSlot}><Text style={sc.wcaId}>{entry.wcaId || ' '}</Text></View>
+      <View style={sc.idSlot}><IdLine entry={entry} maxFs={C.idFs} panelW={NAMETAG_H.panelW} style={sc.wcaId} /></View>
       {codes}
     </>
   );
@@ -189,7 +215,7 @@ function FrontPanel({ entry, panelW, panelH, pos, compName, qr, logoMode, logoDa
     <PanelFrame pos={pos} panelW={panelW} panelH={panelH}>{children}</PanelFrame>
   );
 
-  if (qrBothSides || entry.staff) {
+  if (qrBothSides || entry.nonCompeting) {
     return frame(<>
       <PanelTop entry={entry} panelW={panelW} compName={compName} titleText={entry.titleFront} logoMode={logoMode} logoDataUrl={logoDataUrl} compact={compact} showEvents={eventIconsVisible({ isQrSide: true, compact })} />
       <QrSection entry={entry} qr={qr} qrSize={qrSize} strings={nametTagStrings} compact={compact} />
@@ -255,9 +281,9 @@ const s = StyleSheet.create({
   compName:   { fontSize: 8.5, textAlign: 'center', color: '#333', marginBottom: 4, fontFamily: FONT },
   name:       { textAlign: 'center', fontFamily: FONT, marginBottom: 6 },
   badge:      { borderRadius: 2, height: 22, justifyContent: 'center', marginBottom: 4 },
-  badgeText:  { fontSize: 13, textAlign: 'center', fontFamily: FONT_BOLD },
+  badgeText:  { fontSize: BADGE_FS, textAlign: 'center', fontFamily: FONT_BOLD },
   iconsRow:   { flexDirection: 'row', justifyContent: 'center', alignItems: 'center', marginTop: 5, marginBottom: 3 },
-  wcaId:      { fontSize: 13, textAlign: 'center', marginBottom: 4, color: '#222', fontFamily: FONT },
+  wcaId:      { fontSize: ID_FS, textAlign: 'center', marginBottom: 4, color: '#222', fontFamily: FONT },
   dutiesSection: { flexDirection: 'column', flex: 1 },
   dutyRow:    { flexDirection: 'row', alignItems: 'flex-start' },
   dutyLabel:  { fontFamily: FONT_BOLD, width: 46, flexShrink: 0 },

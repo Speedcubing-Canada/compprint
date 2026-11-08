@@ -50,6 +50,13 @@ export interface CustomEvent {
   competitors?: CustomCompetitor[];
 }
 
+// One staff CSV line. who: a WCA ID or full name, as typed. extra: the fields after it,
+// upper-cased; matchStaff decides which one is the badge title.
+export interface StaffCsvLine {
+  who: string;
+  extra: string[];
+}
+
 export interface CompetitionSettings {
   competitionId: string;
   competitionName: string;
@@ -104,6 +111,10 @@ export interface CompetitionSettings {
   otsBlanks: boolean;
   // Name tags for non-competing Delegates, organizers and volunteers.
   staffNametags: boolean;
+  // Uploaded staff team list: these people get a STAFF (or their own label) badge.
+  staffCsv: StaffCsvLine[];
+  // "ID: <registrantId>" beside the WCA ID on name tags.
+  nametagCompetitorId: boolean;
   // Station numbers on a one-group final's blanks, only when its field fits the stations.
   finalStationNumbers: boolean;
   // Overrides the station count read from the WCIF. `null` = detected.

@@ -55,6 +55,18 @@ const widthMap = (groups: Record<number, string>) => new Map<string, number>(
 const BOLD_W = widthMap(BOLD_GROUPS);
 const REGULAR_W = widthMap(REGULAR_GROUPS);
 
+// Largest half-point size at which a line `w1` wide at 1pt fits `width`, within [minFs, maxFs].
+export const fitLineFs = (w1: number, width: number, maxFs = Infinity, minFs = 7) =>
+  Math.max(minFs, Math.min(maxFs, Math.floor((width / Math.max(w1, 1)) * 2) / 2));
+
+// textWidth runs a little wide: the longest default title, NOUVELLE COMPÉTITRICE, measures
+// 172.6pt yet prints on one line in LETTER's 172pt badge, so it must not shrink.
+const BADGE_SLACK = 1;
+
+// Badge title size: full size unless a long (custom) title would overrun the badge.
+export const badgeFs = (title: string, panelW: number, maxFs: number) =>
+  fitLineFs(textWidth(title, 1), nametagInnerW(panelW) + BADGE_SLACK, maxFs);
+
 // Unknown glyphs (CJK, symbols) count as a full em so the name errs small, never clipped.
 export function textWidth(text: string, fontSize: number, bold = true): number {
   const widths = bold ? BOLD_W : REGULAR_W;
@@ -135,7 +147,7 @@ export const nametagNameW = (panelW: number) => nametagInnerW(panelW) - 2 * 4;
 // counts characters, not glyph widths, so it is capped where a wide name would overrun the name width.
 // A name fitting one line at `minOneLineFs` prints at least that size; a longer one wraps if that's bigger.
 export function nametagName(name: string, panelW: number, availH: number, minOneLineFs = 9) {
-  const fits = Math.max(NAME_MIN_FS, Math.floor((nametagNameW(panelW) / Math.max(textWidth(name, 1, false), 1)) * 2) / 2);
+  const fits = fitLineFs(textWidth(name, 1, false), nametagNameW(panelW), Infinity, NAME_MIN_FS);
   const tooLong = fits < minOneLineFs;
   const byLength = Math.max(tooLong ? 9 : minOneLineFs, Math.floor((panelW - 14) / Math.max(name.length * 0.55, 1)));
   const legacy = Math.min(fits, NAMETAG_NAME_MAX_FS, byLength);

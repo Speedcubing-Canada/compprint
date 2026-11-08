@@ -26,7 +26,7 @@ const COMPOUND_GIVEN = new Set([
   'paulo henrique', 'luiz henrique', 'luis carlos', 'luiz gustavo', 'joao guilherme',
 ]);
 
-const fold = (s: string) => s.normalize('NFD').replace(/\p{M}/gu, '').toLowerCase();
+export const fold = (s: string) => s.normalize('NFD').replace(/\p{M}/gu, '').toLowerCase();
 
 /** Splits a printed name at the surname. Words are space-separated; a hyphenated part is one word. */
 export function splitName(name: string, countryIso2: string): { given: string; surname: string } {

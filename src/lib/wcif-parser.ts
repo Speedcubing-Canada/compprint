@@ -5,6 +5,8 @@ import { packSlipPages } from '../pdf/firstTimerSlipLines';
 import { buildScheduleDays, scheduleLabels, type CheckingDay, type ScheduleDay } from './scheduleRows';
 import { cmp } from './sort';
 import { markSharedFirstNames } from './splitName';
+import { matchStaff } from './staffCsv';
+import { getsNametag, isDelegateRole, isNonCompetingStaff, isOfficial, printedName } from './person';
 import { buildVenueSchedule, type VenueSchedule } from './venueSchedule';
 import { parseActivityCode, roundIdOf, type ActivityCode } from './activityCode';
 
@@ -41,7 +43,9 @@ export interface NametTagEntry {
   // On-the-spot fill-in tag: QR codes point at the competition, not a person.
   blank?: boolean;
   // Non-competing staff or official: no personal results to link.
-  staff?: boolean;
+  nonCompeting?: boolean;
+  // Printed beside the WCA ID when the competitor ID option is on.
+  competitorId?: number;
 }
 
 // One per accepted newcomer, for the confirmation slip the delegate attaches after the
@@ -55,12 +59,6 @@ export interface FirstTimerEntry {
   eventIds: EventId[];
   // On-the-spot fill-in slip: every field is a line to write on.
   blank?: boolean;
-}
-
-// Drops the "(local name)" suffix. NFC, since the PDF fonts have accented letters but no
-// standalone combining marks (a decomposed ư would lose its horn).
-export function printedName(name: string): string {
-  return name.replace(/ \(.*\)$/, '').normalize('NFC');
 }
 
 function buildDuties(
@@ -1072,22 +1070,19 @@ export function parseWCIF(wcif: WCIF, settings: CompetitionSettings): ParsedWCIF
 
   const nametags: NametTagEntry[] = [];
   const firstTimers: FirstTimerEntry[] = [];
+  const staffTeam = matchStaff(wcif.persons, settings.staffCsv, settings.staffNametags).labels;
   for (const person of wcif.persons) {
-    const isDelegate = person.roles.some(r => r === 'delegate' || r === 'trainee-delegate');
-    const isOrganizer = person.roles.includes('organizer');
-    const accepted = person.registration?.status === 'accepted';
-    // ponytail: no account-type flag in the WCIF. An unregistered official with no WCA ID is
-    // taken for an org account, so a never-competed human organizer gets no tag.
-    const looksHuman = !!person.registration || !!person.wcaId;
-    const staff = person.registration?.isCompeting === false
-      || ((isDelegate || isOrganizer) && !accepted && looksHuman);
-    if (staff ? !settings.staffNametags : !accepted) continue;
+    if (!getsNametag(person, settings.staffNametags)) continue;
+    const isDelegate = isDelegateRole(person);
+    const nonCompeting = isNonCompetingStaff(person);
+    const listed = staffTeam.has(person);
+    const staffTitle = staffTeam.get(person) ?? null;
 
     const name = printedName(person.name);
     const isFemale = person.gender === 'f';
 
     // Newcomers (no WCA ID) get a first-timer confirmation slip.
-    if (!person.wcaId && !staff && person.registration) {
+    if (!person.wcaId && !nonCompeting && person.registration) {
       const registeredSet = new Set(person.registration.eventIds as string[]);
       firstTimers.push({
         name,
@@ -1101,9 +1096,9 @@ export function parseWCIF(wcif: WCIF, settings: CompetitionSettings): ParsedWCIF
     let role: NametTagRole;
     if (isDelegate) {
       role = 'delegate';
-    } else if (isOrganizer) {
+    } else if (isOfficial(person)) {
       role = 'organizer';
-    } else if (staff) {
+    } else if (nonCompeting || listed) {
       role = 'staff';
     } else if (!person.wcaId) {
       role = 'new-competitor';
@@ -1111,7 +1106,7 @@ export function parseWCIF(wcif: WCIF, settings: CompetitionSettings): ParsedWCIF
       role = 'competitor';
     }
 
-    const registeredSet = new Set(staff ? [] : person.registration?.eventIds as string[]);
+    const registeredSet = new Set(nonCompeting ? [] : person.registration?.eventIds as string[]);
     const events = WCA_EVENT_ORDER.filter(e => registeredSet.has(e));
     const dutyArgs = [shortNametTagNames, nametTagDutyStrings.dutyGroup] as const;
 
@@ -1123,14 +1118,15 @@ export function parseWCIF(wcif: WCIF, settings: CompetitionSettings): ParsedWCIF
       registrationId: person.registration?.wcaRegistrationId ?? 0,
       gender: person.gender,
       role,
-      titleFront: resolveTitle(nametTagTitles.front, role, isFemale),
-      titleBack:  resolveTitle(nametTagTitles.back,  role, isFemale),
+      titleFront: staffTitle ?? resolveTitle(nametTagTitles.front, role, isFemale),
+      titleBack:  staffTitle ?? resolveTitle(nametTagTitles.back,  role, isFemale),
       events,
       compete:  buildDuties(person.assignments, 'competitor',      activityCode, ...dutyArgs),
       scramble: buildDuties(person.assignments, 'staff-scrambler', activityCode, ...dutyArgs),
       judge:    buildDuties(person.assignments, 'staff-judge',     activityCode, ...dutyArgs),
       run:      buildDuties(person.assignments, 'staff-runner',    activityCode, ...dutyArgs),
-      ...(staff ? { staff } : {}),
+      ...(nonCompeting ? { nonCompeting } : {}),
+      ...(settings.nametagCompetitorId && !nonCompeting ? { competitorId: person.registrantId } : {}),
     });
   }
 

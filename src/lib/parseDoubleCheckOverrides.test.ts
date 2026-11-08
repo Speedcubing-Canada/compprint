@@ -2,6 +2,10 @@ import { describe, it, expect } from 'vitest';
 import { parseDoubleCheckOverrides } from './parseDoubleCheckOverrides';
 
 describe('parseDoubleCheckOverrides', () => {
+  it('reads semicolon separated lines', () => {
+    expect(parseDoubleCheckOverrides('2015foob01;333;444\r\n')).toEqual({ '2015FOOB01': ['333', '444'] });
+  });
+
   it('parses one competitor per line with their events', () => {
     const out = parseDoubleCheckOverrides('2015FOOB01,333,444\n2018BARS02,333bf,555bf');
     expect(out).toEqual({

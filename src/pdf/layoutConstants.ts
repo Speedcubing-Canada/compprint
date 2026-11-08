@@ -215,9 +215,9 @@ export function liveQrTarget(
     wcaLiveId: string | null;
     wcaLivePersonIds: Record<number, string> | null;
   },
-  entry: { registrantId: number; registrationId: number; blank?: boolean; staff?: boolean },
+  entry: { registrantId: number; registrationId: number; blank?: boolean; nonCompeting?: boolean },
 ): string {
-  const toComp = entry.blank || entry.staff;
+  const toComp = entry.blank || entry.nonCompeting;
   if (cfg.mode === 'ilr') {
     const live = `https://www.worldcubeassociation.org/competitions/${cfg.competitionId}/live`;
     return toComp ? live : `${live}/competitors/${entry.registrationId}`;

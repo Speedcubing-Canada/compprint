@@ -16,6 +16,15 @@ export interface ChangelogEntry {
 /** Newest first. See "Contributing" in the README before adding an entry. */
 export const CHANGELOG: ChangelogEntry[] = [
   {
+    id: '2026-11-07',
+    items: {
+      en: ['Name tags can show staff teams from a CSV file, and each competitor\'s ID.'],
+      fr: ['Les badges peuvent afficher les équipes de staff depuis un fichier CSV, et l\'ID de chaque compétiteur.'],
+      es: ['Las acreditaciones pueden mostrar los equipos de staff desde un archivo CSV, y el ID de cada competidor.'],
+      pt: ['Os crachás podem mostrar as equipes de staff a partir de um arquivo CSV, e o ID de cada competidor.'],
+    },
+  },
+  {
     id: '2026-11-01',
     items: {
       en: [

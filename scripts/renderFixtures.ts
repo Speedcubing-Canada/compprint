@@ -2,6 +2,7 @@
 //
 //   npm run render:fixtures            # vertical nametags (default)
 //   npm run render:fixtures -- --horizontal
+//   npm run render:fixtures -- --competitor-id  # adds "ID: N" to the name tags
 //
 // Writes to ../current-output/, which the pdf-print-edit skill diffs against
 // ../original-output/. Renders the shipping components, never a copy of them.
@@ -330,6 +331,7 @@ async function main() {
     useDefaultLogo: false,
     nametagLogoMode: 'hidden',
     nametagLayout: horizontal ? 'horizontal' : 'vertical',
+    nametagCompetitorId: process.argv.includes('--competitor-id'),
   });
 
   console.log(`Rendering ${nt.entries.length} name tags (${ntSettings.nametagLayout})…`);
@@ -389,8 +391,8 @@ async function main() {
     'nametag-staff-test.pdf',
     e(NametTagDocument, {
       nametags: [
-        { ...d!, role: 'delegate', staff: true, events: [] },
-        { ...v!, role: 'staff', staff: true, events: [], wcaId: '', titleFront: 'STAFF', titleBack: 'STAFF' },
+        { ...d!, role: 'delegate', nonCompeting: true, events: [] },
+        { ...v!, role: 'staff', nonCompeting: true, events: [], wcaId: '', titleFront: 'STAFF', titleBack: 'STAFF' },
         ...rest.slice(0, 2),
       ],
       settings: ntSettings,

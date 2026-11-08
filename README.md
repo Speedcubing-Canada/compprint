@@ -429,6 +429,28 @@ LoginPage → CompetitionPickerPage → RoundScopePage → SettingsPage → Gene
   switch to turn the feature on: it is on for every WCA competition, its rules live under
   **Advanced** at the bottom of `/settings`, and "off" is unticking both ranking rules with no
   round and no CSV. Custom (non-WCA) competitions never get it, having no WCIF to rank against.
+- **Staff teams** come from an optional CSV in the name tag settings, one person per line: a WCA
+  ID or full name (accent and case insensitive, with or without the WCIF's `(local name)`
+  suffix), then an optional badge title, e.g. `2015FOOB01` or `Jane Doe,STREAM`. Commas,
+  semicolons (Excel's "CSV" in French, Spanish and Portuguese) or tabs separate the fields,
+  whichever the first line uses most; a field that starts with a double quote may hold one, and
+  a header row is skipped. The competitor and double-check uploads share this parsing
+  (`src/lib/csv.ts`): a file with a UTF-16 byte order mark (Excel's "Unicode Text") is read as
+  UTF-16, else a file with no valid UTF-8 accent is read as Windows-1252. A line holding both a
+  name and a WCA ID (`Name,WCA ID` or `WCA ID,Name`) matches on the ID. When a header names the
+  second column a name, or any line's second column is its person's exact name, that column is
+  names for the whole file and the title comes from the third. A file whose every name in the
+  second column is misspelled still prints them as titles.
+  Listed people get the STAFF badge (or their title, upper-cased, on both sides,
+  one line, shrunk to fit), sort with the staff, and keep their own duties and QR codes. Only
+  people who get a name tag match. A listed Delegate or organizer keeps their own badge unless
+  the line has a title. `/settings` warns about every listed Delegate and organizer, every name it
+  can't find, every name several people share (use the WCA ID then), and a file with no one in it.
+  After a reload it fetches the WCIF again to show them.
+- **Competitor ID on name tags** (off by default) prints `ID: <registrantId>` beside the WCA ID,
+  the number scoretakers type and scorecards show. Labelled `ID`, not `WCA Live`, since WCA Live
+  is being retired. The line shrinks to fit, never wraps, and keeps its line
+  box so nothing under it moves. Non-competing staff and blank tags have no number to print.
 - Scorecards come out in **cut-and-stack order**: print, cut each sheet into 4, keep the four
   positions separated, stack them in order, and the deck is already sorted. The download page
   spells this out per document.

@@ -2,6 +2,14 @@ import { describe, it, expect } from 'vitest';
 import { parseCompetitorCsv } from './parseCompetitorCsv';
 
 describe('parseCompetitorCsv', () => {
+  it('reads an Excel fr/es/pt export: semicolons, quoted names', () => {
+    expect(parseCompetitorCsv('Name;WCA ID\r\nJosé Núñez;2019NUNE01\r\n"Doe, John";2019DOEJ01\r\nAna Lima\r\n')).toEqual([
+      { name: 'José Núñez', wcaId: '2019NUNE01' },
+      { name: 'Doe, John', wcaId: '2019DOEJ01' },
+      { name: 'Ana Lima', wcaId: '' },
+    ]);
+  });
+
   it('parses one competitor per line, name only', () => {
     const out = parseCompetitorCsv('Alice Martin\nBob Tremblay');
     expect(out).toEqual([

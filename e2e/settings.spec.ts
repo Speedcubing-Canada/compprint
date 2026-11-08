@@ -27,3 +27,13 @@ test('the whole flow works in French', async ({ page, isMobile }) => {
   const { name } = await download(page, 'Télécharger');
   expect(name).toBe('PickeringBlindfolded2026_pdfs.zip');
 });
+
+test('a staff CSV warns about officials and names it cannot find', async ({ page }) => {
+  const csv = '2007STRO01\nMarcel Martel,Stream\nNobody Here\n';
+  await page.locator('input[name="staffCsv"]')
+    .setInputFiles({ name: 'staff.csv', mimeType: 'text/csv', buffer: Buffer.from(csv) });
+
+  await expect(page.getByText('staff.csv')).toBeVisible();
+  await expect(page.getByText(/Sarah Strong$/)).toBeVisible();
+  await expect(page.getByText(/Nobody Here$/)).toBeVisible();
+});

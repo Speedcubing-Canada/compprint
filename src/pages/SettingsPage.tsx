@@ -19,6 +19,8 @@ import { readPresetSettings, presetLogoUrl } from '../presets';
 import { SCC_DEFAULT_LOGO } from '../assets/scc-logo';
 import Header from '../components/Header';
 import WarningBanner from '../components/WarningBanner';
+import CsvFileField from '../components/CsvFileField';
+import StaffCsvSection from './StaffCsvSection';
 import { coverTimingShown, restorableSettings, submittedSettings, type SettingsDraft } from '../lib/settingsDraft';
 import OtsNotice from '../components/OtsNotice';
 import CustomEventEditor from '../components/CustomEventEditor';
@@ -93,6 +95,8 @@ export default function SettingsPage() {
     scorecardsA6: false,
     otsBlanks: false,
     staffNametags: true,
+    staffCsv: [],
+    nametagCompetitorId: preset.nametagCompetitorId ?? false,
     finalStationNumbers: true,
     stationsPerStage: null,
     // Regulation 11i binds every competition, so there is no switch: "off" is both ranking
@@ -124,7 +128,7 @@ export default function SettingsPage() {
     liveResultsMode, wcaLiveId, hideWcaLiveId, nametagLogoMode, nametagQrMode, nametagLayout,
     scorecardCheckMode, customEvents, splitPdfsByStage, scrambleDoubleCheckRounds,
     scrambleDoubleCheckOverrides, scrambleDoubleCheckWorldTop, scrambleDoubleCheckRegionTop,
-    scrambleDoubleCheckRegionScope, otsBlanks, staffNametags, finalStationNumbers, stationsPerStage, scorecardsA6,
+    scrambleDoubleCheckRegionScope, otsBlanks, staffNametags, staffCsv, nametagCompetitorId, finalStationNumbers, stationsPerStage, scorecardsA6,
   } = draft;
   const merged = mergesRounds(draft);
   const coverTiming = coverTimingShown(draft.coverTiming, docs);
@@ -141,6 +145,7 @@ export default function SettingsPage() {
     customEvents.length > 0 || Object.keys(scrambleDoubleCheckOverrides).length > 0,
   );
   const [dcOverridesName, setDcOverridesName] = useState<string | null>(() => readFileName('dcOverrides'));
+  const [staffCsvName, setStaffCsvName] = useState<string | null>(() => readFileName('staffCsv'));
   // Generate waits for the WCA Live lookup: without its ids every name tag QR falls back to
   // the WCA Live home page.
   const [submitting, setSubmitting] = useState(false);
@@ -148,7 +153,6 @@ export default function SettingsPage() {
   // The WCA Live id and person ids that belong together, so retyping that id brings them back.
   const knownLive = useRef(previous?.wcaLiveId ? { id: previous.wcaLiveId, personIds: previous.wcaLivePersonIds } : null);
   const fileInputRef = useRef<HTMLInputElement>(null);
-  const dcFileInputRef = useRef<HTMLInputElement>(null);
 
   // Reads the draft as committed when the wait ends, lookup patches and edits made meanwhile included.
   const save = useEffectEvent(() => {
@@ -158,6 +162,7 @@ export default function SettingsPage() {
       }));
       writeFileName('logo', logoName);
       writeFileName('dcOverrides', dcOverridesName);
+      writeFileName('staffCsv', staffCsvName);
     } catch (e) {
       setSaveError(e instanceof DOMException && e.name === 'QuotaExceededError' ? 'settings.storage_full' : 'settings.save_failed');
       setSubmitting(false);
@@ -299,21 +304,6 @@ export default function SettingsPage() {
   function normalizeDcRankingTop(key: 'scrambleDoubleCheckWorldTop' | 'scrambleDoubleCheckRegionTop') {
     const fallback = key === 'scrambleDoubleCheckWorldTop' ? DC_WORLD_TOP_DEFAULT : DC_REGION_TOP_DEFAULT;
     edit(d => (d[key] === 0 ? { ...d, [key]: fallback } : d));
-  }
-
-  function handleDcOverridesChange(e: ChangeEvent<HTMLInputElement>) {
-    const file = e.target.files?.[0];
-    if (!file) return;
-    setDcOverridesName(file.name);
-    const reader = new FileReader();
-    reader.onload = () => patch({ scrambleDoubleCheckOverrides: parseDoubleCheckOverrides(reader.result as string) });
-    reader.readAsText(file);
-  }
-
-  function handleRemoveDcOverrides() {
-    patch({ scrambleDoubleCheckOverrides: {} });
-    setDcOverridesName(null);
-    if (dcFileInputRef.current) dcFileInputRef.current.value = '';
   }
 
   const liveModeOptions: { value: LiveResultsMode; label: string; description: string }[] = [
@@ -580,11 +570,11 @@ export default function SettingsPage() {
 
           {logoDataUrl ? (
             <>
-            <div className={s.logoPreview}>
+            <div className={ui.filePreview}>
               <img src={logoDataUrl} alt="Logo preview" className={s.logoImg} />
-              <div className={s.logoMeta}>
-                <span className={s.logoName}>{logoName}</span>
-                <button className={s.removeBtn} onClick={handleRemoveLogo}>{t('common.remove')}</button>
+              <div className={ui.fileMeta}>
+                <span className={ui.fileName}>{logoName}</span>
+                <button className={ui.removeBtn} onClick={handleRemoveLogo}>{t('common.remove')}</button>
               </div>
             </div>
             {showScorecards && (
@@ -611,7 +601,7 @@ export default function SettingsPage() {
                   className={ui.radio}
                 />
                 <img src={SCC_DEFAULT_LOGO} alt="Speedcubing Canada logo" className={s.logoImg} />
-                <div className={s.logoMeta}>
+                <div className={ui.fileMeta}>
                   <span className={ui.optionLabel}>{t('settings.logo.default_title')}</span>
                   <span className={ui.optionDesc}>{t('settings.logo.default_desc')}</span>
                   <span className={`${ui.hint} ${s.hintFlush}`}>{t('settings.logo.use_default_hint')}</span>
@@ -707,6 +697,22 @@ export default function SettingsPage() {
             className={s.checkboxCard}
             label={t('settings.nametag.staff_label')}
             desc={t('settings.nametag.staff_desc')}
+          />
+
+          <CheckboxCard
+            checked={nametagCompetitorId}
+            onChange={checked => patch({ nametagCompetitorId: checked })}
+            className={s.checkboxCard}
+            label={t('settings.nametag.competitor_id_label')}
+            desc={t('settings.nametag.competitor_id_desc')}
+          />
+
+          <StaffCsvSection
+            competitionId={competitionId}
+            lines={staffCsv}
+            staffNametags={staffNametags}
+            fileName={staffCsvName}
+            onChange={(lines, file) => { setStaffCsvName(file); patch({ staffCsv: lines }); }}
           />
         </section>
         )}
@@ -841,25 +847,15 @@ export default function SettingsPage() {
                 {t('settings.double_check.overrides_title')}
               </div>
               <p className={ui.hint}>{t('settings.double_check.overrides_hint')}</p>
-              {dcOverrideCount > 0 ? (
-                <div className={s.logoPreview}>
-                  <div className={s.logoMeta}>
-                    <span className={s.logoName}>{dcOverridesName}</span>
-                    <span className={ui.optionDesc}>{t('settings.double_check.overrides_count', { count: dcOverrideCount })}</span>
-                    <button className={s.removeBtn} onClick={handleRemoveDcOverrides}>{t('common.remove')}</button>
-                  </div>
-                </div>
-              ) : (
-                <button className={ui.dropzone} onClick={() => dcFileInputRef.current?.click()}>
-                  {t('common.choose_file')}
-                </button>
-              )}
-              <input
-                ref={dcFileInputRef}
-                type="file"
-                accept=".csv,text/csv,text/plain"
-                hidden
-                onChange={handleDcOverridesChange}
+              <CsvFileField
+                name="dcOverrides"
+                loaded={dcOverrideCount > 0 ? { fileName: dcOverridesName ?? '', count: t('settings.double_check.overrides_count', { count: dcOverrideCount }) } : null}
+                onText={(text, file) => {
+                  const overrides = parseDoubleCheckOverrides(text);
+                  setDcOverridesName(Object.keys(overrides).length ? file : null);
+                  patch({ scrambleDoubleCheckOverrides: overrides });
+                }}
+                onClear={() => { setDcOverridesName(null); patch({ scrambleDoubleCheckOverrides: {} }); }}
               />
 
               </section>
