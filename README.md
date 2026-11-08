@@ -440,7 +440,7 @@ LoginPage → CompetitionPickerPage → RoundScopePage → SettingsPage → Gene
   Listed people get the STAFF badge (or their title, upper-cased, on both sides,
   one line, shrunk to fit), sort with the staff, and keep their own duties and QR codes. Only
   people who get a name tag match. A listed Delegate or organizer keeps their own badge unless
-  the line has a title. `/settings` warns about those Delegates and organizers, every name it
+  the line has a title. `/settings` warns about every listed Delegate and organizer, every name it
   can't find, every name several people share (use the WCA ID then), and a file with no one in it.
 - **Competitor ID on name tags** (off by default) prints `ID: <registrantId>` beside the WCA ID,
   the number scoretakers type and scorecards show. Labelled `ID`, not `WCA Live`, since WCA Live

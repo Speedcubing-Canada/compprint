@@ -36,7 +36,7 @@ export interface StaffMatch {
   unmatched: string[];
   // Lines whose name several people share.
   ambiguous: string[];
-  // Printed names of listed Delegates and organizers without a label: their own badge wins.
+  // Printed names of listed Delegates and organizers: their own badge wins unless the line has a label.
   officials: string[];
 }
 
@@ -65,7 +65,9 @@ export function matchStaff(persons: Person[], lines: StaffCsvLine[], staffNameta
     out.labels.set(p, label && !namesPerson(label, p) ? label : null);
   }
   for (const [p, label] of out.labels) {
-    if (label === null && isOfficial(p)) { out.labels.delete(p); out.officials.push(printedName(p.name)); }
+    if (!isOfficial(p)) continue;
+    out.officials.push(printedName(p.name));
+    if (label === null) out.labels.delete(p);
   }
   return out;
 }

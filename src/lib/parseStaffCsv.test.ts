@@ -64,10 +64,10 @@ const people = [
 const labels = (m: ReturnType<typeof matchStaff>) => [...m.labels].map(([p, label]) => [p.name, label]);
 
 describe('matchStaff', () => {
-  it('reports unlabeled officials, unmatched lines and shared names', () => {
+  it('reports every listed official, unmatched lines and shared names', () => {
     const twins = [...people, person(9, 'Zoe Streamer')];
     const m = matchStaff(twins, parseStaffCsv('Del Egate\norg anizer,Stream\nNobody Here\nZoé Streamer'), true);
-    expect(m.officials).toEqual(['Del Egate']);
+    expect(m.officials).toEqual(['Del Egate', 'Org Anizer']);
     expect(m.unmatched).toEqual(['Nobody Here']);
     expect(m.ambiguous).toEqual(['Zoé Streamer']);
     expect(labels(m)).toEqual([['Org Anizer', 'STREAM']]);
