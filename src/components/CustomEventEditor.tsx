@@ -3,7 +3,7 @@ import { Upload } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import type { CustomEvent, CustomEventFormat } from '../types/settings';
 import { EVENT_ICONS } from '../assets/events';
-import { readTextFile } from '../lib/decodeText';
+import { readTextFile } from '../lib/csv';
 import { parseCompetitorCsv } from '../lib/parseCompetitorCsv';
 import Tooltip from './Tooltip';
 import ui from '../styles/ui.module.css';

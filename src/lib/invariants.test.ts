@@ -2,9 +2,10 @@ import { describe, expect, it } from 'vitest';
 import type { CompetitionSettings } from '../types/settings';
 import type { WCIF } from '../types/wcif';
 import {
-  finalizeEntries, parseWCIF, printedName, realEntries, unstackQuadrants,
+  finalizeEntries, parseWCIF, realEntries, unstackQuadrants,
   type ParsedWCIF, type ScorecardData, type ScorecardEntry,
 } from './wcif-parser';
+import { printedName } from './person';
 import { buildPdfJobs, type PdfJob } from './pdfJobs';
 import { SCORECARD_BUCKETS, filterParsedByScope } from './generationScope';
 import { parseActivityCode } from './activityCode';

@@ -59,6 +59,14 @@ const REGULAR_W = widthMap(REGULAR_GROUPS);
 export const fitLineFs = (w1: number, width: number, maxFs = Infinity, minFs = 7) =>
   Math.max(minFs, Math.min(maxFs, Math.floor((width / Math.max(w1, 1)) * 2) / 2));
 
+// textWidth runs a little wide: the longest default title, NOUVELLE COMPÉTITRICE, measures
+// 172.6pt yet prints on one line in LETTER's 172pt badge, so it must not shrink.
+const BADGE_SLACK = 1;
+
+// Badge title size: full size unless a long (custom) title would overrun the badge.
+export const badgeFs = (title: string, panelW: number, maxFs: number) =>
+  fitLineFs(textWidth(title, 1), nametagInnerW(panelW) + BADGE_SLACK, maxFs);
+
 // Unknown glyphs (CJK, symbols) count as a full em so the name errs small, never clipped.
 export function textWidth(text: string, fontSize: number, bold = true): number {
   const widths = bold ? BOLD_W : REGULAR_W;

@@ -1,5 +1,4 @@
 import type { GenerationScope } from '../lib/generationScope';
-import type { StaffCsvLine } from '../lib/parseStaffCsv';
 
 // Mirrored by `LANGUAGES` in src/i18n/index.ts and `LOCALES` in src/lib/i18n.ts.
 // Keep all three in sync.
@@ -49,6 +48,14 @@ export interface CustomEvent {
   roundLabel?: string;
   // When set, one named card per competitor padded to a full page, instead of 4 blanks.
   competitors?: CustomCompetitor[];
+}
+
+// One staff CSV line. key: an upper-cased WCA ID, or a folded full name. who: the line as
+// typed, for warnings. label: null = the translated STAFF title.
+export interface StaffCsvLine {
+  key: string;
+  who: string;
+  label: string | null;
 }
 
 export interface CompetitionSettings {

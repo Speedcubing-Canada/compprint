@@ -110,7 +110,6 @@ function loadNametagFixture(): {
     // original PDF exactly. The fixture supplies data, the component supplies layout.
     titleFront: c.title_fr,
     titleBack: c.title_en,
-    competitorId: process.argv.includes('--competitor-id') ? c.live_id : '',
     events: c.events,
     // 'Aucun' stays in the arrays (it is a rendered value, not an absence).
     compete: (c.groups ?? []).sort(),
@@ -332,6 +331,7 @@ async function main() {
     useDefaultLogo: false,
     nametagLogoMode: 'hidden',
     nametagLayout: horizontal ? 'horizontal' : 'vertical',
+    nametagCompetitorId: process.argv.includes('--competitor-id'),
   });
 
   console.log(`Rendering ${nt.entries.length} name tags (${ntSettings.nametagLayout})…`);

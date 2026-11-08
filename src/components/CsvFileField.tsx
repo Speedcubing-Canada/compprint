@@ -1,8 +1,7 @@
 import { useRef } from 'react';
 import { useTranslation } from 'react-i18next';
-import { readTextFile } from '../lib/decodeText';
+import { readTextFile } from '../lib/csv';
 import ui from '../styles/ui.module.css';
-import s from '../pages/SettingsPage.module.css';
 
 // The loaded file's name and count, else a picker.
 export default function CsvFileField({ name, fileName, countLabel, onText, onClear }: {
@@ -14,11 +13,11 @@ export default function CsvFileField({ name, fileName, countLabel, onText, onCle
   return (
     <>
       {countLabel ? (
-        <div className={s.logoPreview}>
-          <div className={s.logoMeta}>
-            <span className={s.logoName}>{fileName}</span>
+        <div className={ui.filePreview}>
+          <div className={ui.fileMeta}>
+            <span className={ui.fileName}>{fileName}</span>
             <span className={ui.optionDesc}>{countLabel}</span>
-            <button className={s.removeBtn} onClick={() => { onClear(); if (ref.current) ref.current.value = ''; }}>{t('common.remove')}</button>
+            <button className={ui.removeBtn} onClick={() => { onClear(); if (ref.current) ref.current.value = ''; }}>{t('common.remove')}</button>
           </div>
         </div>
       ) : (

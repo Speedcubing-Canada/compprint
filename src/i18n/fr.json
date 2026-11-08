@@ -134,6 +134,7 @@
       "staff_csv_title": "Équipes de staff (optionnel)",
       "staff_csv_hint": "Téléverser un fichier CSV, une ligne par personne : ID WCA ou nom complet, puis un intitulé de badge optionnel (ex. 2015FOOB01 ou Jeanne Roy,STREAM). Les personnes listées reçoivent un badge STAFF, ou leur intitulé.",
       "staff_csv_count": "{{count}} personne(s) chargée(s)",
+      "staff_csv_empty": "Aucune personne trouvée dans {{names}}. Mettez une personne par ligne.",
       "staff_csv_officials": "Les délégués et organisateurs gardent leur propre badge, sauf si leur ligne a un intitulé. Personnes affectées : {{names}}",
       "staff_csv_unmatched": "Les personnes suivantes sont introuvables dans cette compétition : {{names}}",
       "staff_csv_ambiguous": "Plusieurs personnes portent ces noms, utilisez plutôt leur ID WCA : {{names}}",

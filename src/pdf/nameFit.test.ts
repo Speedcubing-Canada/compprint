@@ -2,17 +2,18 @@ import { describe, it, expect } from 'vitest';
 import { fileURLToPath } from 'node:url';
 import * as fontkit from 'fontkit';
 import {
-  textWidth, nameBox, nameLayout, nametagName, nametagNameW, splitAtSurname,
+  badgeFs, textWidth, nameBox, nameLayout, nametagName, nametagNameW, splitAtSurname,
   NAME_LINE_HEIGHT, NAME_MAX_FS, NAME_MIN_FS, NAMETAG_NAME_MAX_FS,
 } from './nameFit';
 import {
-  NAMETAG_COMPACT_NAME_FS, NAMETAG_COMPACT_NAME_H, NAMETAG_CONFIGS, NAMETAG_H, PDF_FONT, PDF_FONT_BOLD, PDF_FONT_BOLD_EXT, PDF_FONT_EXT,
+  NAMETAG_COMPACT as C, NAMETAG_COMPACT_NAME_FS, NAMETAG_COMPACT_NAME_H, NAMETAG_CONFIGS, NAMETAG_H, PDF_FONT, PDF_FONT_BOLD, PDF_FONT_BOLD_EXT, PDF_FONT_EXT,
   SCORECARD_CONFIGS, nametagInnerW, nametagNameH,
 } from './layoutConstants';
 import { corpus } from '../test/corpus';
 import { randomWcif } from '../test/wcifGen';
-import { printedName } from '../lib/wcif-parser';
+import { printedName } from '../lib/person';
 import { splitName } from '../lib/splitName';
+import { getNametTagTitleStrings } from '../lib/i18n';
 
 const LONG = 'André Rodrigo César Pinheiro Monte Amado';
 const lines = (text: string) => text.split('\n');
@@ -216,5 +217,25 @@ describe('splitAtSurname', () => {
     });
     expect(bad).toEqual([]);
     expect(wrapped).toBeGreaterThan(10);
+  });
+});
+
+// Only a long custom title may shrink: every built-in one prints at full size, as it did before custom titles.
+describe('name tag badge title', () => {
+  const titles = (['en', 'fr', 'es', 'pt'] as const).flatMap(lang => {
+    const t = getNametTagTitleStrings(lang).front;
+    return [true, false].flatMap(f => [t.delegate(f), t.organizer(f), t.newCompetitor(f), t.competitor(f), t.staff(f)]);
+  });
+  const badges = [
+    ...Object.entries(NAMETAG_CONFIGS).map(([paper, c]) => [`vertical ${paper}`, c.panelW, 13] as const),
+    ['horizontal', NAMETAG_H.panelW, C.badgeFs] as const,
+  ];
+
+  it.each(badges)('%s: built-in titles keep full size', (_, panelW, maxFs) => {
+    expect(titles.filter(t => badgeFs(t, panelW, maxFs) < maxFs)).toEqual([]);
+  });
+
+  it('shrinks a long custom title', () => {
+    expect(badgeFs('INTERNATIONAL BROADCAST TEAM LEAD', NAMETAG_CONFIGS.LETTER.panelW, 13)).toBeLessThan(13);
   });
 });

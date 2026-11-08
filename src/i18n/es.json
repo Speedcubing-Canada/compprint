@@ -134,6 +134,7 @@
       "staff_csv_title": "Equipos de staff (opcional)",
       "staff_csv_hint": "Sube un archivo CSV, una línea por persona: ID WCA o nombre completo, y luego un título de acreditación opcional (ej. 2015FOOB01 o Ana Pérez,STREAM). Las personas listadas reciben una acreditación STAFF, o su título.",
       "staff_csv_count": "{{count}} persona(s) cargada(s)",
+      "staff_csv_empty": "No se encontró ninguna persona en {{names}}. Pon una persona por línea.",
       "staff_csv_officials": "Los delegados y organizadores conservan su propia acreditación, salvo que su línea tenga un título. Personas afectadas: {{names}}",
       "staff_csv_unmatched": "Las siguientes personas no se encontraron en esta competencia: {{names}}",
       "staff_csv_ambiguous": "Varias personas comparten estos nombres, usa su ID WCA en su lugar: {{names}}",

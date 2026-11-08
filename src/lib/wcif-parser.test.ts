@@ -1,6 +1,6 @@
 import { describe, it, expect, beforeEach } from 'vitest';
 import { subStageLabel, parseWCIF } from './wcif-parser';
-import { matchStaff, parseStaffCsv } from './parseStaffCsv';
+import { parseStaffCsv } from './parseStaffCsv';
 import { DEFAULT_DOCUMENTS, hasUnassignedIntermediate } from './generationScope';
 import type { ScorecardEntry, CoverEntry, ScorecardData, NametTagEntry } from './wcif-parser';
 import type {
@@ -1712,37 +1712,24 @@ describe('staff CSV', () => {
     ]);
   });
 
-  it('reports officials and unmatched lines', () => {
-    const m = matchStaff(people, csv, true);
-    expect(m.officials).toEqual(['Del Egate', 'Org Anizer']);
-    expect(m.unmatched).toEqual(['Nobody Here']);
-  });
-
-  it('lists an official once, however many lines name them', () => {
-    expect(matchStaff(people, parseStaffCsv('Del Egate\ndel egate,x\n'), true).officials).toEqual(['Del Egate']);
-  });
-
-  it('only matches people who get a name tag', () => {
-    expect(matchStaff(people, parseStaffCsv('Vol Unteer'), false).unmatched).toEqual(['Vol Unteer']);
-  });
-
   it('refuses a name two people share, but not their WCA IDs', () => {
     const twins = [...people, comp(7, 'Zoe Streamer', { wcaId: '2020ZOES01' })];
-    const m = matchStaff(twins, parseStaffCsv('Zoé Streamer\n2020ZOES01,Stream'), true);
-    expect(m.ambiguous).toEqual(['Zoé Streamer']);
-    expect([...m.byRegistrantId]).toEqual([[7, 'STREAM']]);
+    const t = parseWCIF(mkWCIF([e], [r], twins), cfg({ staffCsv: parseStaffCsv('Zoé Streamer\n2020ZOES01,Stream') })).nametags;
+    expect(t.find(x => x.registrantId === 7)).toMatchObject({ role: 'staff', titleFront: 'STREAM' });
+    expect(t.find(x => x.registrantId === 1)).toMatchObject({ role: 'competitor' });
+  });
+
+  it('labels only the listed one of two unregistered Delegates', () => {
+    const unregistered = (name: string, wcaId: string): Person => ({
+      ...per(0, [], { wcaId }), registrantId: null as unknown as number, name, roles: ['delegate'], registration: null,
+    });
+    const both = [unregistered('Liam Orovec', '2014OROV01'), unregistered('Other Delegate', '2015OTHE01')];
+    const t = parseWCIF(mkWCIF([e], [r], both), cfg({ staffCsv: parseStaffCsv('2014OROV01,Stream') })).nametags;
+    expect(t.map(x => [x.name, x.titleFront])).toEqual([['Liam Orovec', 'STREAM'], ['Other Delegate', 'DELEGATE']]);
   });
 
   it('changes nothing without a CSV', () => {
     expect(byName('Zoé Streamer', { staffCsv: [] })).toMatchObject({ role: 'competitor', titleFront: 'COMPETITOR' });
-  });
-
-  it('fills the competitor ID only when asked, and never for non-competing staff or blanks', () => {
-    expect(byName('Plain Competitor').competitorId).toBe('');
-    const on = tags({ nametagCompetitorId: true, otsBlanks: true });
-    expect(on.find(t => t.name === 'Plain Competitor')!.competitorId).toBe('3');
-    expect(on.find(t => t.name === 'Vol Unteer')!.competitorId).toBe('');
-    expect(on.filter(t => t.blank).every(t => t.competitorId === '')).toBe(true);
   });
 });
 

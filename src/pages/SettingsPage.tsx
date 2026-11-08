@@ -7,8 +7,6 @@ import type { GenerationScope, DocumentSelection } from '../lib/generationScope'
 import { LANGUAGES } from '../i18n/index';
 import { resolveDefaultPrimaryLanguage, secondaryLanguageRow, isCanadianLanguage } from '../lib/languageSelector';
 import { parseDoubleCheckOverrides } from '../lib/parseDoubleCheckOverrides';
-import { matchStaff, parseStaffCsv } from '../lib/parseStaffCsv';
-import { getCachedWcif } from '../lib/wcifCache';
 import { isChampionship } from '../lib/championship';
 import Tooltip from '../components/Tooltip';
 import {
@@ -22,6 +20,7 @@ import { SCC_DEFAULT_LOGO } from '../assets/scc-logo';
 import Header from '../components/Header';
 import WarningBanner from '../components/WarningBanner';
 import CsvFileField from '../components/CsvFileField';
+import StaffCsvSection from './StaffCsvSection';
 import { coverTimingShown, restorableSettings, submittedSettings, type SettingsDraft } from '../lib/settingsDraft';
 import OtsNotice from '../components/OtsNotice';
 import CustomEventEditor from '../components/CustomEventEditor';
@@ -262,16 +261,6 @@ export default function SettingsPage() {
   ];
 
   const dcOverrideCount = Object.keys(scrambleDoubleCheckOverrides).length;
-  // The WCIF is cached by the scope step; after a hard reload only the count shows.
-  const cachedWcif = staffCsv.length > 0 ? getCachedWcif(competitionId) : undefined;
-  const staffMatch = cachedWcif ? matchStaff(cachedWcif.persons, staffCsv, staffNametags) : null;
-  const staffWarnings = staffMatch
-    ? ([
-      ['settings.nametag.staff_csv_officials', staffMatch.officials],
-      ['settings.nametag.staff_csv_unmatched', staffMatch.unmatched],
-      ['settings.nametag.staff_csv_ambiguous', staffMatch.ambiguous],
-    ] as const).filter(([, names]) => names.length > 0)
-    : [];
 
   function handleLogoChange(e: ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0];
@@ -581,11 +570,11 @@ export default function SettingsPage() {
 
           {logoDataUrl ? (
             <>
-            <div className={s.logoPreview}>
+            <div className={ui.filePreview}>
               <img src={logoDataUrl} alt="Logo preview" className={s.logoImg} />
-              <div className={s.logoMeta}>
-                <span className={s.logoName}>{logoName}</span>
-                <button className={s.removeBtn} onClick={handleRemoveLogo}>{t('common.remove')}</button>
+              <div className={ui.fileMeta}>
+                <span className={ui.fileName}>{logoName}</span>
+                <button className={ui.removeBtn} onClick={handleRemoveLogo}>{t('common.remove')}</button>
               </div>
             </div>
             {showScorecards && (
@@ -612,7 +601,7 @@ export default function SettingsPage() {
                   className={ui.radio}
                 />
                 <img src={SCC_DEFAULT_LOGO} alt="Speedcubing Canada logo" className={s.logoImg} />
-                <div className={s.logoMeta}>
+                <div className={ui.fileMeta}>
                   <span className={ui.optionLabel}>{t('settings.logo.default_title')}</span>
                   <span className={ui.optionDesc}>{t('settings.logo.default_desc')}</span>
                   <span className={`${ui.hint} ${s.hintFlush}`}>{t('settings.logo.use_default_hint')}</span>
@@ -718,22 +707,13 @@ export default function SettingsPage() {
             desc={t('settings.nametag.competitor_id_desc')}
           />
 
-          <div className={s.subheading}>{t('settings.nametag.staff_csv_title')}</div>
-          <p className={ui.hint}>{t('settings.nametag.staff_csv_hint')}</p>
-          <CsvFileField
-            name="staffCsv"
+          <StaffCsvSection
+            competitionId={competitionId}
+            lines={staffCsv}
+            staffNametags={staffNametags}
             fileName={staffCsvName}
-            countLabel={staffCsv.length > 0 ? t('settings.nametag.staff_csv_count', { count: staffCsv.length }) : null}
-            onText={(text, file) => { setStaffCsvName(file); patch({ staffCsv: parseStaffCsv(text) }); }}
-            onClear={() => { setStaffCsvName(null); patch({ staffCsv: [] }); }}
+            onChange={(lines, file) => { setStaffCsvName(file); patch({ staffCsv: lines }); }}
           />
-          {staffWarnings.length > 0 && (
-            <div className={s.warningWrap}>
-              {staffWarnings.map(([key, names]) => (
-                <WarningBanner key={key}>{t(key, { names: names.join(', ') })}</WarningBanner>
-              ))}
-            </div>
-          )}
         </section>
         )}
 
@@ -993,4 +973,3 @@ function CheckboxCard({ checked, onChange, label, desc, className, disabled }: {
     </label>
   );
 }
-

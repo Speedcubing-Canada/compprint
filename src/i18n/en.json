@@ -134,6 +134,7 @@
       "staff_csv_title": "Staff teams (optional)",
       "staff_csv_hint": "Upload a CSV file, one line per person: WCA ID or full name, then an optional badge title (e.g. 2015FOOB01 or Jane Doe,STREAM). Listed people get a STAFF badge, or their title.",
       "staff_csv_count": "{{count}} person(s) loaded",
+      "staff_csv_empty": "No people found in {{names}}. Put one person per line.",
       "staff_csv_officials": "Delegates and organizers keep their own badge unless their line has a title. Affected people: {{names}}",
       "staff_csv_unmatched": "The following people could not be found in this competition: {{names}}",
       "staff_csv_ambiguous": "Several people share these names, use their WCA ID instead: {{names}}",

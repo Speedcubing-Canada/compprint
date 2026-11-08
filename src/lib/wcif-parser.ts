@@ -40,8 +40,6 @@ export interface NametTagEntry {
   scramble: string[];
   judge: string[];
   run: string[];
-  // The registrant number to print beside the WCA ID; '' when off, for non-competing staff and blanks.
-  competitorId: string;
   // On-the-spot fill-in tag: QR codes point at the competition, not a person.
   blank?: boolean;
   // Non-competing staff or official: no personal results to link.
@@ -60,8 +58,6 @@ export interface FirstTimerEntry {
   // On-the-spot fill-in slip: every field is a line to write on.
   blank?: boolean;
 }
-
-export { printedName } from './person';
 
 function buildDuties(
   assignments: Assignment[],
@@ -1072,13 +1068,13 @@ export function parseWCIF(wcif: WCIF, settings: CompetitionSettings): ParsedWCIF
 
   const nametags: NametTagEntry[] = [];
   const firstTimers: FirstTimerEntry[] = [];
-  const staffTeam = matchStaff(wcif.persons, settings.staffCsv, settings.staffNametags).byRegistrantId;
+  const staffTeam = matchStaff(wcif.persons, settings.staffCsv, settings.staffNametags).labels;
   for (const person of wcif.persons) {
     if (!getsNametag(person, settings.staffNametags)) continue;
     const isDelegate = isDelegateRole(person);
     const isOrganizer = person.roles.includes('organizer');
     const staff = isNonCompetingStaff(person);
-    const staffLabel = staffTeam.get(person.registrantId);
+    const staffLabel = staffTeam.get(person);
 
     const name = printedName(person.name);
     const isFemale = person.gender === 'f';
@@ -1122,7 +1118,6 @@ export function parseWCIF(wcif: WCIF, settings: CompetitionSettings): ParsedWCIF
       role,
       titleFront: staffLabel ?? resolveTitle(nametTagTitles.front, role, isFemale),
       titleBack:  staffLabel ?? resolveTitle(nametTagTitles.back,  role, isFemale),
-      competitorId: settings.nametagCompetitorId && !staff ? String(person.registrantId) : '',
       events,
       compete:  buildDuties(person.assignments, 'competitor',      activityCode, ...dutyArgs),
       scramble: buildDuties(person.assignments, 'staff-scrambler', activityCode, ...dutyArgs),
@@ -1150,7 +1145,7 @@ export function parseWCIF(wcif: WCIF, settings: CompetitionSettings): ParsedWCIF
       role: 'competitor',
       titleFront: resolveTitle(nametTagTitles.front, 'competitor', false),
       titleBack:  resolveTitle(nametTagTitles.back,  'competitor', false),
-      competitorId: '', events: [], compete: [], scramble: [], judge: [], run: [], blank: true,
+      events: [], compete: [], scramble: [], judge: [], run: [], blank: true,
     };
     nametags.push(blankTag, blankTag, blankTag, blankTag);
 

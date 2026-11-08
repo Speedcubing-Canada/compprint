@@ -209,15 +209,6 @@
 
 /* ---------- logo / file rows ---------- */
 
-.logoPreview {
-  display: flex;
-  align-items: center;
-  gap: var(--space-4);
-  background-color: var(--surface);
-  border: 1px solid var(--border);
-  border-radius: var(--radius-md);
-  padding: var(--space-3) var(--space-4);
-}
 
 /* A standalone toggle that happens to show the logo it turns on. */
 .logoPreviewChoice {
@@ -235,36 +226,9 @@
   flex-shrink: 0;
 }
 
-.logoMeta {
-  display: flex;
-  flex-direction: column;
-  gap: 6px;
-  min-width: 0;
-}
 
-.logoName {
-  font-size: var(--fs-label);
-  color: var(--text-muted);
-  word-break: break-word;
-}
 
-.removeBtn {
-  background: none;
-  border: 1px solid var(--border-strong);
-  border-radius: var(--radius-sm);
-  padding: 3px 10px;
-  font-size: var(--fs-caption);
-  cursor: pointer;
-  color: var(--text-muted);
-  font-family: inherit;
-  align-self: flex-start;
-  transition: border-color 0.12s ease, color 0.12s ease;
-}
 
-.removeBtn:hover {
-  border-color: var(--danger);
-  color: var(--danger);
-}
 
 /* ---------- misc blocks ---------- */
 

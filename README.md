@@ -433,12 +433,15 @@ LoginPage → CompetitionPickerPage → RoundScopePage → SettingsPage → Gene
   ID or full name (accent and case insensitive, with or without the WCIF's `(local name)`
   suffix), then an optional badge title, e.g. `2015FOOB01` or `Jane Doe,STREAM`. Commas,
   semicolons (Excel's "CSV" in French, Spanish and Portuguese) or tabs separate the fields,
-  double quotes may hold one, a header row is skipped, and a non-UTF-8 file is read as
-  Windows-1252. Listed people get the STAFF badge (or their title, upper-cased, on both sides,
+  double quotes may hold one, and a header row is skipped. The competitor and double-check
+  uploads share this parsing (`src/lib/csv.ts`): a file with a UTF-16 byte order mark (Excel's
+  "Unicode Text") is read as UTF-16, else a non-UTF-8 file is read as Windows-1252. A second
+  column that is a WCA ID or the person's own name (a `Name,WCA ID` roster) is not a title.
+  Listed people get the STAFF badge (or their title, upper-cased, on both sides,
   one line, shrunk to fit), sort with the staff, and keep their own duties and QR codes. Only
   people who get a name tag match. A listed Delegate or organizer keeps their own badge unless
-  the line has a title. `/settings` warns about every such line, every name it can't find, and
-  every name several people share (use the WCA ID then).
+  the line has a title. `/settings` warns about those Delegates and organizers, every name it
+  can't find, every name several people share (use the WCA ID then), and a file with no one in it.
 - **Competitor ID on name tags** (off by default) prints `ID: <registrantId>` beside the WCA ID,
   the number scoretakers type and scorecards show. Labelled `ID`, not `WCA Live`, since WCA Live
   is being retired. The line shrinks to fit, never wraps, and keeps its line
