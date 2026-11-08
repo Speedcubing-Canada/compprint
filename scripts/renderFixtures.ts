@@ -2,6 +2,7 @@
 //
 //   npm run render:fixtures            # vertical nametags (default)
 //   npm run render:fixtures -- --horizontal
+//   npm run render:fixtures -- --live-id     # adds "ID: N" to the name tags
 //
 // Writes to ../current-output/, which the pdf-print-edit skill diffs against
 // ../original-output/. Renders the shipping components, never a copy of them.
@@ -109,6 +110,7 @@ function loadNametagFixture(): {
     // original PDF exactly. The fixture supplies data, the component supplies layout.
     titleFront: c.title_fr,
     titleBack: c.title_en,
+    liveId: process.argv.includes('--live-id') ? c.live_id : '',
     events: c.events,
     // 'Aucun' stays in the arrays (it is a rendered value, not an absence).
     compete: (c.groups ?? []).sort(),

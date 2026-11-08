@@ -429,6 +429,17 @@ LoginPage → CompetitionPickerPage → RoundScopePage → SettingsPage → Gene
   switch to turn the feature on: it is on for every WCA competition, its rules live under
   **Advanced** at the bottom of `/settings`, and "off" is unticking both ranking rules with no
   round and no CSV. Custom (non-WCA) competitions never get it, having no WCIF to rank against.
+- **Staff teams** come from an optional CSV in the name tag settings, one person per line,
+  no header: a WCA ID or full name (accent and case insensitive, with or without the WCIF's
+  `(local name)` suffix), then an optional badge title, e.g. `2015FOOB01` or `Jane Doe,STREAM`.
+  Listed people get the STAFF badge (or their title, upper-cased, on both sides), sort with the
+  staff, and keep their own duties and QR codes. A listed Delegate or organizer keeps their own
+  badge unless the line has a title, and `/settings` warns about every such line and every
+  name it can't find.
+- **Competitor ID on name tags** (off by default) prints `ID: <registrantId>` beside the WCA ID,
+  the number scoretakers type and scorecards show. Labelled `ID`, not `WCA Live`, since WCA Live
+  is being retired. The line shrinks to fit, never wraps, and keeps its line
+  box so nothing under it moves. Non-competing staff and blank tags have no number to print.
 - Scorecards come out in **cut-and-stack order**: print, cut each sheet into 4, keep the four
   positions separated, stack them in order, and the deck is already sorted. The download page
   spells this out per document.

@@ -1,5 +1,6 @@
 import type { ReactNode } from 'react';
 import { Document, Page, View, Text, Image, StyleSheet, Svg, Path } from '@react-pdf/renderer';
+import type { Style } from '@react-pdf/types';
 import { docMeta } from './docMeta';
 import type { CompetitionSettings, LiveResultsMode, NametTagLayout, NametTagLogoMode } from '../types/settings';
 import type { NametTagEntry, NametTagRole } from '../lib/wcif-parser';
@@ -9,12 +10,37 @@ import { resolveLogo } from '../lib/logo';
 import { qrPathData } from './qrPath';
 import {
   NAMETAGS_PER_PAGE, NAMETAG_COMPACT as C, NAMETAG_COMPACT_NAME_FS, NAMETAG_COMPACT_NAME_H, NAMETAG_CONFIGS, NAMETAG_H, NAMETAG_PANEL_BORDER,
-  NAMETAG_PANEL_PAD, ICON_GAP, eventIconsVisible, nametagIconSize, liveQrTarget, nametagCompactQrSize, nametagHPositions, nametagNameH,
+  NAMETAG_PANEL_PAD, ICON_GAP, nametagInnerW, eventIconsVisible, nametagIconSize, liveQrTarget, nametagCompactQrSize, nametagHPositions, nametagNameH,
   nametagTopSectionH,
   PDF_FONT as FONT, PDF_FONT_BOLD as FONT_BOLD,
 } from './layoutConstants';
 import './fontSetup';
 import { nametagName, NAME_LINE_HEIGHT, textWidth } from './nameFit';
+
+// One line, never wrapped: shrinks in half points to fit, down to `minFs`.
+function fitFs(text: string, maxFs: number, width: number, minFs: number) {
+  return Math.max(minFs, Math.min(maxFs, Math.floor((width / Math.max(textWidth(text, 1), 1)) * 2) / 2));
+}
+
+// Not "WCA Live": that site is being retired, the registrant number outlives it.
+const LIVE_PREFIX = 'ID: ';
+const ID_GAP = '    ';
+
+// The WCA ID, then the registrant number in bold like scorecards. The line box keeps `maxFs`'s
+// height when the text shrinks, so nothing under it moves.
+function IdLine({ entry, maxFs, panelW, style }: {
+  entry: NametTagEntry; maxFs: number; panelW: number; style: Style;
+}) {
+  const live = entry.liveId;
+  const text = [entry.wcaId, live && LIVE_PREFIX + live].filter(Boolean).join(ID_GAP);
+  const fontSize = fitFs(text, maxFs, nametagInnerW(panelW), 7);
+  return (
+    <Text style={[style, { fontSize, lineHeight: (maxFs * 1.1) / fontSize }]}>
+      {entry.wcaId || (live ? '' : ' ')}
+      {live && <>{entry.wcaId ? ID_GAP : ''}{LIVE_PREFIX}<Text style={{ fontFamily: FONT_BOLD }}>{live}</Text></>}
+    </Text>
+  );
+}
 
 
 // Vertical layout: landscape page, 4 slots wide × 2 tall = 8 slots = 4 pairs.
@@ -115,14 +141,14 @@ function PanelTop({ entry, panelW, compName, titleText, logoMode, logoDataUrl, c
       <Text style={[s.name, c.name, { fontSize: name.fontSize, lineHeight: NAME_LINE_HEIGHT }]}>{name.text}</Text>
       {!compact && <View style={{ flex: 1 }} />}
       <View style={[s.badge, c.badge, { backgroundColor: bg }]}>
-        <Text style={[s.badgeText, c.badgeText, { color: fg }]}>{titleText}</Text>
+        <Text style={[s.badgeText, c.badgeText, { color: fg, fontSize: fitFs(titleText, compact ? C.badgeFs : 13, nametagInnerW(panelW) - 4, 7) }]}>{titleText}</Text>
       </View>
       {showEvents && (
         <View style={[s.iconsRow, c.iconsRow]}>
           {icons.map(evId => <Image key={evId} src={EVENT_ICONS[evId]} style={{ width: iconSz, height: iconSz, marginHorizontal: ICON_GAP }} />)}
         </View>
       )}
-      {!compact && <Text style={s.wcaId}>{entry.wcaId || ' '}</Text>}
+      {!compact && <IdLine entry={entry} maxFs={13} panelW={panelW} style={s.wcaId} />}
     </View>
   );
 }
@@ -159,7 +185,7 @@ function QrSection({ entry, qr, qrSize, strings, compact = false }: {
   if (!compact) return codes;
   return (
     <>
-      <View style={sc.idSlot}><Text style={sc.wcaId}>{entry.wcaId || ' '}</Text></View>
+      <View style={sc.idSlot}><IdLine entry={entry} maxFs={C.idFs} panelW={NAMETAG_H.panelW} style={sc.wcaId} /></View>
       {codes}
     </>
   );

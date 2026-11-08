@@ -1,4 +1,5 @@
 import type { GenerationScope } from '../lib/generationScope';
+import type { StaffCsvLine } from '../lib/parseStaffCsv';
 
 // Mirrored by `LANGUAGES` in src/i18n/index.ts and `LOCALES` in src/lib/i18n.ts.
 // Keep all three in sync.
@@ -104,6 +105,10 @@ export interface CompetitionSettings {
   otsBlanks: boolean;
   // Name tags for non-competing Delegates, organizers and volunteers.
   staffNametags: boolean;
+  // Uploaded staff team list: these people get a STAFF (or their own label) badge.
+  staffCsv: StaffCsvLine[];
+  // "ID: <registrantId>" beside the WCA ID on name tags.
+  nametagLiveId: boolean;
   // Station numbers on a one-group final's blanks, only when its field fits the stations.
   finalStationNumbers: boolean;
   // Overrides the station count read from the WCIF. `null` = detected.

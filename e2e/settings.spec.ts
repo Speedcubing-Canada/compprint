@@ -27,3 +27,13 @@ test('the whole flow works in French', async ({ page, isMobile }) => {
   const { name } = await download(page, 'Télécharger');
   expect(name).toBe('PickeringBlindfolded2026_pdfs.zip');
 });
+
+test('a staff CSV warns about officials and names it cannot find', async ({ page }) => {
+  const csv = '2007STRO01\nMarcel Martel,Stream\nNobody Here\n';
+  await page.locator('input[type="file"][accept^=".csv"]').first()
+    .setInputFiles({ name: 'staff.csv', mimeType: 'text/csv', buffer: Buffer.from(csv) });
+
+  await expect(page.getByText('3 person(s) loaded')).toBeVisible();
+  await expect(page.getByText('Delegates and organizers keep their own badge unless their line has a title. Affected people: Sarah Strong')).toBeVisible();
+  await expect(page.getByText('The following people could not be found in this competition: nobody here')).toBeVisible();
+});

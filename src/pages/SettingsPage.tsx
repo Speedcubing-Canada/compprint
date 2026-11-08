@@ -7,6 +7,9 @@ import type { GenerationScope, DocumentSelection } from '../lib/generationScope'
 import { LANGUAGES } from '../i18n/index';
 import { resolveDefaultPrimaryLanguage, secondaryLanguageRow, isCanadianLanguage } from '../lib/languageSelector';
 import { parseDoubleCheckOverrides } from '../lib/parseDoubleCheckOverrides';
+import { parseStaffCsv } from '../lib/parseStaffCsv';
+import { matchStaff } from '../lib/wcif-parser';
+import { getCachedWcif } from '../lib/wcifCache';
 import { isChampionship } from '../lib/championship';
 import Tooltip from '../components/Tooltip';
 import {
@@ -93,6 +96,8 @@ export default function SettingsPage() {
     scorecardsA6: false,
     otsBlanks: false,
     staffNametags: true,
+    staffCsv: [],
+    nametagLiveId: preset.nametagLiveId ?? false,
     finalStationNumbers: true,
     stationsPerStage: null,
     // Regulation 11i binds every competition, so there is no switch: "off" is both ranking
@@ -124,7 +129,7 @@ export default function SettingsPage() {
     liveResultsMode, wcaLiveId, hideWcaLiveId, nametagLogoMode, nametagQrMode, nametagLayout,
     scorecardCheckMode, customEvents, splitPdfsByStage, scrambleDoubleCheckRounds,
     scrambleDoubleCheckOverrides, scrambleDoubleCheckWorldTop, scrambleDoubleCheckRegionTop,
-    scrambleDoubleCheckRegionScope, otsBlanks, staffNametags, finalStationNumbers, stationsPerStage, scorecardsA6,
+    scrambleDoubleCheckRegionScope, otsBlanks, staffNametags, staffCsv, nametagLiveId, finalStationNumbers, stationsPerStage, scorecardsA6,
   } = draft;
   const merged = mergesRounds(draft);
   const coverTiming = coverTimingShown(draft.coverTiming, docs);
@@ -141,6 +146,7 @@ export default function SettingsPage() {
     customEvents.length > 0 || Object.keys(scrambleDoubleCheckOverrides).length > 0,
   );
   const [dcOverridesName, setDcOverridesName] = useState<string | null>(() => readFileName('dcOverrides'));
+  const [staffCsvName, setStaffCsvName] = useState<string | null>(() => readFileName('staffCsv'));
   // Generate waits for the WCA Live lookup: without its ids every name tag QR falls back to
   // the WCA Live home page.
   const [submitting, setSubmitting] = useState(false);
@@ -149,6 +155,7 @@ export default function SettingsPage() {
   const knownLive = useRef(previous?.wcaLiveId ? { id: previous.wcaLiveId, personIds: previous.wcaLivePersonIds } : null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const dcFileInputRef = useRef<HTMLInputElement>(null);
+  const staffFileInputRef = useRef<HTMLInputElement>(null);
 
   // Reads the draft as committed when the wait ends, lookup patches and edits made meanwhile included.
   const save = useEffectEvent(() => {
@@ -158,6 +165,7 @@ export default function SettingsPage() {
       }));
       writeFileName('logo', logoName);
       writeFileName('dcOverrides', dcOverridesName);
+      writeFileName('staffCsv', staffCsvName);
     } catch (e) {
       setSaveError(e instanceof DOMException && e.name === 'QuotaExceededError' ? 'settings.storage_full' : 'settings.save_failed');
       setSubmitting(false);
@@ -256,6 +264,9 @@ export default function SettingsPage() {
   ];
 
   const dcOverrideCount = Object.keys(scrambleDoubleCheckOverrides).length;
+  // The WCIF is cached by the scope step; after a hard reload only the count shows.
+  const cachedWcif = staffCsv.length > 0 ? getCachedWcif(competitionId) : undefined;
+  const staffMatch = cachedWcif ? matchStaff(cachedWcif.persons, staffCsv) : null;
 
   function handleLogoChange(e: ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0];
@@ -308,6 +319,21 @@ export default function SettingsPage() {
     const reader = new FileReader();
     reader.onload = () => patch({ scrambleDoubleCheckOverrides: parseDoubleCheckOverrides(reader.result as string) });
     reader.readAsText(file);
+  }
+
+  function handleStaffCsvChange(e: ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    setStaffCsvName(file.name);
+    const reader = new FileReader();
+    reader.onload = () => patch({ staffCsv: parseStaffCsv(reader.result as string) });
+    reader.readAsText(file);
+  }
+
+  function handleRemoveStaffCsv() {
+    patch({ staffCsv: [] });
+    setStaffCsvName(null);
+    if (staffFileInputRef.current) staffFileInputRef.current.value = '';
   }
 
   function handleRemoveDcOverrides() {
@@ -708,6 +734,47 @@ export default function SettingsPage() {
             label={t('settings.nametag.staff_label')}
             desc={t('settings.nametag.staff_desc')}
           />
+
+          <CheckboxCard
+            checked={nametagLiveId}
+            onChange={checked => patch({ nametagLiveId: checked })}
+            className={s.checkboxCard}
+            label={t('settings.nametag.live_id_label')}
+            desc={t('settings.nametag.live_id_desc')}
+          />
+
+          <div className={s.subheading}>{t('settings.nametag.staff_csv_title')}</div>
+          <p className={ui.hint}>{t('settings.nametag.staff_csv_hint')}</p>
+          {staffCsv.length > 0 ? (
+            <div className={s.logoPreview}>
+              <div className={s.logoMeta}>
+                <span className={s.logoName}>{staffCsvName}</span>
+                <span className={ui.optionDesc}>{t('settings.nametag.staff_csv_count', { count: staffCsv.length })}</span>
+                <button className={s.removeBtn} onClick={handleRemoveStaffCsv}>{t('common.remove')}</button>
+              </div>
+            </div>
+          ) : (
+            <button className={ui.dropzone} onClick={() => staffFileInputRef.current?.click()}>
+              {t('common.choose_file')}
+            </button>
+          )}
+          <input
+            ref={staffFileInputRef}
+            type="file"
+            accept=".csv,text/csv,text/plain"
+            hidden
+            onChange={handleStaffCsvChange}
+          />
+          {staffMatch && (staffMatch.officials.length > 0 || staffMatch.unmatched.length > 0) && (
+            <div className={s.warningWrap}>
+              {staffMatch.officials.length > 0 && (
+                <WarningBanner>{t('settings.nametag.staff_csv_officials', { names: staffMatch.officials.join(', ') })}</WarningBanner>
+              )}
+              {staffMatch.unmatched.length > 0 && (
+                <WarningBanner>{t('settings.nametag.staff_csv_unmatched', { names: staffMatch.unmatched.join(', ') })}</WarningBanner>
+              )}
+            </div>
+          )}
         </section>
         )}
 

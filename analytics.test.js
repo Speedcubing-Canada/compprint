@@ -98,7 +98,7 @@ describe('round trip with the real client payload', () => {
         competitionId: 'GrosJouets2026', paperFormat: 'A4', language: 'fr',
         secondaryLanguage: 'en', nametagLayout: 'vertical', nametagLogoMode: 'with-name',
         nametagQrMode: 'back-only', useDefaultLogo: true, logoDataUrl: null,
-        hideWcaLiveId: false, secondRoundMode: 'prefilled',
+        hideWcaLiveId: false, nametagLiveId: false, staffCsv: [], secondRoundMode: 'prefilled',
         scorecardCheckMode: 'per-group-card', scrambleDoubleCheck: false,
         customEvents: [], isCustomCompetition: false,
         generationScope: { mode: 'everything', documents: { scorecards: true, nametags: true } },

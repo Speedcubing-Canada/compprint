@@ -24,6 +24,7 @@ const KEYS = {
 const FILE_NAME_KEYS = {
   logo: 'logo_file_name',
   dcOverrides: 'dc_overrides_file_name',
+  staffCsv: 'staff_csv_file_name',
 } as const;
 
 export type UploadKind = keyof typeof FILE_NAME_KEYS;
@@ -155,6 +156,8 @@ export function readSettings(): CompetitionSettings | null {
   if (s.splitPdfsByStage === undefined) s.splitPdfsByStage = false;
   if (s.otsBlanks === undefined) s.otsBlanks = false;
   if (s.staffNametags === undefined) s.staffNametags = true;
+  if (s.staffCsv === undefined) s.staffCsv = [];
+  if (s.nametagLiveId === undefined) s.nametagLiveId = false;
   if (s.finalStationNumbers === undefined) s.finalStationNumbers = true;
   if (s.stationsPerStage === undefined) s.stationsPerStage = null;
   if (s.liveResultsMode === undefined) s.liveResultsMode = 'wca-live';
