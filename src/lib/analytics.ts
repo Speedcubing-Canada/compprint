@@ -123,7 +123,7 @@ export function buildGenerateEvent(args: {
       logo: logoChoice(settings),
       liveResultsMode: settings.liveResultsMode,
       hideWcaLiveId: settings.hideWcaLiveId,
-      nametagLiveId: settings.nametagLiveId,
+      nametagCompetitorId: settings.nametagCompetitorId,
       // A count only: the lines are people's names.
       staffCsvLines: settings.staffCsv.length,
       splitPdfsByStage: settings.splitPdfsByStage,

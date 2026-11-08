@@ -108,7 +108,7 @@ export interface CompetitionSettings {
   // Uploaded staff team list: these people get a STAFF (or their own label) badge.
   staffCsv: StaffCsvLine[];
   // "ID: <registrantId>" beside the WCA ID on name tags.
-  nametagLiveId: boolean;
+  nametagCompetitorId: boolean;
   // Station numbers on a one-group final's blanks, only when its field fits the stations.
   finalStationNumbers: boolean;
   // Overrides the station count read from the WCIF. `null` = detected.

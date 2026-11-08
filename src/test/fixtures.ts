@@ -46,7 +46,7 @@ export function testSettings(over: Partial<CompetitionSettings> = {}): Competiti
     otsBlanks: false,
     staffNametags: true,
     staffCsv: [],
-    nametagLiveId: false,
+    nametagCompetitorId: false,
     finalStationNumbers: true,
     stationsPerStage: null,
     scrambleDoubleCheck: false,

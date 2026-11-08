@@ -157,7 +157,7 @@ export function readSettings(): CompetitionSettings | null {
   if (s.otsBlanks === undefined) s.otsBlanks = false;
   if (s.staffNametags === undefined) s.staffNametags = true;
   if (s.staffCsv === undefined) s.staffCsv = [];
-  if (s.nametagLiveId === undefined) s.nametagLiveId = false;
+  if (s.nametagCompetitorId === undefined) s.nametagCompetitorId = false;
   if (s.finalStationNumbers === undefined) s.finalStationNumbers = true;
   if (s.stationsPerStage === undefined) s.stationsPerStage = null;
   if (s.liveResultsMode === undefined) s.liveResultsMode = 'wca-live';

@@ -1,6 +1,5 @@
 import type { CustomCompetitor } from '../types/settings';
-
-const WCA_ID_RE = /^\d{4}[A-Z]{4}\d{2}$/i;
+import { isWcaId } from './parseStaffCsv';
 
 /**
  * One competitor per line, unquoted: `Name` or `Name,WCAID`.
@@ -30,7 +29,7 @@ export function parseCompetitorCsv(text: string): CustomCompetitor[] {
     let name: string;
     let wcaId: string;
     const last = fields[fields.length - 1];
-    if (fields.length > 1 && WCA_ID_RE.test(last)) {
+    if (fields.length > 1 && isWcaId(last)) {
       wcaId = last.toUpperCase();
       name = fields.slice(0, -1).filter(Boolean).join(', ');
     } else {

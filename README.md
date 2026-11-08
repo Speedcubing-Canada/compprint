@@ -429,13 +429,16 @@ LoginPage → CompetitionPickerPage → RoundScopePage → SettingsPage → Gene
   switch to turn the feature on: it is on for every WCA competition, its rules live under
   **Advanced** at the bottom of `/settings`, and "off" is unticking both ranking rules with no
   round and no CSV. Custom (non-WCA) competitions never get it, having no WCIF to rank against.
-- **Staff teams** come from an optional CSV in the name tag settings, one person per line,
-  no header: a WCA ID or full name (accent and case insensitive, with or without the WCIF's
-  `(local name)` suffix), then an optional badge title, e.g. `2015FOOB01` or `Jane Doe,STREAM`.
-  Listed people get the STAFF badge (or their title, upper-cased, on both sides), sort with the
-  staff, and keep their own duties and QR codes. A listed Delegate or organizer keeps their own
-  badge unless the line has a title, and `/settings` warns about every such line and every
-  name it can't find.
+- **Staff teams** come from an optional CSV in the name tag settings, one person per line: a WCA
+  ID or full name (accent and case insensitive, with or without the WCIF's `(local name)`
+  suffix), then an optional badge title, e.g. `2015FOOB01` or `Jane Doe,STREAM`. Commas,
+  semicolons (Excel's "CSV" in French, Spanish and Portuguese) or tabs separate the fields,
+  double quotes may hold one, a header row is skipped, and a non-UTF-8 file is read as
+  Windows-1252. Listed people get the STAFF badge (or their title, upper-cased, on both sides,
+  one line, shrunk to fit), sort with the staff, and keep their own duties and QR codes. Only
+  people who get a name tag match. A listed Delegate or organizer keeps their own badge unless
+  the line has a title. `/settings` warns about every such line, every name it can't find, and
+  every name several people share (use the WCA ID then).
 - **Competitor ID on name tags** (off by default) prints `ID: <registrantId>` beside the WCA ID,
   the number scoretakers type and scorecards show. Labelled `ID`, not `WCA Live`, since WCA Live
   is being retired. The line shrinks to fit, never wraps, and keeps its line

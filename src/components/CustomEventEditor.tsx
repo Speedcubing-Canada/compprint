@@ -3,6 +3,7 @@ import { Upload } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import type { CustomEvent, CustomEventFormat } from '../types/settings';
 import { EVENT_ICONS } from '../assets/events';
+import { readTextFile } from '../lib/decodeText';
 import { parseCompetitorCsv } from '../lib/parseCompetitorCsv';
 import Tooltip from './Tooltip';
 import ui from '../styles/ui.module.css';
@@ -76,12 +77,10 @@ export default function CustomEventEditor({
   function handleCsvUpload(i: number, e: ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0];
     if (!file) return;
-    const reader = new FileReader();
-    reader.onload = () => {
-      update(i, { competitors: parseCompetitorCsv(reader.result as string) });
+    readTextFile(file, text => {
+      update(i, { competitors: parseCompetitorCsv(text) });
       setCsvNames(prev => ({ ...prev, [i]: file.name }));
-    };
-    reader.readAsText(file);
+    });
   }
 
   function removeCsv(i: number) {

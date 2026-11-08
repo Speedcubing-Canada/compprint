@@ -27,7 +27,7 @@ function settings(over: Partial<CompetitionSettings> = {}): CompetitionSettings 
     wcaLivePersonIds: null,
     hideWcaLiveId: false,
     staffCsv: [],
-    nametagLiveId: false,
+    nametagCompetitorId: false,
     nametagLogoMode: 'with-name',
     nametagQrMode: 'back-only',
     nametagLayout: 'vertical',

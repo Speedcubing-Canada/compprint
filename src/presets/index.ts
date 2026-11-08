@@ -17,7 +17,7 @@ export interface Preset {
 // Excludes anything competition-specific: ids, custom events, generationScope.
 export type PresetSettings = Partial<Pick<CompetitionSettings,
   | 'language' | 'secondaryLanguage' | 'paperFormat' | 'secondRoundMode'
-  | 'useDefaultLogo' | 'hideWcaLiveId' | 'nametagLiveId'
+  | 'useDefaultLogo' | 'hideWcaLiveId' | 'nametagCompetitorId'
   | 'nametagLogoMode' | 'nametagQrMode' | 'nametagLayout'
   | 'scorecardCheckMode' | 'scrambleDoubleCheckRegionTop' | 'mergeScorecardRounds' | 'coverTiming' | 'underlineSharedFirstNames'
 >> & {
@@ -44,7 +44,7 @@ const SETTING_VALUES: Record<keyof PresetSettings, readonly string[] | 'boolean'
   secondRoundMode: ['prefilled', 'blanks'],
   useDefaultLogo: 'boolean',
   hideWcaLiveId: 'boolean',
-  nametagLiveId: 'boolean',
+  nametagCompetitorId: 'boolean',
   nametagLogoMode: ['hidden', 'with-name', 'logo-only'],
   nametagQrMode: ['back-only', 'both-sides'],
   nametagLayout: ['vertical', 'horizontal'],

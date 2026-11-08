@@ -1,6 +1,6 @@
 import { describe, it, expect, beforeEach } from 'vitest';
-import { subStageLabel, parseWCIF, matchStaff } from './wcif-parser';
-import { parseStaffCsv } from './parseStaffCsv';
+import { subStageLabel, parseWCIF } from './wcif-parser';
+import { matchStaff, parseStaffCsv } from './parseStaffCsv';
 import { DEFAULT_DOCUMENTS, hasUnassignedIntermediate } from './generationScope';
 import type { ScorecardEntry, CoverEntry, ScorecardData, NametTagEntry } from './wcif-parser';
 import type {
@@ -19,7 +19,7 @@ const BASE: CompetitionSettings = {
   logoDataUrl: null, useDefaultLogo: false, scorecardCompNameWithLogo: false, liveResultsMode: 'wca-live',
   wcaLiveId: null, wcaLivePersonIds: null,
   hideWcaLiveId: false, nametagLogoMode: 'hidden', nametagQrMode: 'back-only', nametagLayout: 'vertical',
-  splitPdfsByStage: false, mergeScorecardRounds: false, otsBlanks: false, staffNametags: true, staffCsv: [], nametagLiveId: false, scorecardsA6: false,
+  splitPdfsByStage: false, mergeScorecardRounds: false, otsBlanks: false, staffNametags: true, staffCsv: [], nametagCompetitorId: false, scorecardsA6: false,
   finalStationNumbers: true, stationsPerStage: null,
   customEvents: [], scorecardCheckMode: 'per-group-card',
   scrambleDoubleCheck: false, scrambleDoubleCheckRounds: ['finals'], scrambleDoubleCheckOverrides: {},
@@ -1713,21 +1713,36 @@ describe('staff CSV', () => {
   });
 
   it('reports officials and unmatched lines', () => {
-    const m = matchStaff(people, csv);
+    const m = matchStaff(people, csv, true);
     expect(m.officials).toEqual(['Del Egate', 'Org Anizer']);
-    expect(m.unmatched).toEqual(['nobody here']);
+    expect(m.unmatched).toEqual(['Nobody Here']);
+  });
+
+  it('lists an official once, however many lines name them', () => {
+    expect(matchStaff(people, parseStaffCsv('Del Egate\ndel egate,x\n'), true).officials).toEqual(['Del Egate']);
+  });
+
+  it('only matches people who get a name tag', () => {
+    expect(matchStaff(people, parseStaffCsv('Vol Unteer'), false).unmatched).toEqual(['Vol Unteer']);
+  });
+
+  it('refuses a name two people share, but not their WCA IDs', () => {
+    const twins = [...people, comp(7, 'Zoe Streamer', { wcaId: '2020ZOES01' })];
+    const m = matchStaff(twins, parseStaffCsv('Zoé Streamer\n2020ZOES01,Stream'), true);
+    expect(m.ambiguous).toEqual(['Zoé Streamer']);
+    expect([...m.byRegistrantId]).toEqual([[7, 'STREAM']]);
   });
 
   it('changes nothing without a CSV', () => {
     expect(byName('Zoé Streamer', { staffCsv: [] })).toMatchObject({ role: 'competitor', titleFront: 'COMPETITOR' });
   });
 
-  it('fills the WCA Live ID only when asked, and never for non-competing staff or blanks', () => {
-    expect(byName('Plain Competitor').liveId).toBe('');
-    const on = tags({ nametagLiveId: true, otsBlanks: true });
-    expect(on.find(t => t.name === 'Plain Competitor')!.liveId).toBe('3');
-    expect(on.find(t => t.name === 'Vol Unteer')!.liveId).toBe('');
-    expect(on.filter(t => t.blank).map(t => t.liveId)).toEqual(['', '', '', '']);
+  it('fills the competitor ID only when asked, and never for non-competing staff or blanks', () => {
+    expect(byName('Plain Competitor').competitorId).toBe('');
+    const on = tags({ nametagCompetitorId: true, otsBlanks: true });
+    expect(on.find(t => t.name === 'Plain Competitor')!.competitorId).toBe('3');
+    expect(on.find(t => t.name === 'Vol Unteer')!.competitorId).toBe('');
+    expect(on.filter(t => t.blank).every(t => t.competitorId === '')).toBe(true);
   });
 });
 

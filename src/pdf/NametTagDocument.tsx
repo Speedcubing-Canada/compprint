@@ -15,29 +15,28 @@ import {
   PDF_FONT as FONT, PDF_FONT_BOLD as FONT_BOLD,
 } from './layoutConstants';
 import './fontSetup';
-import { nametagName, NAME_LINE_HEIGHT, textWidth } from './nameFit';
-
-// One line, never wrapped: shrinks in half points to fit, down to `minFs`.
-function fitFs(text: string, maxFs: number, width: number, minFs: number) {
-  return Math.max(minFs, Math.min(maxFs, Math.floor((width / Math.max(textWidth(text, 1), 1)) * 2) / 2));
-}
+import { fitLineFs, nametagName, NAME_LINE_HEIGHT, textWidth } from './nameFit';
 
 // Not "WCA Live": that site is being retired, the registrant number outlives it.
-const LIVE_PREFIX = 'ID: ';
+const ID_PREFIX = 'ID: ';
 const ID_GAP = '    ';
+const BADGE_FS = 13;
+const ID_FS = 13;
+// Badge titles never wrap: a long custom one shrinks, then ellipsizes.
+const ONE_LINE = { maxLines: 1, textOverflow: 'ellipsis' } as Style;
 
 // The WCA ID, then the registrant number in bold like scorecards. The line box keeps `maxFs`'s
 // height when the text shrinks, so nothing under it moves.
 function IdLine({ entry, maxFs, panelW, style }: {
   entry: NametTagEntry; maxFs: number; panelW: number; style: Style;
 }) {
-  const live = entry.liveId;
-  const text = [entry.wcaId, live && LIVE_PREFIX + live].filter(Boolean).join(ID_GAP);
-  const fontSize = fitFs(text, maxFs, nametagInnerW(panelW), 7);
+  const id = entry.competitorId;
+  const plain = (entry.wcaId && id ? entry.wcaId + ID_GAP : entry.wcaId) + (id ? ID_PREFIX : '');
+  const fontSize = fitLineFs(textWidth(plain, 1, false) + textWidth(id, 1, true), nametagInnerW(panelW), maxFs);
   return (
     <Text style={[style, { fontSize, lineHeight: (maxFs * 1.1) / fontSize }]}>
-      {entry.wcaId || (live ? '' : ' ')}
-      {live && <>{entry.wcaId ? ID_GAP : ''}{LIVE_PREFIX}<Text style={{ fontFamily: FONT_BOLD }}>{live}</Text></>}
+      {plain || ' '}
+      {id && <Text style={{ fontFamily: FONT_BOLD }}>{id}</Text>}
     </Text>
   );
 }
@@ -141,14 +140,14 @@ function PanelTop({ entry, panelW, compName, titleText, logoMode, logoDataUrl, c
       <Text style={[s.name, c.name, { fontSize: name.fontSize, lineHeight: NAME_LINE_HEIGHT }]}>{name.text}</Text>
       {!compact && <View style={{ flex: 1 }} />}
       <View style={[s.badge, c.badge, { backgroundColor: bg }]}>
-        <Text style={[s.badgeText, c.badgeText, { color: fg, fontSize: fitFs(titleText, compact ? C.badgeFs : 13, nametagInnerW(panelW) - 4, 7) }]}>{titleText}</Text>
+        <Text style={[s.badgeText, c.badgeText, ONE_LINE, { color: fg, fontSize: fitLineFs(textWidth(titleText, 1), nametagInnerW(panelW) - 4, compact ? C.badgeFs : BADGE_FS) }]}>{titleText}</Text>
       </View>
       {showEvents && (
         <View style={[s.iconsRow, c.iconsRow]}>
           {icons.map(evId => <Image key={evId} src={EVENT_ICONS[evId]} style={{ width: iconSz, height: iconSz, marginHorizontal: ICON_GAP }} />)}
         </View>
       )}
-      {!compact && <IdLine entry={entry} maxFs={13} panelW={panelW} style={s.wcaId} />}
+      {!compact && <IdLine entry={entry} maxFs={ID_FS} panelW={panelW} style={s.wcaId} />}
     </View>
   );
 }
@@ -281,9 +280,9 @@ const s = StyleSheet.create({
   compName:   { fontSize: 8.5, textAlign: 'center', color: '#333', marginBottom: 4, fontFamily: FONT },
   name:       { textAlign: 'center', fontFamily: FONT, marginBottom: 6 },
   badge:      { borderRadius: 2, height: 22, justifyContent: 'center', marginBottom: 4 },
-  badgeText:  { fontSize: 13, textAlign: 'center', fontFamily: FONT_BOLD },
+  badgeText:  { fontSize: BADGE_FS, textAlign: 'center', fontFamily: FONT_BOLD },
   iconsRow:   { flexDirection: 'row', justifyContent: 'center', alignItems: 'center', marginTop: 5, marginBottom: 3 },
-  wcaId:      { fontSize: 13, textAlign: 'center', marginBottom: 4, color: '#222', fontFamily: FONT },
+  wcaId:      { fontSize: ID_FS, textAlign: 'center', marginBottom: 4, color: '#222', fontFamily: FONT },
   dutiesSection: { flexDirection: 'column', flex: 1 },
   dutyRow:    { flexDirection: 'row', alignItems: 'flex-start' },
   dutyLabel:  { fontFamily: FONT_BOLD, width: 46, flexShrink: 0 },
