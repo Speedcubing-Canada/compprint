@@ -4,7 +4,8 @@ import { csvRows } from './csv';
 import { fold } from './splitName';
 import { getsNametag, isOfficial, isWcaId, printedName } from './person';
 
-const HEADER_RE = /^(wca[ _]?id|id|(full )?name|nom( complet)?|nombre( completo)?|nome( completo)?)$/;
+const ID_HEADER = /^(wca[ _-]?id|id)$/;
+const NAME_HEADER = /^((full )?name|nom( complet| et prenom)?|prenom( et)? nom|nombre( completo| y apellidos?)?|nome( completo| e sobrenome)?)$/;
 
 // Letters NFD keeps whole, so "Søren" still matches a "Soren" line.
 const STROKED: Record<string, string> = { ø: 'o', ł: 'l', đ: 'd', ħ: 'h', ß: 'ss', æ: 'ae', œ: 'oe' };
@@ -12,37 +13,43 @@ const STROKED: Record<string, string> = { ø: 'o', ł: 'l', đ: 'd', ħ: 'h', ß
 export const staffNameKey = (name: string) =>
   fold(name.trim().replace(/\s+/g, ' ')).replace(/[øłđħßæœ]/g, c => STROKED[c]!);
 
+const lineKey = (who: string) => (isWcaId(who) ? who.toUpperCase() : staffNameKey(who));
+
 /**
  * Staff team file, one person per line:
- *   WCAID-or-full-name[,badge label]
- * A header row is skipped. A repeated person keeps their last line.
+ *   WCAID-or-full-name[,badge title]
+ * A line with both a name and a WCA ID is matched on the ID. A header row is skipped, and one
+ * naming the second column a name keeps it from being read as a title. A repeated person keeps
+ * their last line.
  */
 export function parseStaffCsv(text: string): StaffCsvLine[] {
   const rows = csvRows(text);
-  if (rows[0] && HEADER_RE.test(staffNameKey(rows[0][0]!))) rows.shift();
+  const header = rows[0] && [ID_HEADER, NAME_HEADER].some(re => re.test(staffNameKey(rows[0]![0]!))) ? rows.shift() : undefined;
+  const namedColumn = !!header?.[1] && NAME_HEADER.test(staffNameKey(header[1]));
   const byKey = new Map<string, StaffCsvLine>();
-  for (const [who = '', label] of rows) {
+  for (const [first = '', ...rest] of rows) {
+    const idSecond = !isWcaId(first) && isWcaId(rest[0] ?? '');
+    const who = idSecond ? rest[0]! : first;
     if (!who) continue;
-    const key = isWcaId(who) ? who.toUpperCase() : staffNameKey(who);
-    byKey.set(key, { key, who, label: label ? label.toUpperCase() : null });
+    const extra = idSecond || namedColumn ? rest.slice(1) : rest;
+    byKey.set(lineKey(who), { who, extra: extra.map(f => f.toUpperCase()) });
   }
   return [...byKey.values()];
 }
 
 export interface StaffMatch {
-  // Badge label per listed person; null = the translated STAFF title.
+  // Badge title per listed person; null = the translated STAFF title.
   labels: Map<Person, string | null>;
   // Lines matching no one who gets a name tag.
   unmatched: string[];
   // Lines whose name several people share.
   ambiguous: string[];
-  // Printed names of listed Delegates and organizers: their own badge wins unless the line has a label.
+  // Printed names of listed Delegates and organizers: their own badge wins unless the line has a title.
   officials: string[];
 }
 
-// A name-and-WCA-ID sheet's second column names the person, it is not a badge.
-const namesPerson = (label: string, p: Person) =>
-  isWcaId(label) || [p.name, printedName(p.name)].some(n => staffNameKey(n) === staffNameKey(label));
+const namesPerson = (field: string, p: Person) =>
+  [p.name, printedName(p.name)].some(n => staffNameKey(n) === staffNameKey(field));
 
 /** Resolves staff lines against the people who get a name tag; a name matches with or without its local suffix. */
 export function matchStaff(persons: Person[], lines: StaffCsvLine[], staffNametags: boolean): StaffMatch {
@@ -58,16 +65,23 @@ export function matchStaff(persons: Person[], lines: StaffCsvLine[], staffNameta
     }
   }
   const out: StaffMatch = { labels: new Map(), unmatched: [], ambiguous: [], officials: [] };
-  for (const { key, who, label } of lines) {
-    if (shared.has(key)) { out.ambiguous.push(who); continue; }
+  const found: [StaffCsvLine, Person][] = [];
+  for (const line of lines) {
+    const key = lineKey(line.who);
+    if (shared.has(key)) { out.ambiguous.push(line.who); continue; }
     const p = (isWcaId(key) ? byWcaId : byName).get(key);
-    if (!p) { out.unmatched.push(who); continue; }
-    out.labels.set(p, label && !namesPerson(label, p) ? label : null);
+    if (p) found.push([line, p]); else out.unmatched.push(line.who);
   }
-  for (const [p, label] of out.labels) {
-    if (!isOfficial(p)) continue;
-    out.officials.push(printedName(p.name));
-    if (label === null) out.labels.delete(p);
+  // ponytail: one exact name in the second column marks it a name column for the whole file; a
+  // file whose every name is misspelled still prints them as titles.
+  const nameColumn = found.some(([{ extra }, p]) => !!extra[0] && namesPerson(extra[0], p));
+  const officials = new Set<string>();
+  for (const [{ extra }, p] of found) {
+    const title = extra[nameColumn ? 1 : 0] || null;
+    if (isOfficial(p)) officials.add(printedName(p.name));
+    if (title || !isOfficial(p)) out.labels.set(p, title);
+    else out.labels.delete(p);
   }
+  out.officials = [...officials];
   return out;
 }

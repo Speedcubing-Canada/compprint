@@ -2,11 +2,12 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { cleanup, fireEvent, screen, waitFor } from '@testing-library/react';
 import type { CompetitionSettings, CustomEvent } from '../types/settings';
+import type { WCIF } from '../types/wcif';
 import { markAllSeen } from '../changelog';
-import { renderWithProviders, useEnglish } from '../test/render';
+import { renderWithProviders, signedInAuth, useEnglish } from '../test/render';
 import { testSettings } from '../test/fixtures';
 import {
-  DEFAULT_SCOPE, readSettings, writeCompetition, writeCustom, writeFileName, writeScope,
+  DEFAULT_SCOPE, readFileName, readSettings, writeCompetition, writeCustom, writeFileName, writeScope,
   writeSettings,
 } from '../lib/flowState';
 import { NO_DOCUMENTS } from '../lib/generationScope';
@@ -23,9 +24,10 @@ vi.mock('../auth/wca', async (importOriginal) => ({
   fetchCompetitionInfo: vi.fn().mockResolvedValue({ scoretakingSoftware: 'wca_live', onTheSpot: false }),
   fetchWcaLiveId: vi.fn().mockResolvedValue(null),
   fetchWcaLivePersonIds: vi.fn().mockResolvedValue(null),
+  fetchWcif: vi.fn(),
 }));
 
-import { fetchCompetitionInfo, fetchWcaLiveId } from '../auth/wca';
+import { fetchCompetitionInfo, fetchWcaLiveId, fetchWcif } from '../auth/wca';
 const mockInfo = vi.mocked(fetchCompetitionInfo);
 const mockScoretaking = {
   mockResolvedValue: (sw: 'wca_live' | 'internal', onTheSpot = false) =>
@@ -47,8 +49,8 @@ const stored = (overrides: Partial<CompetitionSettings> = {}): CompetitionSettin
     ...overrides,
   });
 
-async function renderSettings() {
-  const view = renderWithProviders(<SettingsPage />);
+async function renderSettings(opts: Parameters<typeof renderWithProviders>[1] = {}) {
+  const view = renderWithProviders(<SettingsPage />, opts);
   // Settles the WCA Live lookup the page fires on mount.
   await screen.findByRole('button', { name: /Generate/ });
   return view;
@@ -599,5 +601,47 @@ describe('underlined surnames', () => {
     writePresetSettings({ underlineSharedFirstNames: true });
     await renderSettings();
     expect(box().checked).toBe(true);
+  });
+});
+
+describe('uploaded CSV files', () => {
+  const upload = (name: string, fileName: string, text: string) => {
+    const input = document.querySelector<HTMLInputElement>(`input[name="${name}"]`)!;
+    fireEvent.change(input, { target: { files: [new File([text], fileName)] } });
+  };
+
+  it('fetches the WCIF after a reload, to warn about a restored staff list', async () => {
+    vi.mocked(fetchWcif).mockResolvedValue({ persons: [] } as unknown as WCIF);
+    writeSettings(stored({ staffCsv: [{ who: 'Nobody Here', extra: [] }] }));
+    writeFileName('staffCsv', 'staff.csv');
+    await renderSettings({ auth: signedInAuth });
+
+    expect(screen.getByText('staff.csv')).toBeTruthy();
+    expect(await screen.findByText(/Nobody Here$/)).toBeTruthy();
+    expect(fetchWcif).toHaveBeenCalledWith('WC2026', signedInAuth.token!.access_token);
+  });
+
+  it('keeps the picker for a file with no people, and loads the fixed one under the same name', async () => {
+    await renderSettings();
+    upload('staffCsv', 'staff.csv', '# nobody yet\n');
+    expect(await screen.findByText(/staff\.csv\. Put one person per line/)).toBeTruthy();
+    expect(screen.queryByText('staff.csv')).toBeNull();
+
+    upload('staffCsv', 'staff.csv', '2015FOOB01\n');
+    expect(await screen.findByText('1 person(s) loaded')).toBeTruthy();
+    expect(screen.getByText('staff.csv')).toBeTruthy();
+  });
+
+  it('saves no file name for a double-check file with no overrides', async () => {
+    writeSettings(stored());
+    await renderSettings();
+    fireEvent.click(advancedToggle());
+    upload('dcOverrides', 'dc.csv', '2015FOOB01,333\n');
+    expect(await screen.findByText('dc.csv')).toBeTruthy();
+
+    upload('dcOverrides', 'empty.csv', '# none\n');
+    await waitFor(() => expect(screen.queryByText('dc.csv')).toBeNull());
+    generate();
+    expect(readFileName('dcOverrides')).toBeNull();
   });
 });

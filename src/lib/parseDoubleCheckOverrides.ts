@@ -11,8 +11,7 @@ import { csvRows } from './csv';
  *   2018BARS02,333bf,555bf
  *
  * Lines with a WCA ID but no events are skipped. WCA IDs are upper-cased; event IDs are
- * lower-cased and de-duplicated. A future helper script may generate this file from a
- * competition's schedule.
+ * lower-cased and de-duplicated.
  */
 export function parseDoubleCheckOverrides(text: string): ScrambleDoubleCheckOverrides {
   const out: ScrambleDoubleCheckOverrides = {};

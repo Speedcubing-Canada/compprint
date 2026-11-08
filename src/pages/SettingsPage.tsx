@@ -849,9 +849,12 @@ export default function SettingsPage() {
               <p className={ui.hint}>{t('settings.double_check.overrides_hint')}</p>
               <CsvFileField
                 name="dcOverrides"
-                fileName={dcOverridesName}
-                countLabel={dcOverrideCount > 0 ? t('settings.double_check.overrides_count', { count: dcOverrideCount }) : null}
-                onText={(text, file) => { setDcOverridesName(file); patch({ scrambleDoubleCheckOverrides: parseDoubleCheckOverrides(text) }); }}
+                loaded={dcOverrideCount > 0 ? { fileName: dcOverridesName ?? '', count: t('settings.double_check.overrides_count', { count: dcOverrideCount }) } : null}
+                onText={(text, file) => {
+                  const overrides = parseDoubleCheckOverrides(text);
+                  setDcOverridesName(Object.keys(overrides).length ? file : null);
+                  patch({ scrambleDoubleCheckOverrides: overrides });
+                }}
                 onClear={() => { setDcOverridesName(null); patch({ scrambleDoubleCheckOverrides: {} }); }}
               />
 

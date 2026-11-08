@@ -57,7 +57,7 @@ describe('liveQrTarget', () => {
   });
 
   it('sends a non-competing staff tag to the competition page, not a competitor page', () => {
-    const staff = { ...entry, staff: true };
+    const staff = { ...entry, nonCompeting: true };
     expect(liveQrTarget({ mode: 'ilr', competitionId: 'Soorsi2026', wcaLiveId: null, wcaLivePersonIds: null }, staff))
       .toBe('https://www.worldcubeassociation.org/competitions/Soorsi2026/live');
     expect(liveQrTarget({ mode: 'wca-live', competitionId: 'X', wcaLiveId: '9667', wcaLivePersonIds: { 5: '42' } }, staff))

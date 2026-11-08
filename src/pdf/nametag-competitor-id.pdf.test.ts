@@ -14,7 +14,7 @@ describe.skipIf(!hasPdftotext && !process.env.CI)('name tag competitor ID and cu
     const settings = testSettings({ nametagLayout, nametagCompetitorId: true, paperFormat: 'LETTER' });
     const [first] = parseWCIF(sampleWcif(), settings).nametags;
     const label = 'SCORETAKING TEAM LEAD';
-    const tag = { ...first!, wcaId: '2017WWWW01', registrantId: 88888, staff: false, titleFront: label, titleBack: label };
+    const tag = { ...first!, wcaId: '2017WWWW01', competitorId: 88888, titleFront: label, titleBack: label };
     const words = pdfWords(await renderToBuffer(createElement(NametTagDocument, { nametags: [tag], settings }) as never));
 
     const back = nametagLayout === 'horizontal'
@@ -43,15 +43,10 @@ describe.skipIf(!hasPdftotext && !process.env.CI)('name tag competitor ID and cu
     expect(offRow.map(w => w.text)).toEqual([]);
   });
 
-  it.each([
-    ['off', { nametagCompetitorId: false }, {}],
-    ['non-competing staff', { nametagCompetitorId: true }, { staff: true }],
-    ['a blank tag', { nametagCompetitorId: true }, { blank: true }],
-  ] as const)('%s: no competitor ID', async (_, over, tagOver) => {
-    const settings = testSettings({ ...over, paperFormat: 'LETTER' });
+  it('no competitor ID on the entry: no ID line', async () => {
+    const settings = testSettings({ paperFormat: 'LETTER' });
     const [first] = parseWCIF(sampleWcif(), settings).nametags;
-    const tag = { ...first!, registrantId: 88888, ...tagOver };
-    const words = pdfWords(await renderToBuffer(createElement(NametTagDocument, { nametags: [tag], settings }) as never));
-    expect(words.filter(w => w.text === '88888' || w.text === 'ID:')).toEqual([]);
+    const words = pdfWords(await renderToBuffer(createElement(NametTagDocument, { nametags: [first!], settings }) as never));
+    expect(words.filter(w => w.text === 'ID:')).toEqual([]);
   });
 });

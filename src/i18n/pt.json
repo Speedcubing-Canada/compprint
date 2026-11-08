@@ -137,7 +137,7 @@
       "staff_csv_empty": "Nenhuma pessoa encontrada em {{names}}. Coloque uma pessoa por linha.",
       "staff_csv_officials": "Delegados e organizadores mantêm o título habitual, a menos que o arquivo especifique outro. Pessoas afetadas: {{names}}",
       "staff_csv_unmatched": "As seguintes pessoas não foram encontradas nesta competição: {{names}}",
-      "staff_csv_ambiguous": "Há mais de uma pessoa chamada {{names}}, use o ID WCA delas",
+      "staff_csv_ambiguous": "Várias pessoas têm estes nomes, use o ID WCA delas: {{names}}",
       "logo_on_nametags": "Logo nos crachás",
       "logo_hidden": "Oculto",
       "logo_hidden_desc": "Logo não exibido nos crachás",

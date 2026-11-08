@@ -207,8 +207,7 @@
   color: var(--text);
 }
 
-/* ---------- logo / file rows ---------- */
-
+/* ---------- logo ---------- */
 
 /* A standalone toggle that happens to show the logo it turns on. */
 .logoPreviewChoice {
@@ -225,10 +224,6 @@
   border-radius: var(--radius-sm);
   flex-shrink: 0;
 }
-
-
-
-
 
 /* ---------- misc blocks ---------- */
 
@@ -280,7 +275,6 @@
   align-items: center;
   color: var(--text-muted);
 }
-
 
 /* Clear of the paper radios, so it reads as its own switch rather than a third format. */
 .a6Toggle {

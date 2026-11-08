@@ -18,7 +18,7 @@ describe.skipIf(!hasPdftotext && !process.env.CI)('horizontal name tag render', 
       nametagLayout: 'horizontal', nametagLogoMode, useDefaultLogo: true, language: 'fr', secondaryLanguage: 'en', ...over,
     });
     const [first, ...rest] = parseWCIF(sampleWcif(), settings).nametags;
-    const tag = { ...first!, name: 'André Rodrigo César Pinheiro Monte Amado', wcaId: '2017ONDE01', staff };
+    const tag = { ...first!, name: 'André Rodrigo César Pinheiro Monte Amado', wcaId: '2017ONDE01', nonCompeting: staff };
     const words = pdfWords(await renderToBuffer(createElement(NametTagDocument, { nametags: [tag, ...rest], settings }) as never));
     // First pair only: front card left, back card right.
     const pair = words.filter(w => w.yMax < below.top);

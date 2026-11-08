@@ -27,10 +27,10 @@ const ONE_LINE: Style = { maxLines: 1, textOverflow: 'ellipsis' };
 
 // The WCA ID, then the registrant number in bold like scorecards. The line box keeps `maxFs`'s
 // height when the text shrinks, so nothing under it moves.
-function IdLine({ entry, qr, maxFs, panelW, style }: {
-  entry: NametTagEntry; qr: QrConfig; maxFs: number; panelW: number; style: Style;
+function IdLine({ entry, maxFs, panelW, style }: {
+  entry: NametTagEntry; maxFs: number; panelW: number; style: Style;
 }) {
-  const id = qr.competitorIds && !entry.staff && !entry.blank ? String(entry.registrantId) : '';
+  const id = entry.competitorId === undefined ? '' : String(entry.competitorId);
   const plain = [entry.wcaId, id && ID_PREFIX].filter(Boolean).join(ID_GAP);
   const fontSize = fitLineFs(textWidth(plain, 1, false) + textWidth(id, 1, true), nametagInnerW(panelW), maxFs);
   return (
@@ -109,8 +109,8 @@ function DutyLines({ duties, fontSize }: { duties: string[]; fontSize: number })
 //   'hidden'    → comp name text only
 //   'with-name' → small logo + comp name text side-by-side
 //   'logo-only' → large logo centred, no comp name text
-function PanelTop({ entry, qr, panelW, compName, titleText, logoMode, logoDataUrl, compact = false, showEvents = true }: {
-  entry: NametTagEntry; qr: QrConfig; panelW: number; compName: string; titleText: string;
+function PanelTop({ entry, panelW, compName, titleText, logoMode, logoDataUrl, compact = false, showEvents = true }: {
+  entry: NametTagEntry; panelW: number; compName: string; titleText: string;
   logoMode: NametTagLogoMode; logoDataUrl: string | null;
   compact?: boolean; showEvents?: boolean;
 }) {
@@ -148,18 +148,17 @@ function PanelTop({ entry, qr, panelW, compName, titleText, logoMode, logoDataUr
           {icons.map(evId => <Image key={evId} src={EVENT_ICONS[evId]} style={{ width: iconSz, height: iconSz, marginHorizontal: ICON_GAP }} />)}
         </View>
       )}
-      {!compact && <IdLine entry={entry} qr={qr} maxFs={ID_FS} panelW={panelW} style={s.wcaId} />}
+      {!compact && <IdLine entry={entry} maxFs={ID_FS} panelW={panelW} style={s.wcaId} />}
     </View>
   );
 }
 
-// Threads through both panels untouched; read by the QR codes and the ID line.
+// Threads through both panels untouched; only QrSection reads any of it.
 interface QrConfig {
   mode: LiveResultsMode;
   competitionId: string;
   wcaLiveId: string | null;
   wcaLivePersonIds: Record<number, string> | null;
-  competitorIds: boolean;
 }
 
 // Compact: the WCA ID sits centred between badge and the bottom-pinned QR codes. No ID still
@@ -169,7 +168,7 @@ function QrSection({ entry, qr, qrSize, strings, compact = false }: {
   compact?: boolean;
 }) {
   const cgComp = `https://www.competitiongroups.com/competitions/${qr.competitionId}`;
-  const cgUrl = entry.blank || entry.staff ? cgComp : `${cgComp}/persons/${entry.registrantId}`;
+  const cgUrl = entry.blank || entry.nonCompeting ? cgComp : `${cgComp}/persons/${entry.registrantId}`;
 
   const codes = (
     <View style={compact ? sc.qrRow : s.qrSection}>
@@ -186,7 +185,7 @@ function QrSection({ entry, qr, qrSize, strings, compact = false }: {
   if (!compact) return codes;
   return (
     <>
-      <View style={sc.idSlot}><IdLine entry={entry} qr={qr} maxFs={C.idFs} panelW={NAMETAG_H.panelW} style={sc.wcaId} /></View>
+      <View style={sc.idSlot}><IdLine entry={entry} maxFs={C.idFs} panelW={NAMETAG_H.panelW} style={sc.wcaId} /></View>
       {codes}
     </>
   );
@@ -216,9 +215,9 @@ function FrontPanel({ entry, panelW, panelH, pos, compName, qr, logoMode, logoDa
     <PanelFrame pos={pos} panelW={panelW} panelH={panelH}>{children}</PanelFrame>
   );
 
-  if (qrBothSides || entry.staff) {
+  if (qrBothSides || entry.nonCompeting) {
     return frame(<>
-      <PanelTop entry={entry} qr={qr} panelW={panelW} compName={compName} titleText={entry.titleFront} logoMode={logoMode} logoDataUrl={logoDataUrl} compact={compact} showEvents={eventIconsVisible({ isQrSide: true, compact })} />
+      <PanelTop entry={entry} panelW={panelW} compName={compName} titleText={entry.titleFront} logoMode={logoMode} logoDataUrl={logoDataUrl} compact={compact} showEvents={eventIconsVisible({ isQrSide: true, compact })} />
       <QrSection entry={entry} qr={qr} qrSize={qrSize} strings={nametTagStrings} compact={compact} />
     </>);
   }
@@ -241,7 +240,7 @@ function FrontPanel({ entry, panelW, panelH, pos, compName, qr, logoMode, logoDa
   const spaceEvenly = compact || estH < (panelH - nametagTopSectionH(logoMode)) * 0.90;
 
   return frame(<>
-    <PanelTop entry={entry} qr={qr} panelW={panelW} compName={compName} titleText={entry.titleFront} logoMode={logoMode} logoDataUrl={logoDataUrl} compact={compact} />
+    <PanelTop entry={entry} panelW={panelW} compName={compName} titleText={entry.titleFront} logoMode={logoMode} logoDataUrl={logoDataUrl} compact={compact} />
     <View style={[s.dutiesSection, spaceEvenly ? { justifyContent: 'space-evenly' } : {}, compact ? { rowGap: 2 } : {}]}>
       {rows.map(({ label, duties }) => (
         <View key={label} style={[s.dutyRow, spaceEvenly ? {} : { marginBottom: 3 }]}>
@@ -263,7 +262,7 @@ function BackPanel({ entry, panelW, panelH, pos, compName, qr, logoMode, logoDat
 }) {
   return (
     <PanelFrame pos={pos} panelW={panelW} panelH={panelH}>
-      <PanelTop entry={entry} qr={qr} panelW={panelW} compName={compName} titleText={entry.titleBack} logoMode={logoMode} logoDataUrl={logoDataUrl} compact={compact} showEvents={eventIconsVisible({ isQrSide: true, compact })} />
+      <PanelTop entry={entry} panelW={panelW} compName={compName} titleText={entry.titleBack} logoMode={logoMode} logoDataUrl={logoDataUrl} compact={compact} showEvents={eventIconsVisible({ isQrSide: true, compact })} />
       <QrSection entry={entry} qr={qr} qrSize={qrSize} strings={strings} compact={compact} />
     </PanelFrame>
   );
@@ -322,7 +321,6 @@ export function NametTagDocument({ nametags, settings }: Props) {
     competitionId,
     wcaLiveId: settings.wcaLiveId,
     wcaLivePersonIds: settings.wcaLivePersonIds,
-    competitorIds: settings.nametagCompetitorId,
   };
 
   // A custom logo wins; otherwise the bundled SCC one, when enabled.

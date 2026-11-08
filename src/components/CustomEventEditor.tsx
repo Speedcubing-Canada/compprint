@@ -3,9 +3,9 @@ import { Upload } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import type { CustomEvent, CustomEventFormat } from '../types/settings';
 import { EVENT_ICONS } from '../assets/events';
-import { readTextFile } from '../lib/csv';
 import { parseCompetitorCsv } from '../lib/parseCompetitorCsv';
 import Tooltip from './Tooltip';
+import CsvFileField from './CsvFileField';
 import ui from '../styles/ui.module.css';
 import s from './CustomEventEditor.module.css';
 
@@ -35,7 +35,6 @@ export default function CustomEventEditor({
 }) {
   const { t } = useTranslation();
   const iconRefs = useRef<(HTMLInputElement | null)[]>([]);
-  const csvRefs = useRef<(HTMLInputElement | null)[]>([]);
   // CSV file names are display-only; they don't belong in CompetitionSettings.
   const [csvNames, setCsvNames] = useState<Record<number, string>>({});
 
@@ -50,7 +49,6 @@ export default function CustomEventEditor({
   function removeEvent(i: number) {
     onChange(events.filter((_, idx) => idx !== i));
     iconRefs.current.splice(i, 1);
-    csvRefs.current.splice(i, 1);
     setCsvNames(prev => {
       const next: Record<number, string> = {};
       for (const [k, v] of Object.entries(prev)) {
@@ -74,15 +72,6 @@ export default function CustomEventEditor({
     reader.readAsDataURL(file);
   }
 
-  function handleCsvUpload(i: number, e: ChangeEvent<HTMLInputElement>) {
-    const file = e.target.files?.[0];
-    if (!file) return;
-    readTextFile(file, text => {
-      update(i, { competitors: parseCompetitorCsv(text) });
-      setCsvNames(prev => ({ ...prev, [i]: file.name }));
-    });
-  }
-
   function removeCsv(i: number) {
     update(i, { competitors: undefined });
     setCsvNames(prev => {
@@ -90,8 +79,6 @@ export default function CustomEventEditor({
       delete next[i];
       return next;
     });
-    const input = csvRefs.current[i];
-    if (input) input.value = '';
   }
 
   return (
@@ -108,7 +95,7 @@ export default function CustomEventEditor({
               autoComplete="off"
               aria-label={t('settings.advanced.event_name_placeholder')}
             />
-            <button className={s.removeBtn} onClick={() => removeEvent(i)}>{t('common.remove')}</button>
+            <button className={ui.removeBtn} onClick={() => removeEvent(i)}>{t('common.remove')}</button>
           </div>
 
           <div className={s.formatRow}>
@@ -179,7 +166,7 @@ export default function CustomEventEditor({
             <div className={s.blockLabel}>
               {t('settings.advanced.icon_hint')}
               {custom.iconDataUrl && (
-                <button className={s.removeBtn} onClick={() => update(i, { iconDataUrl: null })}>
+                <button className={ui.removeBtn} onClick={() => update(i, { iconDataUrl: null })}>
                   {t('common.clear')}
                 </button>
               )}
@@ -231,26 +218,17 @@ export default function CustomEventEditor({
               {t('settings.advanced.csv_label')}{' '}
               <span className={s.optionalNote}>({t('settings.advanced.csv_optional')})</span>
             </div>
-            {custom.competitors && custom.competitors.length > 0 ? (
-              <div className={s.csvPreview}>
-                <span className={s.csvName}>{csvNames[i] ?? t('settings.advanced.csv_label')}</span>
-                <span className={s.csvCount}>{t('settings.advanced.csv_count', { count: custom.competitors.length })}</span>
-                <button className={s.removeBtn} onClick={() => removeCsv(i)}>{t('common.remove')}</button>
-              </div>
-            ) : (
-              <>
-                <p className={s.csvHint}>{t('settings.advanced.csv_hint')}</p>
-                <button className={s.csvUploadBtn} onClick={() => csvRefs.current[i]?.click()}>
-                  {t('common.choose_file')}
-                </button>
-              </>
-            )}
-            <input
-              ref={el => { csvRefs.current[i] = el; }}
-              type="file"
-              accept=".csv,text/csv,text/plain"
-              hidden
-              onChange={e => handleCsvUpload(i, e)}
+            {!custom.competitors?.length && <p className={s.csvHint}>{t('settings.advanced.csv_hint')}</p>}
+            <CsvFileField
+              name={`customCsv${i}`}
+              loaded={custom.competitors?.length
+                ? { fileName: csvNames[i] ?? t('settings.advanced.csv_label'), count: t('settings.advanced.csv_count', { count: custom.competitors.length }) }
+                : null}
+              onText={(text, file) => {
+                update(i, { competitors: parseCompetitorCsv(text) });
+                setCsvNames(prev => ({ ...prev, [i]: file }));
+              }}
+              onClear={() => removeCsv(i)}
             />
           </div>
         </div>

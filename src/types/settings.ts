@@ -50,12 +50,11 @@ export interface CustomEvent {
   competitors?: CustomCompetitor[];
 }
 
-// One staff CSV line. key: an upper-cased WCA ID, or a folded full name. who: the line as
-// typed, for warnings. label: null = the translated STAFF title.
+// One staff CSV line. who: a WCA ID or full name, as typed. extra: the fields after it,
+// upper-cased; matchStaff decides which one is the badge title.
 export interface StaffCsvLine {
-  key: string;
   who: string;
-  label: string | null;
+  extra: string[];
 }
 
 export interface CompetitionSettings {

@@ -391,8 +391,8 @@ async function main() {
     'nametag-staff-test.pdf',
     e(NametTagDocument, {
       nametags: [
-        { ...d!, role: 'delegate', staff: true, events: [] },
-        { ...v!, role: 'staff', staff: true, events: [], wcaId: '', titleFront: 'STAFF', titleBack: 'STAFF' },
+        { ...d!, role: 'delegate', nonCompeting: true, events: [] },
+        { ...v!, role: 'staff', nonCompeting: true, events: [], wcaId: '', titleFront: 'STAFF', titleBack: 'STAFF' },
         ...rest.slice(0, 2),
       ],
       settings: ntSettings,

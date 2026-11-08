@@ -137,7 +137,7 @@
       "staff_csv_empty": "No people found in {{names}}. Put one person per line.",
       "staff_csv_officials": "Delegates and organizers keep their usual title, unless the file specifies another one. Affected people: {{names}}",
       "staff_csv_unmatched": "The following people could not be found in this competition: {{names}}",
-      "staff_csv_ambiguous": "There is more than one {{names}}, use their WCA IDs instead",
+      "staff_csv_ambiguous": "Several people share these names, use their WCA IDs instead: {{names}}",
       "logo_on_nametags": "Logo on name tags",
       "logo_hidden": "Hidden",
       "logo_hidden_desc": "Logo not shown on name tags",

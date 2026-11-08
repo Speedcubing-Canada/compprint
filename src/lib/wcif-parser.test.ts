@@ -1,6 +1,6 @@
 import { describe, it, expect, beforeEach } from 'vitest';
 import { subStageLabel, parseWCIF } from './wcif-parser';
-import { parseStaffCsv } from './parseStaffCsv';
+import { parseStaffCsv } from './staffCsv';
 import { DEFAULT_DOCUMENTS, hasUnassignedIntermediate } from './generationScope';
 import type { ScorecardEntry, CoverEntry, ScorecardData, NametTagEntry } from './wcif-parser';
 import type {
@@ -1646,7 +1646,7 @@ describe('non-competing staff name tags', () => {
 
   it('tags unregistered or withdrawn officials and non-competing volunteers, sorted after officials', () => {
     const tags = parseWCIF(mkWCIF([e], [r], people), cfg()).nametags;
-    expect(tags.map(t => [t.name, t.role, !!t.staff])).toEqual([
+    expect(tags.map(t => [t.name, t.role, !!t.nonCompeting])).toEqual([
       ['Dan', 'delegate', true], ['Dee', 'delegate', true], ['Ora', 'organizer', true],
       ['Vol', 'staff', true], ['P4', 'competitor', false],
     ]);
@@ -1693,12 +1693,12 @@ describe('staff CSV', () => {
   it('turns listed competitors into staff, keeping their duties and personal QR', () => {
     const t = byName('José Núñez');
     expect(t).toMatchObject({ role: 'staff', titleFront: 'STAFF', titleBack: 'STAFF', compete: ['3x3x3: Group 1'] });
-    expect(t.staff).toBeUndefined();
+    expect(t.nonCompeting).toBeUndefined();
   });
 
   it('prints the second column as the badge, on both sides', () => {
     expect(byName('Zoé Streamer')).toMatchObject({ role: 'staff', titleFront: 'STREAM', titleBack: 'STREAM' });
-    expect(byName('Vol Unteer')).toMatchObject({ role: 'staff', titleFront: 'SCORETAKING', staff: true });
+    expect(byName('Vol Unteer')).toMatchObject({ role: 'staff', titleFront: 'SCORETAKING', nonCompeting: true });
   });
 
   it('keeps an official badge unless the line has a label', () => {
@@ -1730,6 +1730,14 @@ describe('staff CSV', () => {
 
   it('changes nothing without a CSV', () => {
     expect(byName('Zoé Streamer', { staffCsv: [] })).toMatchObject({ role: 'competitor', titleFront: 'COMPETITOR' });
+  });
+
+  it('gives a competitor ID to competitors only, when the option is on', () => {
+    expect(tags().map(t => t.competitorId)).toEqual(Array(6).fill(undefined));
+    const on = tags({ nametagCompetitorId: true });
+    expect(on.map(t => [t.name, t.competitorId])).toEqual([
+      ['Del Egate', 4], ['Org Anizer', 5], ['José Núñez', 2], ['Vol Unteer', undefined], ['Zoé Streamer', 1], ['Plain Competitor', 3],
+    ]);
   });
 });
 

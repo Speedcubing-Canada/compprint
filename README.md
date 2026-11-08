@@ -433,15 +433,20 @@ LoginPage → CompetitionPickerPage → RoundScopePage → SettingsPage → Gene
   ID or full name (accent and case insensitive, with or without the WCIF's `(local name)`
   suffix), then an optional badge title, e.g. `2015FOOB01` or `Jane Doe,STREAM`. Commas,
   semicolons (Excel's "CSV" in French, Spanish and Portuguese) or tabs separate the fields,
-  double quotes may hold one, and a header row is skipped. The competitor and double-check
-  uploads share this parsing (`src/lib/csv.ts`): a file with a UTF-16 byte order mark (Excel's
-  "Unicode Text") is read as UTF-16, else a non-UTF-8 file is read as Windows-1252. A second
-  column that is a WCA ID or the person's own name (a `Name,WCA ID` roster) is not a title.
+  whichever the first line uses most; a field that starts with a double quote may hold one, and
+  a header row is skipped. The competitor and double-check uploads share this parsing
+  (`src/lib/csv.ts`): a file with a UTF-16 byte order mark (Excel's "Unicode Text") is read as
+  UTF-16, else a file with no valid UTF-8 accent is read as Windows-1252. A line holding both a
+  name and a WCA ID (`Name,WCA ID` or `WCA ID,Name`) matches on the ID. When a header names the
+  second column a name, or any line's second column is its person's exact name, that column is
+  names for the whole file and the title comes from the third. A file whose every name in the
+  second column is misspelled still prints them as titles.
   Listed people get the STAFF badge (or their title, upper-cased, on both sides,
   one line, shrunk to fit), sort with the staff, and keep their own duties and QR codes. Only
   people who get a name tag match. A listed Delegate or organizer keeps their own badge unless
   the line has a title. `/settings` warns about every listed Delegate and organizer, every name it
   can't find, every name several people share (use the WCA ID then), and a file with no one in it.
+  After a reload it fetches the WCIF again to show them.
 - **Competitor ID on name tags** (off by default) prints `ID: <registrantId>` beside the WCA ID,
   the number scoretakers type and scorecards show. Labelled `ID`, not `WCA Live`, since WCA Live
   is being retired. The line shrinks to fit, never wraps, and keeps its line
