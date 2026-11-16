@@ -11,7 +11,7 @@ import { qrPathData } from './qrPath';
 import {
   NAMETAGS_PER_PAGE, NAMETAG_COMPACT as C, NAMETAG_COMPACT_NAME_FS, NAMETAG_COMPACT_NAME_H, NAMETAG_CONFIGS, NAMETAG_H, NAMETAG_PANEL_BORDER,
   NAMETAG_PANEL_PAD, ICON_GAP, nametagInnerW, eventIconsVisible, nametagIconSize, liveQrTarget, nametagCompactQrSize, nametagHPositions, nametagNameH,
-  nametagTopSectionH,
+  nametagTopSectionH, NAMETAG_DUTY_LABEL,
   PDF_FONT as FONT, PDF_FONT_BOLD as FONT_BOLD,
 } from './layoutConstants';
 import './fontSetup';
@@ -230,7 +230,7 @@ function FrontPanel({ entry, panelW, panelH, pos, compName, qr, logoMode, logoDa
   ].filter(r => r.duties.length > 0);
 
   const totalItems = rows.reduce((sum, r) => sum + r.duties.length, 0);
-  const dutyFs = Math.max(5, Math.min(7.5, 7.5 - Math.max(0, totalItems - 8) * 0.12));
+  const dutyFs = Math.max(5, Math.min(NAMETAG_DUTY_LABEL.fs, NAMETAG_DUTY_LABEL.fs - Math.max(0, totalItems - 8) * 0.12));
 
   // Estimate whether space-evenly is safe. Assumes ~2 items/line, lineH = fontSize * 1.4.
   // Compact always spreads: its rows keep a 2pt gap, and Yoga top-packs space-evenly on overflow.
@@ -286,7 +286,7 @@ const s = StyleSheet.create({
   wcaId:      { fontSize: ID_FS, textAlign: 'center', marginBottom: 4, color: '#222', fontFamily: FONT },
   dutiesSection: { flexDirection: 'column', flex: 1 },
   dutyRow:    { flexDirection: 'row', alignItems: 'flex-start' },
-  dutyLabel:  { fontFamily: FONT_BOLD, width: 46, flexShrink: 0 },
+  dutyLabel:  { fontFamily: FONT_BOLD, width: NAMETAG_DUTY_LABEL.w, flexShrink: 0 },
   qrSection:  { flex: 1, flexDirection: 'row', justifyContent: 'center', alignItems: 'center', gap: 14 },
   qrCol:      { flexDirection: 'column', alignItems: 'center' },
   qrLabel:    { fontSize: C.labelFs, textAlign: 'center', color: '#444', marginTop: C.labelGap },

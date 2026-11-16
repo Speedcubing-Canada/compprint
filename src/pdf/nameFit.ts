@@ -1,5 +1,5 @@
 // Competitor-name sizing for scorecards and name tags. Pure, so the layout tests can import it.
-import { nametagInnerW, SCORECARD_HEADER as H } from './layoutConstants';
+import { nametagInnerW, SCORECARD_EVENT_ROW as E, SCORECARD_HEADER as H } from './layoutConstants';
 
 // Advance widths (1/1000 em) of the embedded Scorecard Sans, which shares Helvetica's metrics
 // and also covers the letters Helvetica lacks (Ł, ł, Đ). The test checks each against the OTF.
@@ -7,7 +7,7 @@ import { nametagInnerW, SCORECARD_HEADER as H } from './layoutConstants';
 const BOLD_GROUPS: Record<number, string> = {
   238: "'",
   278: 'Iijl .,’ı',
-  333: 'ft-()',
+  333: 'ft-():',
   389: 'r',
   418: 'ł',
   474: '"',
@@ -30,7 +30,7 @@ const BOLD_GROUPS: Record<number, string> = {
 const REGULAR_GROUPS: Record<number, string> = {
   191: "'",
   222: 'ijl’ı',
-  278: 'I .,ftìíîïĩīĭįǐȉỉ',
+  278: 'I .,:ftìíîïĩīĭįǐȉỉ',
   305: 'ł',
   333: '-()r',
   355: '"',
@@ -89,9 +89,11 @@ export function nameBox(cardW: number, hasLogo: boolean, withCompName: boolean) 
   };
 }
 
-// Scorecard event cell: 2/5 of the event row after the icon (14+2×3) and three 2×3 cell margins.
-export const scorecardEventFs = (name: string, cardW: number, hasIcon: boolean) =>
-  fitLineFs(textWidth(name, 1, false), (cardW - 2 * (H.cardBorder + H.cardPadH) - (hasIcon ? 20 : 0) - 18) * 2 / 5, 9);
+export function scorecardEventFs(name: string, cardW: number, hasIcon: boolean) {
+  const { event, round, group } = E.flex;
+  const rowW = cardW - 2 * (H.cardBorder + H.cardPadH) - (hasIcon ? E.iconW + 2 * E.gap : 0) - 3 * 2 * E.gap;
+  return fitLineFs(textWidth(name, 1, false), rowW * event / (event + round + group), E.fs);
+}
 
 export const NAME_MAX_FS = 18;
 export const NAME_MIN_FS = 7;

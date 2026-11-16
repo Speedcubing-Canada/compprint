@@ -8,7 +8,7 @@ import { EVENT_ICONS } from '../assets/events';
 import { logoState, resolveLogo, showCompNameAboveCompetitor, type LogoState } from '../lib/logo';
 import { coverTimingShown } from '../lib/settingsDraft';
 import {
-  SCORECARD_CONFIGS as CONFIGS, SCORECARD_HEADER as H, scorecardsPerPage, scorecardRowHeight, showLiveIdLine,
+  SCORECARD_CONFIGS as CONFIGS, SCORECARD_EVENT_ROW as E, SCORECARD_HEADER as H, scorecardsPerPage, scorecardRowHeight, showLiveIdLine,
   PDF_FONT as FONT, PDF_FONT_BOLD as FONT_BOLD,
 } from './layoutConstants';
 import './fontSetup';
@@ -74,10 +74,10 @@ const styles = StyleSheet.create({
     flexDirection: 'row', alignItems: 'stretch',
     marginTop: 4, marginBottom: 6,
   },
-  eventIcon: { width: 14, height: 14, marginHorizontal: 3, alignSelf: 'center' },
-  eventCell:  { flex: 2,   textAlign: 'center', paddingVertical: 2, borderBottom: BORDER_THIN, marginHorizontal: 3 },
-  roundCell:  { flex: 1.5, fontSize: 9, textAlign: 'center', paddingVertical: 2, borderBottom: BORDER_THIN, marginHorizontal: 3 },
-  groupCell:  { flex: 1.5, fontSize: 9, textAlign: 'center', paddingVertical: 2, borderBottom: BORDER_THIN, marginHorizontal: 3 },
+  eventIcon: { width: E.iconW, height: E.iconW, marginHorizontal: E.gap, alignSelf: 'center' },
+  eventCell:  { flex: E.flex.event, textAlign: 'center', paddingVertical: 2, borderBottom: BORDER_THIN, marginHorizontal: E.gap },
+  roundCell:  { flex: E.flex.round, fontSize: E.fs, textAlign: 'center', paddingVertical: 2, borderBottom: BORDER_THIN, marginHorizontal: E.gap },
+  groupCell:  { flex: E.flex.group, fontSize: E.fs, textAlign: 'center', paddingVertical: 2, borderBottom: BORDER_THIN, marginHorizontal: E.gap },
 
   // Attempt table
   table:          { borderTop: BORDER_THIN, borderLeft: BORDER_THIN },
