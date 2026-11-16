@@ -767,7 +767,9 @@ const shortNames = (overrides: Record<string, string> = {}): Record<string, stri
 const SHORT_NAMETAG_NAMES_EN = shortNames();
 const SHORT_NAMETAG_NAMES_FR = shortNames({ '333oh': 'À une main', 'fto': 'Octaminx' });
 const SHORT_NAMETAG_NAMES_ES = shortNames({ '333oh': 'Una mano' });
-const SHORT_NAMETAG_NAMES_PT = shortNames({ '333oh': 'Uma Mão', '333mbf': 'Multi-Vendado' });
+const SHORT_NAMETAG_NAMES_PT = shortNames({
+  '333oh': 'Uma Mão', '333bf': '3x3x3 Vendado', '444bf': '4x4x4 Vendado', '555bf': '5x5x5 Vendado', '333mbf': 'Multi-Vendado',
+});
 
 export function getShortNametTagNames(language: LocaleCode): Record<string, string> {
   return LOCALES[language].shortNames;
