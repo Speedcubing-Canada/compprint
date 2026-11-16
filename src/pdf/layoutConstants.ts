@@ -172,7 +172,7 @@ export function nametagIconSize(panelW: number, count: number, compact: boolean)
 // sizes: widen the column rather than truncating a translation.
 export const CHECKING_FLEX = {
   start: 1,
-  event: 2.7,
+  event: 2.9,
   groups: 1,
   scorecards: 1.1,
   dataEntry: 1.3,

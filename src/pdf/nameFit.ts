@@ -89,6 +89,10 @@ export function nameBox(cardW: number, hasLogo: boolean, withCompName: boolean) 
   };
 }
 
+// Scorecard event cell: 2/5 of the event row after the icon (14+2×3) and three 2×3 cell margins.
+export const scorecardEventFs = (name: string, cardW: number, hasIcon: boolean) =>
+  fitLineFs(textWidth(name, 1, false), (cardW - 2 * (H.cardBorder + H.cardPadH) - (hasIcon ? 20 : 0) - 18) * 2 / 5, 9);
+
 export const NAME_MAX_FS = 18;
 export const NAME_MIN_FS = 7;
 // Built-in Helvetica's line box ((900 + 200) / 1000), so one-line names sit where they always did.

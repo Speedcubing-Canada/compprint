@@ -2,7 +2,7 @@ import { describe, it, expect } from 'vitest';
 import { fileURLToPath } from 'node:url';
 import * as fontkit from 'fontkit';
 import {
-  badgeFs, textWidth, nameBox, nameLayout, nametagName, nametagNameW, splitAtSurname,
+  badgeFs, scorecardEventFs, textWidth, nameBox, nameLayout, nametagName, nametagNameW, splitAtSurname,
   NAME_LINE_HEIGHT, NAME_MAX_FS, NAME_MIN_FS, NAMETAG_NAME_MAX_FS,
 } from './nameFit';
 import {
@@ -13,7 +13,8 @@ import { corpus } from '../test/corpus';
 import { randomWcif } from '../test/wcifGen';
 import { printedName } from '../lib/person';
 import { splitName } from '../lib/splitName';
-import { getNametTagTitleStrings } from '../lib/i18n';
+import { getEventName, getNametTagTitleStrings } from '../lib/i18n';
+import { WCA_EVENT_ORDER } from '../lib/wcif-parser';
 
 const LONG = 'André Rodrigo César Pinheiro Monte Amado';
 const lines = (text: string) => text.split('\n');
@@ -237,5 +238,17 @@ describe('name tag badge title', () => {
 
   it('shrinks a long custom title', () => {
     expect(badgeFs('INTERNATIONAL BROADCAST TEAM LEAD', NAMETAG_CONFIGS.LETTER.panelW, 13)).toBeLessThan(13);
+  });
+});
+
+describe('scorecard event cell', () => {
+  const names = (['en', 'fr', 'es', 'pt'] as const).flatMap(lang => WCA_EVENT_ORDER.map(id => getEventName(id, lang)));
+
+  it.each(Object.entries(SCORECARD_CONFIGS))('%s: every event name fits on one line at 8pt or more', (_, c) => {
+    expect(names.filter(n => scorecardEventFs(n, c.cardW, true) < 8)).toEqual([]);
+  });
+
+  it('keeps full size for English names', () => {
+    expect(WCA_EVENT_ORDER.filter(id => scorecardEventFs(getEventName(id, 'en'), SCORECARD_CONFIGS.A4.cardW, true) < 9)).toEqual([]);
   });
 });
