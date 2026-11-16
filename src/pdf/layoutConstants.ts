@@ -41,6 +41,11 @@ export const SCORECARD_HEADER = {
   idLineH: 11, compNameLineH: 12,
 } as const;
 
+// Scorecard event row: icon, then event/round/group cells, each with `gap` either side.
+export const SCORECARD_EVENT_ROW = {
+  iconW: 14, gap: 3, fs: 9, flex: { event: 2, round: 1.5, group: 1.5 },
+} as const;
+
 export const SCORECARD_CONFIGS = {
   LETTER: {
     cardW: 257, cardH: 345,
