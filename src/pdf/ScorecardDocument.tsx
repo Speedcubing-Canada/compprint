@@ -12,7 +12,7 @@ import {
   PDF_FONT as FONT, PDF_FONT_BOLD as FONT_BOLD,
 } from './layoutConstants';
 import './fontSetup';
-import { nameBox, nameLayout, NAME_LINE_HEIGHT, splitAtSurname } from './nameFit';
+import { nameBox, nameLayout, NAME_LINE_HEIGHT, scorecardEventFs, splitAtSurname } from './nameFit';
 import { resultHeader as buildResultHeader } from './resultHeader';
 
 const BORDER      = `${H.cardBorder}pt solid black`;
@@ -75,7 +75,7 @@ const styles = StyleSheet.create({
     marginTop: 4, marginBottom: 6,
   },
   eventIcon: { width: 14, height: 14, marginHorizontal: 3, alignSelf: 'center' },
-  eventCell:  { flex: 2,   fontSize: 9, textAlign: 'center', paddingVertical: 2, borderBottom: BORDER_THIN, marginHorizontal: 3 },
+  eventCell:  { flex: 2,   textAlign: 'center', paddingVertical: 2, borderBottom: BORDER_THIN, marginHorizontal: 3 },
   roundCell:  { flex: 1.5, fontSize: 9, textAlign: 'center', paddingVertical: 2, borderBottom: BORDER_THIN, marginHorizontal: 3 },
   groupCell:  { flex: 1.5, fontSize: 9, textAlign: 'center', paddingVertical: 2, borderBottom: BORDER_THIN, marginHorizontal: 3 },
 
@@ -218,7 +218,7 @@ function ScorecardCard({
       {/* Event info row */}
       <View style={styles.eventRow}>
         {icon && <Image src={icon} style={styles.eventIcon} />}
-        <Text style={styles.eventCell}>{card.eventName}</Text>
+        <Text style={[styles.eventCell, { fontSize: scorecardEventFs(card.eventName, cardW, !!icon) }]}>{card.eventName}</Text>
         <LabelWithGreyTotal label={card.roundLabel} connector={strings.ofConnector} style={styles.roundCell} />
         <LabelWithGreyTotal label={card.group} connector={strings.ofConnector} style={styles.groupCell} />
       </View>

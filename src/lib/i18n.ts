@@ -627,10 +627,10 @@ const NAMETAG_ES: NametTagStrings = {
 };
 
 const NAMETAG_PT: NametTagStrings = {
-  compete: 'Competir:',
-  scramble: 'Misturar:',
-  judge: 'Julgar:',
-  run: 'Correr:',
+  compete: 'Competidor:',
+  scramble: 'Embaralhador:',
+  judge: 'Juiz:',
+  run: 'Corredor:',
   dutyGroup: (g) => `Grupo ${g}`,
   qrSchedule: 'Cronograma',
   qrResults: 'Resultados',
@@ -803,10 +803,10 @@ const EVENT_NAMES_ES: Record<string, string> = {
 const EVENT_NAMES_PT: Record<string, string> = {
   '333': 'Cubo 3x3x3', '222': 'Cubo 2x2x2', '444': 'Cubo 4x4x4',
   '555': 'Cubo 5x5x5', '666': 'Cubo 6x6x6', '777': 'Cubo 7x7x7',
-  '333bf': '3x3x3 Às Cegas', '333fm': 'FMC', '333oh': '3x3x3 Uma Mão',
+  '333bf': '3x3x3 Vendado', '333fm': 'FMC', '333oh': '3x3x3 Com Uma Mão',
   'clock': 'Clock', 'minx': 'Megaminx', 'pyram': 'Pyraminx',
-  'skewb': 'Skewb', 'sq1': 'Square-1', 'fto': 'FTO', '444bf': '4x4x4 Às Cegas',
-  '555bf': '5x5x5 Às Cegas', '333mbf': '3x3x3 Multi-BLD',
+  'skewb': 'Skewb', 'sq1': 'Square-1', 'fto': 'FTO', '444bf': '4x4x4 Vendado',
+  '555bf': '5x5x5 Vendado', '333mbf': '3x3x3 Multi-Vendado',
 };
 
 export function getEventName(eventId: string, language: LocaleCode): string {
