@@ -105,6 +105,8 @@ export const MAX_PAGES_PER_NAMETAG_PDF = 250;
 // Name tag panel side padding and border.
 export const NAMETAG_PANEL_PAD = 7;
 export const NAMETAG_PANEL_BORDER = 1.5;
+// Duty label column ("Scramble:") and its largest font size.
+export const NAMETAG_DUTY_LABEL = { w: 46, fs: 7.5 } as const;
 export const nametagInnerW = (panelW: number) => panelW - 2 * (NAMETAG_PANEL_PAD + NAMETAG_PANEL_BORDER);
 
 // Vertical name tag panels.

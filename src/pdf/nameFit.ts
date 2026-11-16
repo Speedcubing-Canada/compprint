@@ -7,7 +7,7 @@ import { nametagInnerW, SCORECARD_EVENT_ROW as E, SCORECARD_HEADER as H } from '
 const BOLD_GROUPS: Record<number, string> = {
   238: "'",
   278: 'Iijl .,’ı',
-  333: 'ft-()',
+  333: 'ft-():',
   389: 'r',
   418: 'ł',
   474: '"',
@@ -30,7 +30,7 @@ const BOLD_GROUPS: Record<number, string> = {
 const REGULAR_GROUPS: Record<number, string> = {
   191: "'",
   222: 'ijl’ı',
-  278: 'I .,ftìíîïĩīĭįǐȉỉ',
+  278: 'I .,:ftìíîïĩīĭįǐȉỉ',
   305: 'ł',
   333: '-()r',
   355: '"',
