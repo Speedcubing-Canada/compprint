@@ -167,12 +167,11 @@ function ScorecardCard({
 
   const resultHeader = buildResultHeader(card, strings);
 
-  const preRows  = isMBF                        ? [1, 2]
-                 : card.format === 'avg5'       ? [1,2,3,4,5]
+  const preRows  = card.format === 'avg5'       ? [1,2,3,4,5]
                  : card.format === 'bo2-avg5'   ? [1,2]
                  : card.format === 'mo3'        ? [1,2,3]
-                 : card.format === 'bo2'        ? [1,2]   // 6x6, 7x7 (bo2 non-MBF)
-                 : card.format === 'bo1'        ? [1]     // custom-event single attempt
+                 : card.format === 'bo2'        ? [1,2]
+                 : card.format === 'bo1'        ? [1]
                  : [1];                                    // 'bo1-mo3': 1 pre-cutoff row
   const postRows = card.format === 'bo2-avg5' ? [3,4,5] : card.format === 'bo1-mo3' ? [2,3] : [];
   const hasCutoff = card.cutoff !== '';
@@ -278,6 +277,8 @@ function CoverCard({
   if (!card.eventId) return null;
   const cover = strings.cover;
   const round = splitLabelTotal(card.roundLabel, strings.ofConnector);
+  const times = card.attemptTimes;
+  const multiDay = new Set(times?.map((t) => t.date)).size > 1;
   return (
     <View style={[styles.coverCard, { position: 'absolute', left: pos.left, top: pos.top, width: cardW, height: cardH }]}>
       <Text style={styles.coverCompName}>{settings.competitionName}</Text>
@@ -289,7 +290,13 @@ function CoverCard({
       {card.group === ''
         ? <Text style={styles.coverGroup}>{cover.allGroups(card.numGroups)}</Text>
         : <LabelWithGreyTotal label={card.group} connector={strings.ofConnector} style={styles.coverGroup} />}
-      {coverTimingShown(settings.coverTiming, settings.generationScope.documents) && <Text style={styles.coverTiming}>{cover.timing(card.startTime, card.endTime)}</Text>}
+      {coverTimingShown(settings.coverTiming, settings.generationScope.documents) && <>
+        {times
+          ? times.map((t) => <Text key={t.attempt} style={[styles.coverTiming, { marginBottom: 2 }]}>
+              {`${cover.attemptTag(t.attempt)}${multiDay ? ` ${t.weekday}` : ''} ${t.startTime}-${t.endTime} · ${cover.timing()}`}
+            </Text>)
+          : <Text style={styles.coverTiming}>{cover.timing(card.startTime, card.endTime)}</Text>}
+      </>}
 
       <View style={styles.coverDividerRow}>
         <View style={styles.coverDividerLine} />

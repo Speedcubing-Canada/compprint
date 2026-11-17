@@ -31,8 +31,8 @@ const cases: [string, () => WCIF, number][] = [
 ];
 
 const cards = (p: ParsedWCIF) => SCORECARD_BUCKETS.flatMap((b) => p[b]).filter((e): e is ScorecardEntry => e.kind === 'scorecard');
-// FMC and MBLD print no named cards: answer sheets, and blank MBLD cards for the delegate.
-const UNNAMED_EVENTS = new Set(['333fm', '333mbf']);
+// FMC prints answer sheets, not named cards.
+const UNNAMED_EVENTS = new Set(['333fm']);
 
 /** Competitor assignments as `event|round|name`, for the people the parser should print. */
 function assignedCards(wcif: WCIF): Map<string, number> {
