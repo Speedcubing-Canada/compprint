@@ -202,8 +202,7 @@ describe('scorecard format selection', () => {
     expect(fmtFor('333bf', rSpec('a'))).toBe('avg5');
   });
 
-  it('333mbf always bo2 - verified via finals blank cards', () => {
-    // 333mbf persons are skipped in named assignments; test via blank finals cards.
+  it('333mbf bo2 on blank finals cards', () => {
     const c2 = ch(101, '333mbf', 2, 1, '2024-01-01T14:00:00Z');
     const e = evt('333mbf', [rSpec('2'), rSpec('2')]);
     const r = room('Stage', [
@@ -651,13 +650,64 @@ describe('person filtering', () => {
     expect(scs(result.firstRound)[0]?.wcaId).toBe('Nouvelle Compétitrice');
   });
 
-  it('333mbf competitor assignments are skipped (no named first-round cards)', () => {
+  it('333mbf group assignments print named first-round cards', () => {
     const c = ch(100, '333mbf', 1, 1);
     const e = evt('333mbf', [rSpec('2')]);
     const r = room('Stage', [act('333mbf', 1, [c])]);
     const p = per(1, [{ aid: 100 }]);
     const result = parseWCIF(mkWCIF([e], [r], [p]), cfg());
-    expect(scs(result.firstRound).filter(s => s.eventId === '333mbf').length).toBe(0);
+    expect(scs(result.firstRound).filter(s => s.eventId === '333mbf').length).toBe(1);
+  });
+
+  it('attempt-scheduled 333mbf: one card per competitor across attempts, plus a cover', () => {
+    const a1 = { ...act('333mbf', 1, []), activityCode: '333mbf-r1-a1' };
+    const a2 = { ...act('333mbf', 1, []), activityCode: '333mbf-r1-a2', startTime: '2024-01-02T09:00:00Z' };
+    const e = evt('333mbf', [rSpec('2')]);
+    const r = room('Stage', [a1, a2]);
+    const people = [per(1, [{ aid: a1.id }, { aid: a2.id }]), per(2, [{ aid: a1.id }, { aid: a2.id }])];
+    const result = parseWCIF(mkWCIF([e], [r], people), cfg());
+    const cards = scs(result.firstRound).filter(s => s.eventId === '333mbf');
+    expect(cards.map(c => c.name).sort()).toEqual(['P1', 'P2']);
+    expect(cards[0].format).toBe('bo2');
+    const covers = result.firstRound.filter((x): x is CoverEntry => x.kind === 'cover' && x.eventId === '333mbf');
+    expect(covers.map(c => c.numScorecards)).toEqual([2]);
+    expect(covers[0].attemptTimes?.map(t => [t.attempt, t.date, t.weekday])).toEqual([[1, '2024-01-01', 'Mon'], [2, '2024-01-02', 'Tue']]);
+    expect(result.groupOverview.map(g => g.heading.split(' - ')[1])).toEqual(['Attempt 1', 'Attempt 2']);
+    expect(result.nametags[0].compete).toEqual(['Multi-BLD: Group 1']);
+  });
+
+  it('attempt-scheduled 333fm: overview block per attempt and a nametag line, still no scorecards', () => {
+    const a1 = { ...act('333fm', 1, []), activityCode: '333fm-r1-a1' };
+    const a2 = { ...act('333fm', 1, []), activityCode: '333fm-r1-a2', startTime: '2024-01-02T09:00:00Z' };
+    const r = room('Stage', [a1, a2]);
+    const result = parseWCIF(mkWCIF([evt('333fm', [rSpec('2')])], [r], [per(1, [{ aid: a1.id }, { aid: a2.id }])]), cfg());
+    expect(result.groupOverview.map(g => g.heading.split(' - ')[1])).toEqual(['Attempt 1', 'Attempt 2']);
+    expect(result.nametags[0].compete).toEqual(['FMC: Group 1']);
+    for (const b of ['firstRound', 'finals', 'extras'] as const)
+      expect(result[b].some(e => e.eventId === '333fm'), b).toBe(false);
+  });
+
+  it('333mbf groups inside attempts (r1-g1-a1, r1-g1-a2): one card and one cover per competitor', () => {
+    const g1 = { ...ch(100, '333mbf', 1, 1), activityCode: '333mbf-r1-g1-a1' };
+    const g2 = { ...ch(101, '333mbf', 1, 1, '2024-01-02T09:00:00Z'), activityCode: '333mbf-r1-g1-a2' };
+    const r = room('Stage', [
+      { ...act('333mbf', 1, [g1]), activityCode: '333mbf-r1-a1' },
+      { ...act('333mbf', 1, [g2]), activityCode: '333mbf-r1-a2' },
+    ]);
+    const people = [per(1, [{ aid: 100 }, { aid: 101 }]), per(2, [{ aid: 100 }, { aid: 101 }])];
+    const result = parseWCIF(mkWCIF([evt('333mbf', [rSpec('2')])], [r], people), cfg());
+    expect(scs(result.firstRound).filter(s => s.eventId === '333mbf').map(c => c.name).sort()).toEqual(['P1', 'P2']);
+    const covers = result.firstRound.filter((x): x is CoverEntry => x.kind === 'cover' && x.eventId === '333mbf');
+    expect(covers.map(c => c.numScorecards)).toEqual([2]);
+    expect(covers[0].startTime).toBeUndefined();
+    expect(covers[0].attemptTimes?.map(t => t.attempt)).toEqual([1, 2]);
+  });
+
+  it.each([['1', 'bo1'], ['2', 'bo2'], ['3', 'mo3']] as const)('333mbf format %s prints as %s', (fmt, want) => {
+    const c = ch(100, '333mbf', 1, 1);
+    const r = room('Stage', [act('333mbf', 1, [c])]);
+    const result = parseWCIF(mkWCIF([evt('333mbf', [rSpec(fmt)])], [r], [per(1, [{ aid: 100 }])]), cfg());
+    expect(scs(result.firstRound)[0]?.format).toBe(want);
   });
 
   it('333mbf limit field is "H1b" regardless of WCIF timeLimit value', () => {

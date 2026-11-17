@@ -164,7 +164,13 @@ export function scheduleLabels(wcif: WCIF, language: LocaleCode) {
     return full.charAt(0).toUpperCase() + full.slice(1);
   };
 
-  return { language, strings, roundCount, localDate, localTime, dayLabel, roundLabel, roundName, fullDateLabel };
+  const shortWeekdayFormat = new Intl.DateTimeFormat(language === 'pt' ? 'pt-BR' : language, { weekday: 'short', timeZone: 'UTC' });
+  // "Thu", "jeu.", from a localDate.
+  const shortWeekday = (date: string): string => {
+    try { return shortWeekdayFormat.format(new Date(`${date}T12:00:00Z`)); } catch { return date; }
+  };
+
+  return { language, strings, roundCount, localDate, localTime, dayLabel, shortWeekday, roundLabel, roundName, fullDateLabel };
 }
 
 /** The schedule tracker and the Round Checklist, one table per day. */

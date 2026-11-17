@@ -16,6 +16,8 @@ export interface CoverCardStrings {
   allGroups: (n: number) => string;
   // Scheduled time, then write-ins for the actual time and scramble set.
   timing: (start?: string, end?: string) => string;
+  // Starts each attempt's line on an attempt-scheduled (MBLD) cover: "E1 16:25-17:35 · <timing()>".
+  attemptTag: (attempt: number) => string;
 }
 
 // One row per round, grouped by day and room. `groupsMade`/`scorecards` are tick-only and
@@ -187,6 +189,7 @@ const EN: ScorecardStrings = {
     resultsChecked: '6. Results checked by Delegate',
     allGroups: (n) => (n === 1 ? 'Only 1 group' : `All ${n} groups`),
     timing: (s, e) => `${s && e ? `Planned ${s}-${e} · ` : ''}Actual _____-_____ · Set ____`,
+    attemptTag: (n) => `A${n}`,
   },
 };
 
@@ -230,6 +233,7 @@ const FR: ScorecardStrings = {
     resultsChecked: '6. Résultats vérifiés par le Délégué',
     allGroups: (n) => (n === 1 ? 'Un seul groupe' : `Les ${n} groupes`),
     timing: (s, e) => `${s && e ? `Prévu ${s}-${e} · ` : ''}Réel _____-_____ · Set ____`,
+    attemptTag: (n) => `E${n}`,
   },
 };
 
@@ -273,6 +277,7 @@ const ES: ScorecardStrings = {
     resultsChecked: '6. Resultados verificados por el Delegado',
     allGroups: (n) => (n === 1 ? 'Solo un grupo' : `Los ${n} grupos`),
     timing: (s, e) => `${s && e ? `Previsto ${s}-${e} · ` : ''}Real _____-_____ · Set ____`,
+    attemptTag: (n) => `I${n}`,
   },
 };
 
@@ -318,6 +323,7 @@ const PT: ScorecardStrings = {
     resultsChecked: '6. Resultados verificados pelo Delegado',
     allGroups: (n) => (n === 1 ? 'O único grupo' : `Os ${n} grupos`),
     timing: (s, e) => `${s && e ? `Previsto ${s}-${e} · ` : ''}Real _____-_____ · Set ____`,
+    attemptTag: (n) => `T${n}`,
   },
 };
 
