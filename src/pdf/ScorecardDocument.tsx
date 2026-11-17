@@ -170,8 +170,8 @@ function ScorecardCard({
   const preRows  = card.format === 'avg5'       ? [1,2,3,4,5]
                  : card.format === 'bo2-avg5'   ? [1,2]
                  : card.format === 'mo3'        ? [1,2,3]
-                 : card.format === 'bo2'        ? [1,2]   // 6x6, 7x7 (bo2 non-MBF)
-                 : card.format === 'bo1'        ? [1]     // custom-event single attempt
+                 : card.format === 'bo2'        ? [1,2]
+                 : card.format === 'bo1'        ? [1]
                  : [1];                                    // 'bo1-mo3': 1 pre-cutoff row
   const postRows = card.format === 'bo2-avg5' ? [3,4,5] : card.format === 'bo1-mo3' ? [2,3] : [];
   const hasCutoff = card.cutoff !== '';

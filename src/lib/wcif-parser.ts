@@ -485,7 +485,7 @@ export function parseWCIF(wcif: WCIF, settings: CompetitionSettings): ParsedWCIF
   // Scheduled local times per `${roundKey}|${groupNum}|${stage}`, for the cover cards.
   const groupTimes: Record<string, { startTime: string; endTime: string }> = {};
   const timesOf = (rid: string, gNum: string, stage: string) => groupTimes[`${rid}|${gNum}|${stage}`];
-  // Same key as groupTimes, for rounds scheduled per attempt.
+  // `${roundKey}|${groupNum}`, for rounds scheduled per attempt.
   const groupAttemptTimes: Record<string, AttemptTime[]> = {};
 
   // Activity maps
@@ -559,7 +559,8 @@ export function parseWCIF(wcif: WCIF, settings: CompetitionSettings): ParsedWCIF
           endTime: labels.localTime(child.endTime, roomTz[roomIdx]),
         };
         if (cCode?.attempt !== undefined) {
-          const list = groupAttemptTimes[`${roundIdOf(cCode)}|${groupOf(cCode)}|${stage}`] ??= [];
+          // Across rooms: one pile can do each attempt somewhere else.
+          const list = groupAttemptTimes[`${roundIdOf(cCode)}|${groupOf(cCode)}`] ??= [];
           const date = labels.localDate(child.startTime, roomTz[roomIdx]);
           mergeAttemptTime(list, { attempt: cCode.attempt, ...times, date, weekday: labels.shortWeekday(date) });
         } else if (cCode?.group !== undefined) {
@@ -567,7 +568,8 @@ export function parseWCIF(wcif: WCIF, settings: CompetitionSettings): ParsedWCIF
         }
         if (cCode?.group !== undefined)
           (roundGroupCodes[roundIdOf(cCode)] ??= new Set()).add(`g${cCode.group}`);
-        if (roundKey) {
+        // Later attempts' rooms aren't stages: the pile is labelled where attempt 1 runs.
+        if (roundKey && (cCode?.attempt ?? 1) === 1) {
           if (!roundStages[roundKey]) roundStages[roundKey] = new Set();
           roundStages[roundKey].add(stage);
         }
@@ -761,8 +763,9 @@ export function parseWCIF(wcif: WCIF, settings: CompetitionSettings): ParsedWCIF
 
   // Named scorecard entries from person assignments
   const named: { entry: ScorecardEntry; country: string }[] = [];
-  // `${registrantId}|${rid}`: one MBLD card per round, however many attempts it is assigned.
+  // `${registrantId}|${rid}`: one MBLD card per round, filed under the lowest attempt assigned.
   const attemptCarded = new Set<string>();
+  const attemptOf = (a: { activityId: number }) => parseActivityCode(activityCode[a.activityId] ?? '')?.attempt ?? 0;
   for (const person of wcif.persons) {
     if (!person.registration || person.registration.status !== 'accepted') continue;
 
@@ -775,7 +778,7 @@ export function parseWCIF(wcif: WCIF, settings: CompetitionSettings): ParsedWCIF
         : strings.newCompetitor;
     const liveId = String(person.registrantId);
 
-    for (const assignment of person.assignments) {
+    for (const assignment of [...person.assignments].sort((a, b) => attemptOf(a) - attemptOf(b))) {
       if (assignment.assignmentCode !== 'competitor') continue;
       const aid = assignment.activityId;
       const code = activityCode[aid];
@@ -903,7 +906,7 @@ export function parseWCIF(wcif: WCIF, settings: CompetitionSettings): ParsedWCIF
       stage,
       numScorecards: ids.size,
       ...timesOf(rid, gNum, stage),
-      ...(groupAttemptTimes[`${rid}|${gNum}|${stage}`] ? { attemptTimes: groupAttemptTimes[`${rid}|${gNum}|${stage}`] } : {}),
+      ...(groupAttemptTimes[`${rid}|${gNum}`] ? { attemptTimes: groupAttemptTimes[`${rid}|${gNum}`] } : {}),
     });
   }
 
@@ -920,7 +923,9 @@ export function parseWCIF(wcif: WCIF, settings: CompetitionSettings): ParsedWCIF
       for (const activity of room.activities) {
         for (const child of groupUnitsOf(activity)) {
           const parsed = parseActivityCode(child.activityCode);
-          if (parsed?.group === undefined) continue;
+          const gNum = groupOf(parsed);
+          // One blank stack per group, not per attempt.
+          if (!parsed || gNum === undefined || (parsed.attempt ?? 1) !== 1) continue;
           const { eventId, round: roundNum } = parsed;
           if (eventId === '333fm') continue;
           if (roundNum === 1) continue;
@@ -939,7 +944,6 @@ export function parseWCIF(wcif: WCIF, settings: CompetitionSettings): ParsedWCIF
           if (!isFinal && !isRound2 && !isSemis) continue;
 
           const ts = timeslots[child.id] ?? 'Z99';
-          const gNum = String(parsed.group);
           const stage = activityStage[child.id]?.toLowerCase() ?? 'hall';
           const totalGroups = numGroups[rid] ?? 1;
           const groupInfo: GroupInfo = { gNum, stage, totalGroups, timeslot: ts, roomIdx: activityRoomIdx[child.id] };

@@ -703,6 +703,31 @@ describe('person filtering', () => {
     expect(covers[0].attemptTimes?.map(t => t.attempt)).toEqual([1, 2]);
   });
 
+  it('attempt-scheduled 333mbf: assignment order and attempt rooms do not split the pile', () => {
+    const a1 = { ...act('333mbf', 1, []), activityCode: '333mbf-r1-a1' };
+    const a2 = { ...act('333mbf', 1, []), activityCode: '333mbf-r1-a2', startTime: '2024-01-02T09:00:00Z' };
+    const people = [per(1, [{ aid: a1.id }, { aid: a2.id }]), per(2, [{ aid: a2.id }, { aid: a1.id }])];
+    const wcif = mkWCIF([evt('333mbf', [rSpec('2')])], [room('Side', [a1]), room('Main', [a2])], people);
+    const result = parseWCIF(wcif, cfg());
+    const cards = scs(result.firstRound).filter(s => s.eventId === '333mbf');
+    expect(new Set(cards.map(c => c.timeslot)).size).toBe(1);
+    expect(cards.map(c => c.group)).toEqual(['Group 1 of 1', 'Group 1 of 1']);
+    const covers = result.firstRound.filter((x): x is CoverEntry => x.kind === 'cover' && x.eventId === '333mbf');
+    expect(covers.map(c => c.numScorecards)).toEqual([2]);
+    expect(covers[0].attemptTimes?.map(t => t.attempt)).toEqual([1, 2]);
+  });
+
+  it('attempt-scheduled 333mbf round 2 without assignments: one blank stack, not one per attempt', () => {
+    const bare = { ...act('333mbf', 1, []), activityCode: '333mbf-r1-a1' };
+    const f1 = { ...act('333mbf', 2, []), activityCode: '333mbf-r2-a1' };
+    const f2 = { ...act('333mbf', 2, []), activityCode: '333mbf-r2-a2', startTime: '2024-01-02T09:00:00Z' };
+    const e = evt('333mbf', [rSpec('2'), rSpec('2')]);
+    const result = parseWCIF(mkWCIF([e], [room('Stage', [bare, f1, f2])]), cfg());
+    const covers = result.finals.filter((x): x is CoverEntry => x.kind === 'cover' && x.eventId === '333mbf');
+    expect(covers.length).toBe(1);
+    expect(scs(result.finals).filter(s => s.eventId === '333mbf').length).toBeGreaterThan(0);
+  });
+
   it.each([['1', 'bo1'], ['2', 'bo2'], ['3', 'mo3']] as const)('333mbf format %s prints as %s', (fmt, want) => {
     const c = ch(100, '333mbf', 1, 1);
     const r = room('Stage', [act('333mbf', 1, [c])]);
