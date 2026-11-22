@@ -32,3 +32,5 @@ walkthrough-shots/
 dist-e2e/
 test-results/
 playwright-report/
+
+CLAUDE.md
