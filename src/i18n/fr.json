@@ -112,8 +112,8 @@
       "not_found": "Introuvable sur WCA Live pour l'instant - entrez-le manuellement si nécessaire",
       "hint": "ID numérique de la compétition sur WCA Live. Utilisé pour générer des QR codes WCA Live sur les badges.",
       "placeholder": "ex. 9667",
-      "hide_label": "Masquer la ligne WCA Live sur les feuilles vierges",
-      "hide_desc": "Les feuilles vierges et supplémentaires perdent la mention « WCA Live : » vide. Les feuilles avec un compétiteur gardent leur ID."
+      "hide_label": "Masquer la ligne Live ID sur les feuilles vierges",
+      "hide_desc": "Les feuilles vierges et supplémentaires perdent la mention « Live ID : » vide. Les feuilles avec un compétiteur gardent leur ID."
     },
     "logo": {
       "title": "Logo de la compétition",

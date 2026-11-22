@@ -331,7 +331,7 @@ describe('live results mode', () => {
     await renderSettings();
 
     expect(screen.getByRole('radio', { name: /Integrated live results/ })).toBeTruthy();
-    expect(screen.queryByText(/Hide the WCA Live line/)).toBeNull();
+    expect(screen.queryByText(/Hide the Live ID line/)).toBeNull();
   });
 
   it('lets the organizer override the detected system', async () => {

@@ -151,7 +151,7 @@ describe.skipIf(!hasPdftotext && !process.env.CI)('the printed text', () => {
     const settings = testSettings({ competitionId: waterloo.id, competitionName: waterloo.name, language });
     const { files } = await generate(waterloo, settings);
     const round1 = text(files['WaterlooSpring2026_round1.pdf']!);
-    expect(round1).toContain('Avery Lam\n2026LAMA01 WCA Live: 79\n');
+    expect(round1).toContain('Avery Lam\n2026LAMA01 Live ID: 79\n');
     for (const line of lines) expect(round1).toContain(line);
     // The fully blank spare card keeps the limit prompt, for the delegate to fill in.
     expect(text(files['WaterlooSpring2026_extras.pdf']!)).toContain(blankPrompt);

@@ -209,7 +209,7 @@ function ScorecardCard({
             {underline ? <>{underline[0]}<Text style={{ textDecoration: 'underline' }}>{underline[1]}</Text></> : name.text}
           </Text>
           <Text style={styles.idText}>
-            {card.wcaId}{showLiveIdLine(settings.hideWcaLiveId, card.liveId) && <>{'    '}WCA Live: <Text style={{ fontFamily: FONT_BOLD }}>{card.liveId}</Text></>}
+            {card.wcaId}{showLiveIdLine(settings.hideWcaLiveId, card.liveId) && <>{'    '}Live ID: <Text style={{ fontFamily: FONT_BOLD }}>{card.liveId}</Text></>}
           </Text>
         </View>
       </View>
