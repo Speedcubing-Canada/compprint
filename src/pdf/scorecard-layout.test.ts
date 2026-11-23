@@ -361,9 +361,9 @@ describe('Cover card timing line fits the card', () => {
   }
 });
 
-// "Hide WCA Live ID" is for blank and extra cards, where the line prints a dangling
-// "WCA Live:". It must never strip the ID off a card with a competitor on it.
-describe('WCA Live line visibility', () => {
+// "Hide the Live ID line" is for blank and extra cards, where the line prints a dangling
+// "Live ID:". It must never strip the ID off a card with a competitor on it.
+describe('Live ID line visibility', () => {
   it('prints on a named card whether or not the setting is on', () => {
     expect(showLiveIdLine(false, '42')).toBe(true);
     expect(showLiveIdLine(true, '42')).toBe(true);

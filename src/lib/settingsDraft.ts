@@ -25,7 +25,7 @@ export function restorableSettings(previous: CompetitionSettings | null): Partia
   return { ...rest, wcaLiveId: rest.wcaLiveId ?? '' };
 }
 
-/** The draft as stored on submit. A custom competition is unofficial: no live results, no double-checking, no "WCA Live:" line. */
+/** The draft as stored on submit. A custom competition is unofficial: no live results, no double-checking, no "Live ID:" line. */
 export function submittedSettings(
   draft: SettingsDraft,
   flow: Pick<CompetitionSettings, FlowOwned>,

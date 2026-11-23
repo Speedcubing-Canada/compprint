@@ -489,8 +489,9 @@ export default function SettingsPage() {
         {(showScorecards || showNametags) && !isCustom && (
         <section className={s.section}>
           <h3 className={ui.sectionHeading}>{t('settings.wca_live.system_title')}</h3>
-          {/* Only the name tag QR codes read the system and the id. The scorecard checkbox
-              below is about the printed "WCA Live:" line, which exists in either system. */}
+          {/* Of the printed documents, only the name tag QR codes use the live results system
+              (WCA Live or ILR) and the WCA Live ID. The scorecard checkbox below is about the
+              printed "Live ID:" line, which scorecards carry under either system. */}
           {showNametags && (<>
           <p className={ui.hint}>{t('settings.wca_live.system_hint')}</p>
           <fieldset className={ui.optionGroup} aria-label={t('settings.wca_live.system_title')}>
